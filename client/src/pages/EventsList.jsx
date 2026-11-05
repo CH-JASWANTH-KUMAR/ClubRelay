@@ -166,7 +166,7 @@ export function EventsList() {
           <Calendar className="w-10 h-10 text-charcoal-300 mx-auto mb-2" />
           <h4 className="text-sm font-semibold text-charcoal-900">No events found</h4>
           <p className="text-xs text-charcoal-500 max-w-sm mx-auto mt-1 mb-4">
-            No events match the selected status filter. Click "New Event Proposal" to create one.
+            No events match the selected status filter. Click “New Event Proposal” to create one.
           </p>
           <Button size="sm" onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4" /> Create Event
@@ -186,7 +186,7 @@ export function EventsList() {
                   <Badge variant={statusVariants[event.status] || 'default'} size="sm">
                     {event.status}
                   </Badge>
-                  <span className="text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">
+                  <span className="text-xs text-charcoal-500 font-medium">
                     {event.eventType}
                   </span>
                 </div>

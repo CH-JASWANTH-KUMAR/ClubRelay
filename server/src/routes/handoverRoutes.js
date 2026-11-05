@@ -14,12 +14,40 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.get('/clubs/:clubId/handovers', listHandovers);
-router.post('/clubs/:clubId/handovers', requireClubRole('PRESIDENT'), createHandover);
+router.get(
+  '/clubs/:clubId/handovers',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  listHandovers
+);
 
-router.get('/clubs/:clubId/handovers/:id', getHandover);
-router.put('/clubs/:clubId/handovers/:id/section', updateHandoverSection);
-router.post('/clubs/:clubId/handovers/:id/acknowledge', acknowledgeHandover);
-router.post('/clubs/:clubId/handovers/:id/complete', requireClubRole('PRESIDENT'), completeHandover);
+router.post(
+  '/clubs/:clubId/handovers',
+  requireClubRole('PRESIDENT', { allowCampusAdmin: true }),
+  createHandover
+);
+
+router.get(
+  '/clubs/:clubId/handovers/:id',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  getHandover
+);
+
+router.put(
+  '/clubs/:clubId/handovers/:id/section',
+  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
+  updateHandoverSection
+);
+
+router.post(
+  '/clubs/:clubId/handovers/:id/acknowledge',
+  requireClubRole('GENERAL_MEMBER'),
+  acknowledgeHandover
+);
+
+router.post(
+  '/clubs/:clubId/handovers/:id/complete',
+  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
+  completeHandover
+);
 
 export default router;

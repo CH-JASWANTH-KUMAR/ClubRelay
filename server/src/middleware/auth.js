@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env.js';
 import { User, Membership } from '../models/index.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'clubrelay_production_jwt_secret_key_9921';
+const JWT_SECRET = env.JWT_SECRET;
 
 export async function requireAuth(req, res, next) {
   try {
     let token = req.cookies?.cr_auth_token;
 
+    // Bearer token fallback for programmatic/test API clients
     if (!token && req.headers.authorization?.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -36,7 +38,7 @@ export async function requireAuth(req, res, next) {
 
     // Attach user and campus to request
     req.user = user;
-    req.campusId = user.campusId._id;
+    req.campusId = user.campusId?._id || user.campusId;
 
     // Load memberships for convenient RBAC
     const memberships = await Membership.find({
@@ -71,7 +73,7 @@ export function generateToken(user) {
   return jwt.sign(
     {
       userId: user._id,
-      campusId: user.campusId,
+      campusId: user.campusId?._id || user.campusId,
       campusRole: user.campusRole,
     },
     JWT_SECRET,

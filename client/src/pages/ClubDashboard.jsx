@@ -168,7 +168,7 @@ export function ClubDashboard() {
                   <div
                     key={event._id}
                     onClick={() => navigate(`/clubs/${clubId}/events/${event._id}`)}
-                    className="p-3.5 rounded border border-border bg-surface hover:border-forest-600 hover:shadow-subtle transition-all cursor-pointer flex items-center justify-between gap-4"
+                    className="p-3.5 rounded border border-border bg-surface hover:border-forest-600 hover:shadow-subtle transition-colors cursor-pointer flex items-center justify-between gap-4"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">

@@ -151,7 +151,7 @@ export function Decisions() {
               {/* Action items */}
               {d.actionItems && d.actionItems.length > 0 && (
                 <div className="bg-subtle/70 rounded p-3 text-xs space-y-1.5 border border-border">
-                  <span className="font-semibold text-charcoal-800 block text-[11px] uppercase tracking-wider">
+                  <span className="font-semibold text-charcoal-800 block text-xs">
                     Follow-Up Action Items:
                   </span>
                   {d.actionItems.map((act, i) => (

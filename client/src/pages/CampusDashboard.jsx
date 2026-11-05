@@ -113,7 +113,7 @@ export function CampusDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="metric-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Active Clubs</span>
+            <span className="text-xs font-semibold text-charcoal-700">Active Clubs</span>
             <Building2 className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
@@ -124,7 +124,7 @@ export function CampusDashboard() {
 
         <Card className="metric-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Events Conducted</span>
+            <span className="text-xs font-semibold text-charcoal-700">Events Conducted</span>
             <Calendar className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
@@ -135,7 +135,7 @@ export function CampusDashboard() {
 
         <Card className="metric-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Pending Faculty Approvals</span>
+            <span className="text-xs font-semibold text-amber-800">Pending Faculty Approvals</span>
             <FileCheck2 className="w-4 h-4 text-amber-700" />
           </div>
           <div className="text-2xl font-bold text-amber-900">
@@ -146,7 +146,7 @@ export function CampusDashboard() {
 
         <Card className="metric-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Active Transitions</span>
+            <span className="text-xs font-semibold text-charcoal-700">Active Transitions</span>
             <ArrowRightLeft className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">

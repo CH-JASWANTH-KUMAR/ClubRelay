@@ -1,59 +1,54 @@
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import path from 'path';
+import fs from 'fs';
+import { env } from './env.js';
 
 let mongod = null;
 
-// Cache connection across serverless warm starts
-let cached = global.mongoose;
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
 export async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
   }
 
-  if (!cached.promise) {
-    let uri = process.env.MONGODB_URI;
+  let uri = env.MONGODB_URI;
 
-    if (!uri) {
-      if (!mongod) {
-        mongod = await MongoMemoryServer.create();
-      }
-      uri = mongod.getUri();
-      console.log(`[Database] Using in-memory MongoDB at: ${uri}`);
-    } else {
-      console.log(`[Database] Connecting to MongoDB Atlas / cluster...`);
+  if (!uri) {
+    if (env.NODE_ENV === 'production') {
+      throw new Error(
+        '[FATAL DATABASE ERROR] Production environment must configure MONGODB_URI. In-memory database fallback is strictly prohibited in production.'
+      );
     }
 
-    const opts = {
-      bufferCommands: false,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-    };
+    if (!mongod) {
+      const cacheDir = path.resolve(process.cwd(), '.cache/mongo-mem');
+      fs.mkdirSync(cacheDir, { recursive: true });
 
-    cached.promise = mongoose.connect(uri, opts).then((m) => {
-      console.log('[Database] MongoDB connected successfully');
-      return m;
-    });
+      mongod = await MongoMemoryServer.create({
+        instance: {
+          tmpDir: cacheDir,
+        },
+      });
+    }
+    uri = mongod.getUri();
+    console.log(`[Database] Using isolated in-memory MongoDB at: ${uri}`);
+  } else {
+    console.log(`[Database] Connecting to MongoDB Atlas cluster...`);
   }
 
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
+  const opts = {
+    serverSelectionTimeoutMS: 5000,
+    autoIndex: env.NODE_ENV !== 'production',
+  };
 
-  return cached.conn;
+  await mongoose.connect(uri, opts);
+  console.log('[Database] MongoDB connected successfully');
+  return mongoose.connection;
 }
 
 export async function disconnectDB() {
-  if (cached.conn) {
+  if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
-    cached.conn = null;
-    cached.promise = null;
   }
   if (mongod) {
     await mongod.stop();

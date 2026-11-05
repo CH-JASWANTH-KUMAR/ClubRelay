@@ -83,78 +83,78 @@ export function Login() {
             />
 
             <Button type="submit" disabled={loading} className="w-full mt-2">
-              {loading ? 'Authenticating...' : 'Sign In to Workspace'}
+              {loading ? 'Authenticating…' : 'Sign In to Workspace'}
             </Button>
           </form>
 
           {/* Quick Demo Personas */}
           <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-charcoal-400 mb-2">
+            <p className="text-xs font-semibold text-charcoal-500 mb-2">
               Instant Demo Logins (Pre-seeded)
             </p>
             <div className="grid grid-cols-1 gap-1.5">
               <button
                 type="button"
                 onClick={() => setDemoUser('sarah.gdg@pcu.edu')}
-                className={`text-left p-2 rounded border text-xs flex items-center justify-between transition-colors ${
+                className={`text-left p-2 rounded border text-xs flex items-center justify-between whitespace-nowrap transition-colors ${
                   email === 'sarah.gdg@pcu.edu'
                     ? 'border-forest-700 bg-forest-50/70 text-forest-900 font-semibold'
                     : 'border-border bg-subtle text-charcoal-700 hover:bg-muted'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-3.5 h-3.5 text-forest-700" />
-                  <span>Sarah Jenkins (Outgoing President · GDG)</span>
+                <div className="flex items-center gap-2 truncate">
+                  <UserCheck className="w-3.5 h-3.5 text-forest-700 flex-shrink-0" />
+                  <span className="truncate">Sarah Jenkins (Outgoing President · GDG)</span>
                 </div>
-                <span className="text-[10px] text-charcoal-400">Student</span>
+                <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Student</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDemoUser('alex.incoming@pcu.edu')}
-                className={`text-left p-2 rounded border text-xs flex items-center justify-between transition-colors ${
+                className={`text-left p-2 rounded border text-xs flex items-center justify-between whitespace-nowrap transition-colors ${
                   email === 'alex.incoming@pcu.edu'
                     ? 'border-forest-700 bg-forest-50/70 text-forest-900 font-semibold'
                     : 'border-border bg-subtle text-charcoal-700 hover:bg-muted'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-3.5 h-3.5 text-forest-700" />
-                  <span>Alex Rivera (Incoming President · GDG)</span>
+                <div className="flex items-center gap-2 truncate">
+                  <UserCheck className="w-3.5 h-3.5 text-forest-700 flex-shrink-0" />
+                  <span className="truncate">Alex Rivera (Incoming President · GDG)</span>
                 </div>
-                <span className="text-[10px] text-charcoal-400">Student</span>
+                <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Student</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDemoUser('advisor.chen@pcu.edu')}
-                className={`text-left p-2 rounded border text-xs flex items-center justify-between transition-colors ${
+                className={`text-left p-2 rounded border text-xs flex items-center justify-between whitespace-nowrap transition-colors ${
                   email === 'advisor.chen@pcu.edu'
                     ? 'border-forest-700 bg-forest-50/70 text-forest-900 font-semibold'
                     : 'border-border bg-subtle text-charcoal-700 hover:bg-muted'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Dr. Evelyn Chen (Faculty Coordinator)</span>
+                <div className="flex items-center gap-2 truncate">
+                  <GraduationCap className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
+                  <span className="truncate">Dr. Evelyn Chen (Faculty Coordinator)</span>
                 </div>
-                <span className="text-[10px] text-charcoal-400">Faculty</span>
+                <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Faculty</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDemoUser('admin@pcu.edu')}
-                className={`text-left p-2 rounded border text-xs flex items-center justify-between transition-colors ${
+                className={`text-left p-2 rounded border text-xs flex items-center justify-between whitespace-nowrap transition-colors ${
                   email === 'admin@pcu.edu'
                     ? 'border-forest-700 bg-forest-50/70 text-forest-900 font-semibold'
                     : 'border-border bg-subtle text-charcoal-700 hover:bg-muted'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-3.5 h-3.5 text-charcoal-700" />
-                  <span>Dean Marcus Vance (Campus Administrator)</span>
+                <div className="flex items-center gap-2 truncate">
+                  <Building2 className="w-3.5 h-3.5 text-charcoal-700 flex-shrink-0" />
+                  <span className="truncate">Dean Marcus Vance (Campus Administrator)</span>
                 </div>
-                <span className="text-[10px] text-charcoal-400">Admin</span>
+                <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Admin</span>
               </button>
             </div>
           </div>

@@ -205,7 +205,7 @@ export function KnowledgeBase() {
                   key={item._id}
                   hover
                   onClick={() => setSelectedItem(item)}
-                  className={`knowledge-item-card cursor-pointer p-3.5 transition-all ${
+                  className={`knowledge-item-card cursor-pointer p-3.5 transition-colors ${
                     isSelected ? 'border-forest-700 ring-1 ring-forest-700 bg-forest-50/20' : ''
                   }`}
                 >
@@ -213,7 +213,7 @@ export function KnowledgeBase() {
                     <Badge variant="default" size="sm">
                       {item.category.replace('_', ' ')}
                     </Badge>
-                    <span className="text-[10px] text-charcoal-400 font-mono">v{item.version}</span>
+                    <span className="text-[10px] text-charcoal-400">v{item.version}</span>
                   </div>
 
                   <h4 className="text-xs font-bold text-charcoal-900 line-clamp-1">{item.title}</h4>
@@ -240,7 +240,7 @@ export function KnowledgeBase() {
                       <Badge variant="approved" size="sm">
                         {selectedItem.category.replace('_', ' ')}
                       </Badge>
-                      <span className="text-xs text-charcoal-500 font-mono">
+                      <span className="text-xs text-charcoal-500">
                         Version {selectedItem.version}
                       </span>
                     </div>

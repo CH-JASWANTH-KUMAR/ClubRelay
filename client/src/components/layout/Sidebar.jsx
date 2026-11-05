@@ -97,7 +97,7 @@ export function Sidebar() {
       {/* Brand & Tagline */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-forest-700 text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-subtle">
+          <div className="w-8 h-8 rounded bg-forest-700 text-white flex items-center justify-center font-bold text-sm shadow-subtle">
             CR
           </div>
           <div>
@@ -109,7 +109,7 @@ export function Sidebar() {
         {/* Club Switcher dropdown if user has clubs */}
         {memberships.length > 0 && (
           <div className="mt-3">
-            <label className="block text-[10px] uppercase font-semibold text-charcoal-400 tracking-wider mb-1">
+            <label className="block text-xs font-medium text-charcoal-500 mb-1">
               Active Organization
             </label>
             <div className="relative">
@@ -136,7 +136,7 @@ export function Sidebar() {
       {/* Navigation links */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
         <div>
-          <div className="text-[10px] uppercase font-semibold text-charcoal-400 tracking-wider px-2 mb-2">
+          <div className="text-xs font-semibold text-charcoal-500 px-2 mb-2">
             Workspace
           </div>
           <nav className="space-y-1">
@@ -176,7 +176,7 @@ export function Sidebar() {
         {/* Governance / Admin links */}
         {(isCampusAdmin || isFaculty) && (
           <div>
-            <div className="text-[10px] uppercase font-semibold text-charcoal-400 tracking-wider px-2 mb-2">
+            <div className="text-xs font-semibold text-charcoal-500 px-2 mb-2">
               Campus Governance
             </div>
             <nav className="space-y-1">

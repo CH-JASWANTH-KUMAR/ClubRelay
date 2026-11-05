@@ -20,29 +20,41 @@ import {
 } from '../models/index.js';
 
 export async function runSeed() {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED_IN_PROD !== 'true') {
+    console.error('[CRITICAL SEED ERROR] Database seeding blocked in PRODUCTION environment!');
+    throw new Error(
+      'Database seeding is strictly forbidden in production without explicitly setting ALLOW_SEED_IN_PROD=true'
+    );
+  }
+
   console.log('[Seed] Starting database seeding...');
   await connectDB();
 
-  // Clear existing collections
-  await Promise.all([
-    Campus.deleteMany({}),
-    User.deleteMany({}),
-    AcademicTerm.deleteMany({}),
-    Club.deleteMany({}),
-    Membership.deleteMany({}),
-    Event.deleteMany({}),
-    EventTask.deleteMany({}),
-    EventTemplate.deleteMany({}),
-    Approval.deleteMany({}),
-    KnowledgeItem.deleteMany({}),
-    Contact.deleteMany({}),
-    Decision.deleteMany({}),
-    Handover.deleteMany({}),
-    Notification.deleteMany({}),
-    AuditLog.deleteMany({}),
-  ]);
+  console.log('[Seed] Connected, clearing collections...');
+  for (const model of [
+    Campus,
+    User,
+    AcademicTerm,
+    Club,
+    Membership,
+    Event,
+    EventTask,
+    EventTemplate,
+    Approval,
+    KnowledgeItem,
+    Contact,
+    Decision,
+    Handover,
+    Notification,
+    AuditLog,
+  ]) {
+    await model.deleteMany({});
+  }
+  console.log('[Seed] Collections cleared.');
 
-  const defaultPasswordHash = await bcrypt.hash('Password123!', 12);
+  console.log('[Seed] Hashing password...');
+  const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
+  console.log('[Seed] Password hashed.');
 
   // 1. Create Campuses
   const pcu = await Campus.create({
@@ -125,6 +137,16 @@ export async function runSeed() {
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
   });
 
+  const facultySharma = await User.create({
+    campusId: pcu._id,
+    fullName: 'Prof. Ramesh Sharma',
+    email: 'advisor.sharma@pcu.edu',
+    passwordHash: defaultPasswordHash,
+    campusRole: 'FACULTY_COORDINATOR',
+    department: 'Electrical & Computer Engineering',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150',
+  });
+
   const sarahPresident = await User.create({
     campusId: pcu._id,
     fullName: 'Sarah Jenkins (Outgoing)',
@@ -163,6 +185,16 @@ export async function runSeed() {
     campusRole: 'STUDENT',
     department: 'Computer Science, Class of 2027',
     avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+  });
+
+  const samMember = await User.create({
+    campusId: pcu._id,
+    fullName: 'Sam Taylor',
+    email: 'sam.member@pcu.edu',
+    passwordHash: defaultPasswordHash,
+    campusRole: 'STUDENT',
+    department: 'Computer Science, Class of 2028',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
   });
 
   const rajIEEE = await User.create({
@@ -210,7 +242,7 @@ export async function runSeed() {
 
   const ieeeClub = await Club.create({
     campusId: pcu._id,
-    facultyCoordinatorId: facultyChen._id,
+    facultyCoordinatorId: facultySharma._id,
     name: 'IEEE Student Branch',
     code: 'IEEE',
     category: 'TECHNICAL',
@@ -276,6 +308,15 @@ export async function runSeed() {
       academicTermId: pcuCurrentTerm._id,
       clubRole: 'CORE_TEAM',
       title: 'Technical Workshop Lead',
+      status: 'ACTIVE',
+    },
+    {
+      campusId: pcu._id,
+      clubId: gdgClub._id,
+      userId: samMember._id,
+      academicTermId: pcuCurrentTerm._id,
+      clubRole: 'GENERAL_MEMBER',
+      title: 'General Member',
       status: 'ACTIVE',
     },
     {

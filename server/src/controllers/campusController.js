@@ -37,6 +37,16 @@ export async function getCampusStats(req, res, next) {
   try {
     const campusId = req.params.campusId || req.campusId;
 
+    if (req.campusId && campusId.toString() !== req.campusId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'TENANT_MISMATCH',
+          message: 'Access denied: You cannot view workspace metrics for another campus.',
+        },
+      });
+    }
+
     const [activeClubsCount, totalEvents, pendingApprovalsCount, activeHandoversCount, clubs] =
       await Promise.all([
         Club.countDocuments({ campusId, status: 'ACTIVE' }),
@@ -68,6 +78,17 @@ export async function getCampusStats(req, res, next) {
 export async function listTerms(req, res, next) {
   try {
     const campusId = req.params.campusId || req.campusId;
+
+    if (req.campusId && campusId.toString() !== req.campusId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'TENANT_MISMATCH',
+          message: 'Access denied: You cannot view terms for another campus workspace.',
+        },
+      });
+    }
+
     const terms = await AcademicTerm.find({ campusId }).sort({ startDate: -1 });
     return res.json({
       success: true,

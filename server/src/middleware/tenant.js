@@ -30,7 +30,16 @@ const ROLE_HIERARCHY = {
   PRESIDENT: 4,
 };
 
-export function requireClubRole(minRole = 'GENERAL_MEMBER') {
+/**
+ * Enforces club-level role permissions and strict multi-tenant campus boundaries.
+ * 
+ * Rules:
+ * - Campus Admin and Faculty Coordinators do NOT automatically receive President powers.
+ * - Campus Admin is granted explicit management access only when allowCampusAdmin is true.
+ * - Faculty Coordinators are advisors, not student officers.
+ * - Only verified active club members with sufficient rank can perform actions.
+ */
+export function requireClubRole(minRole = 'GENERAL_MEMBER', options = { allowCampusAdmin: false, allowAssignedFaculty: false }) {
   return async (req, res, next) => {
     try {
       const clubId = req.params.clubId || req.body.clubId;
@@ -62,25 +71,31 @@ export function requireClubRole(minRole = 'GENERAL_MEMBER') {
         });
       }
 
-      // Campus Admin has elevated override for management
+      // Campus Admin has elevated override for campus governance if permitted
       if (req.user.campusRole === 'CAMPUS_ADMIN') {
-        req.club = club;
-        req.userClubRole = 'PRESIDENT';
-        return next();
+        if (options.allowCampusAdmin) {
+          req.club = club;
+          req.isCampusAdmin = true;
+          req.userClubRole = 'CAMPUS_ADMIN';
+          return next();
+        }
       }
 
-      // Faculty Coordinator assigned to this club has override
+      // Faculty Coordinator has advisor rights if assigned and permitted
       if (
         req.user.campusRole === 'FACULTY_COORDINATOR' &&
         club.facultyCoordinatorId &&
         club.facultyCoordinatorId.toString() === req.user._id.toString()
       ) {
-        req.club = club;
-        req.userClubRole = 'PRESIDENT';
-        return next();
+        if (options.allowAssignedFaculty) {
+          req.club = club;
+          req.isAssignedFaculty = true;
+          req.userClubRole = 'FACULTY_COORDINATOR';
+          return next();
+        }
       }
 
-      // Check student's membership in this club
+      // Check student's active membership in this club
       const membership = await Membership.findOne({
         campusId: req.campusId,
         clubId: club._id,
@@ -106,7 +121,7 @@ export function requireClubRole(minRole = 'GENERAL_MEMBER') {
           success: false,
           error: {
             code: 'INSUFFICIENT_CLUB_ROLE',
-            message: `Requires ${minRole} privilege or above.`,
+            message: `Requires ${minRole} privilege or above. General members cannot perform executive actions.`,
           },
         });
       }
@@ -120,4 +135,31 @@ export function requireClubRole(minRole = 'GENERAL_MEMBER') {
       next(err);
     }
   };
+}
+
+/**
+ * Enforces that reviewer is either Campus Admin (campus-wide authority)
+ * or the assigned Faculty Coordinator for this specific club.
+ */
+export async function verifyFacultyReviewerForClub(req, clubId) {
+  const club = await Club.findById(clubId);
+  if (!club) return { allowed: false, reason: 'CLUB_NOT_FOUND' };
+
+  if (club.campusId.toString() !== req.campusId.toString()) {
+    return { allowed: false, reason: 'TENANT_MISMATCH' };
+  }
+
+  if (req.user.campusRole === 'CAMPUS_ADMIN') {
+    return { allowed: true, club };
+  }
+
+  if (
+    req.user.campusRole === 'FACULTY_COORDINATOR' &&
+    club.facultyCoordinatorId &&
+    club.facultyCoordinatorId.toString() === req.user._id.toString()
+  ) {
+    return { allowed: true, club };
+  }
+
+  return { allowed: false, reason: 'NOT_ASSIGNED_FACULTY_COORDINATOR' };
 }

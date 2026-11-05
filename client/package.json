@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint": "echo 'Linting client...'"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

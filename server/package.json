@@ -9,7 +9,7 @@
     "dev": "nodemon --watch src src/index.js",
     "seed": "node src/scripts/seed.js",
     "test": "vitest run",
-    "lint": "echo 'Linting server...'"
+    "lint": "eslint src"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

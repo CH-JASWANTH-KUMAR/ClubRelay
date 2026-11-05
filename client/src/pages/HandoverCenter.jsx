@@ -255,7 +255,7 @@ export function HandoverCenter() {
         <Lock className="w-4 h-4 text-forest-700 flex-shrink-0" />
         <span>
           <strong>Credential Security:</strong> Do not post plaintext account passwords in the handover. Use the
-          "Important Documents" section to transfer Bitwarden or 1Password shared vault ownership.
+          “Important Documents” section to transfer Bitwarden or 1Password shared vault ownership.
         </span>
       </div>
 
@@ -284,7 +284,7 @@ export function HandoverCenter() {
                     src={activeHandover.outgoingLeaderId?.avatarUrl}
                   />
                   <div>
-                    <span className="text-[10px] text-charcoal-400 font-semibold uppercase tracking-wider block">
+                    <span className="text-xs text-charcoal-500 font-medium block">
                       Outgoing {activeHandover.roleHandover}
                     </span>
                     <span className="text-xs font-bold text-charcoal-900">
@@ -302,7 +302,7 @@ export function HandoverCenter() {
                     src={activeHandover.incomingLeaderId?.avatarUrl}
                   />
                   <div>
-                    <span className="text-[10px] text-charcoal-400 font-semibold uppercase tracking-wider block">
+                    <span className="text-xs text-charcoal-500 font-medium block">
                       Incoming {activeHandover.roleHandover}
                     </span>
                     <span className="text-xs font-bold text-charcoal-900">
@@ -364,7 +364,7 @@ export function HandoverCenter() {
                   <button
                     key={sec.key}
                     onClick={() => setActiveSectionKey(sec.key)}
-                    className={`w-full text-left p-3 rounded border text-xs font-medium flex items-center justify-between transition-all ${
+                    className={`w-full text-left p-3 rounded border text-xs font-medium flex items-center justify-between transition-colors ${
                       isSelected
                         ? 'border-forest-700 bg-forest-50/70 text-forest-900 font-semibold shadow-subtle'
                         : 'border-border bg-surface text-charcoal-700 hover:bg-subtle'
@@ -426,7 +426,7 @@ export function HandoverCenter() {
                   {/* Pre-populated structured references if present */}
                   {activeHandover.sections?.[activeSectionKey]?.taskList && (
                     <div className="bg-subtle p-3 rounded text-xs space-y-1.5 border border-border">
-                      <span className="font-semibold text-charcoal-800 block text-[11px] uppercase">
+                      <span className="font-semibold text-charcoal-800 block text-xs">
                         Current Outstanding Tasks:
                       </span>
                       {activeHandover.sections[activeSectionKey].taskList.map((t, i) => (
@@ -440,7 +440,7 @@ export function HandoverCenter() {
 
                   {activeHandover.sections?.[activeSectionKey]?.commitments && (
                     <div className="bg-subtle p-3 rounded text-xs space-y-1.5 border border-border">
-                      <span className="font-semibold text-charcoal-800 block text-[11px] uppercase">
+                      <span className="font-semibold text-charcoal-800 block text-xs">
                         Pending Commitments:
                       </span>
                       {activeHandover.sections[activeSectionKey].commitments.map((c, i) => (
@@ -552,12 +552,12 @@ export function HandoverCenter() {
 
           <div className="grid grid-cols-2 gap-4 bg-subtle p-3 rounded">
             <div>
-              <span className="text-charcoal-500 block text-[10px] uppercase">Outgoing Officer:</span>
+              <span className="text-charcoal-500 block text-xs">Outgoing Officer:</span>
               <span className="font-bold">{activeHandover?.outgoingLeaderId?.fullName}</span> (
               {activeHandover?.outgoingLeaderId?.email})
             </div>
             <div>
-              <span className="text-charcoal-500 block text-[10px] uppercase">Incoming Officer:</span>
+              <span className="text-charcoal-500 block text-xs">Incoming Officer:</span>
               <span className="font-bold">{activeHandover?.incomingLeaderId?.fullName}</span> (
               {activeHandover?.incomingLeaderId?.email})
             </div>

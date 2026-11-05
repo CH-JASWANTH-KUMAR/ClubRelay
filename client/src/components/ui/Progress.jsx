@@ -15,10 +15,10 @@ export function Progress({ value = 0, max = 100, className = '', barClassName = 
     >
       <div
         className={twMerge(
-          'h-full bg-forest-700 transition-all duration-300 ease-out rounded-full',
+          'h-full bg-forest-700 origin-left transition-transform duration-300 ease-out rounded-full w-full',
           barClassName
         )}
-        style={{ width: `${percentage}%` }}
+        style={{ transform: `scaleX(${percentage / 100})` }}
       />
     </div>
   );

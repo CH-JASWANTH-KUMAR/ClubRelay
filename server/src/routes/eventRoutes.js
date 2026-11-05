@@ -17,8 +17,17 @@ router.use(requireAuth);
 
 router.get('/event-templates', listEventTemplates);
 
-router.get('/clubs/:clubId/events', listClubEvents);
-router.post('/clubs/:clubId/events', requireClubRole('CORE_TEAM'), createEvent);
+// Tenant-isolated club event endpoints
+router.get(
+  '/clubs/:clubId/events',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  listClubEvents
+);
+router.post(
+  '/clubs/:clubId/events',
+  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
+  createEvent
+);
 
 router.get('/events/:eventId', getEvent);
 router.put('/events/:eventId', updateEvent);

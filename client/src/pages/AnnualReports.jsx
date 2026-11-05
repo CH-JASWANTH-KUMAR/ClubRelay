@@ -102,7 +102,7 @@ export function AnnualReports() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="report-stat-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider">Events Executed</span>
+            <span className="text-xs font-semibold text-charcoal-700">Events Executed</span>
             <Calendar className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
@@ -113,7 +113,7 @@ export function AnnualReports() {
 
         <Card className="report-stat-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Attendees</span>
+            <span className="text-xs font-semibold text-charcoal-700">Total Attendees</span>
             <Users className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
@@ -124,7 +124,7 @@ export function AnnualReports() {
 
         <Card className="report-stat-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider">Budget Spent</span>
+            <span className="text-xs font-semibold text-charcoal-700">Budget Spent</span>
             <DollarSign className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
@@ -137,7 +137,7 @@ export function AnnualReports() {
 
         <Card className="report-stat-card">
           <div className="flex items-center justify-between text-charcoal-500 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider">Handover Readiness</span>
+            <span className="text-xs font-semibold text-charcoal-700">Handover Readiness</span>
             <ArrowRightLeft className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
@@ -164,8 +164,8 @@ export function AnnualReports() {
                 <YAxis tick={{ fontSize: 11, fill: '#5F6662' }} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E2E0D8',
+                    backgroundColor: 'var(--cr-bg-surface)',
+                    border: '1px solid var(--cr-border)',
                     borderRadius: '6px',
                     fontSize: '12px',
                   }}
@@ -187,7 +187,7 @@ export function AnnualReports() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-charcoal-700">
-            <thead className="bg-subtle text-charcoal-500 text-[11px] uppercase tracking-wider border-b border-border">
+            <thead className="bg-subtle text-charcoal-600 text-xs font-semibold border-b border-border">
               <tr>
                 <th className="py-2.5 px-3">Event Title</th>
                 <th className="py-2.5 px-3">Category</th>

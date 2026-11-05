@@ -14,9 +14,12 @@
     "build": "npm run build --workspace=client",
     "test": "npm run test --workspace=server && npm run test --workspace=client",
     "seed": "npm run seed --workspace=server",
-    "lint": "npm run lint --workspace=client && npm run lint --workspace=server"
+    "lint": "eslint client/src server/src"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.1.2",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0"
   }
 }

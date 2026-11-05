@@ -20,8 +20,8 @@ router.post('/', requireCampusRole('CAMPUS_ADMIN'), createClub);
 
 router.get('/:clubId', getClub);
 router.get('/:clubId/members', getMembers);
-router.post('/:clubId/members', requireClubRole('SECRETARY'), addMember);
-router.put('/:clubId/members/:memberId', requireClubRole('PRESIDENT'), updateMemberRole);
-router.delete('/:clubId/members/:memberId', requireClubRole('PRESIDENT'), removeMember);
+router.post('/:clubId/members', requireClubRole('SECRETARY', { allowCampusAdmin: true }), addMember);
+router.put('/:clubId/members/:memberId', requireClubRole('PRESIDENT', { allowCampusAdmin: true }), updateMemberRole);
+router.delete('/:clubId/members/:memberId', requireClubRole('PRESIDENT', { allowCampusAdmin: true }), removeMember);
 
 export default router;

@@ -142,7 +142,7 @@ export function FacultyApprovals() {
                 {/* Logistics grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-subtle/70 p-3 rounded text-xs border border-border">
                   <div>
-                    <span className="text-charcoal-400 text-[10px] uppercase font-semibold block">
+                    <span className="text-charcoal-500 text-xs font-medium block">
                       Event Schedule
                     </span>
                     <span className="font-semibold text-charcoal-800">
@@ -151,7 +151,7 @@ export function FacultyApprovals() {
                   </div>
 
                   <div>
-                    <span className="text-charcoal-400 text-[10px] uppercase font-semibold block">
+                    <span className="text-charcoal-500 text-xs font-medium block">
                       Proposed Venue
                     </span>
                     <span className="font-semibold text-charcoal-800">
@@ -160,7 +160,7 @@ export function FacultyApprovals() {
                   </div>
 
                   <div>
-                    <span className="text-charcoal-400 text-[10px] uppercase font-semibold block">
+                    <span className="text-charcoal-500 text-xs font-medium block">
                       Requested Budget
                     </span>
                     <span className="font-semibold text-charcoal-800">
@@ -169,7 +169,7 @@ export function FacultyApprovals() {
                   </div>
 
                   <div>
-                    <span className="text-charcoal-400 text-[10px] uppercase font-semibold block">
+                    <span className="text-charcoal-500 text-xs font-medium block">
                       Lead Organizer
                     </span>
                     <span className="font-semibold text-charcoal-800">

@@ -7,7 +7,10 @@ import { createScope, animate } from 'animejs';
  * Guarantees:
  * 1. Honors `prefers-reduced-motion: reduce` by bypassing animations or setting duration 0.
  * 2. Scopes all animations strictly to `rootRef.current`.
- * 3. Automatically invokes `scope.revert()` on component unmount or effect cleanup.
+ * 3. Uses the documented Anime.js v4 `createScope().add()` pattern so animations created
+ *    in the scope constructor are registered and reverted on React unmount or StrictMode cycles.
+ * 4. Prevents duplicate animations during React StrictMode lifecycle.
+ * 5. Supports registering named event-driven animations via `scope.add(name, method)`.
  * 
  * @param {Function} setupCallback - Callback receiving ({ root, scope, animate, isReducedMotion })
  * @param {Array} deps - Dependency array for effect re-execution
@@ -22,16 +25,19 @@ export function useAnimeScope(setupCallback, deps = []) {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const isReducedMotion = mediaQuery.matches;
 
-    // Create Anime.js scope bound to component root
+    // Create Anime.js scope bound directly to component root
     const scope = createScope({ root: rootRef.current });
 
     if (!isReducedMotion && setupCallback) {
       try {
-        setupCallback({
-          root: rootRef.current,
-          scope,
-          animate,
-          isReducedMotion,
+        // Official Anime.js v4 pattern: register constructor with scope.add()
+        scope.add((self) => {
+          return setupCallback({
+            root: rootRef.current,
+            scope: self,
+            animate,
+            isReducedMotion,
+          });
         });
       } catch (err) {
         console.warn('[Anime.js Scope Warning]:', err);
@@ -39,6 +45,7 @@ export function useAnimeScope(setupCallback, deps = []) {
     }
 
     return () => {
+      // Revert all active animations, clean up inline styles, and unbind listeners
       scope.revert();
     };
   }, deps);

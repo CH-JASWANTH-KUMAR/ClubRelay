@@ -189,7 +189,7 @@ export function Directory() {
 
                 {c.servicesOffered && (
                   <div className="mt-2 text-xs bg-subtle p-2 rounded text-charcoal-700">
-                    <span className="font-semibold block text-[10px] text-charcoal-400 uppercase">
+                    <span className="font-medium block text-xs text-charcoal-500">
                       Services:
                     </span>
                     {c.servicesOffered}

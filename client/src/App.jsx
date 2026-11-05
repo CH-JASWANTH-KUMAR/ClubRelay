@@ -33,7 +33,7 @@ function ProtectedRoute({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center text-xs text-charcoal-500 font-medium">
-        Verifying session...
+        Verifying session…
       </div>
     );
   }

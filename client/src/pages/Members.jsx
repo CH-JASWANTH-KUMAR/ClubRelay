@@ -100,7 +100,7 @@ export function Members() {
 
         <div ref={listRef} className="overflow-x-auto">
           <table className="w-full text-left text-xs text-charcoal-700">
-            <thead className="bg-subtle text-charcoal-500 text-[11px] uppercase tracking-wider border-b border-border">
+            <thead className="bg-subtle text-charcoal-600 text-xs font-semibold border-b border-border">
               <tr>
                 <th className="py-2.5 px-3">Member</th>
                 <th className="py-2.5 px-3">Role & Title</th>

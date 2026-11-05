@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { User, Campus, Membership, AcademicTerm } from '../models/index.js';
+import { env } from '../config/env.js';
+import { User, Campus, Membership } from '../models/index.js';
 import { generateToken } from '../middleware/auth.js';
 
 const loginSchema = z.object({
@@ -14,6 +15,14 @@ const registerSchema = z.object({
   password: z.string().min(6),
   department: z.string().optional(),
 });
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
 
 export async function login(req, res, next) {
   try {
@@ -41,12 +50,7 @@ export async function login(req, res, next) {
     const token = generateToken(user);
 
     // Set secure HttpOnly cookie
-    res.cookie('cr_auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
 
     const memberships = await Membership.find({
       userId: user._id,
@@ -57,11 +61,11 @@ export async function login(req, res, next) {
     delete userObj.passwordHash;
     userObj.memberships = memberships;
 
+    // Production hardening: Token is transported exclusively in HttpOnly cookie
     return res.json({
       success: true,
       data: {
         user: userObj,
-        token,
       },
     });
   } catch (err) {
@@ -81,9 +85,33 @@ export async function register(req, res, next) {
       });
     }
 
+    // Enforce campus registration policy
+    if (campus.settings && campus.settings.allowSelfRegistration === false) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'REGISTRATION_DISABLED',
+          message: 'Self-registration is disabled for this campus. Please contact your campus administrator.',
+        },
+      });
+    }
+
+    // Verify campus email domain rule
+    const emailLower = data.email.toLowerCase();
+    const emailDomain = emailLower.split('@')[1];
+    if (campus.domain && emailDomain !== campus.domain.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_CAMPUS_DOMAIN',
+          message: `Email must belong to the campus domain (@${campus.domain}).`,
+        },
+      });
+    }
+
     const existingUser = await User.findOne({
       campusId: campus._id,
-      email: data.email.toLowerCase(),
+      email: emailLower,
     });
 
     if (existingUser) {
@@ -98,7 +126,7 @@ export async function register(req, res, next) {
     const user = await User.create({
       campusId: campus._id,
       fullName: data.fullName,
-      email: data.email.toLowerCase(),
+      email: emailLower,
       passwordHash,
       department: data.department || '',
       campusRole: 'STUDENT',
@@ -106,12 +134,7 @@ export async function register(req, res, next) {
 
     const token = generateToken(user);
 
-    res.cookie('cr_auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
 
     const userObj = user.toObject();
     delete userObj.passwordHash;
@@ -121,7 +144,6 @@ export async function register(req, res, next) {
       success: true,
       data: {
         user: userObj,
-        token,
       },
     });
   } catch (err) {
@@ -130,7 +152,13 @@ export async function register(req, res, next) {
 }
 
 export function logout(req, res) {
-  res.clearCookie('cr_auth_token');
+  res.clearCookie('cr_auth_token', {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+
   return res.json({
     success: true,
     message: 'Logged out successfully.',

@@ -200,7 +200,7 @@ export function EventDetail() {
   };
 
   if (loading && !eventData) {
-    return <div className="text-center py-12 text-xs text-charcoal-500">Loading workspace...</div>;
+    return <div className="text-center py-12 text-xs text-charcoal-500">Loading workspace…</div>;
   }
 
   const currentStageIndex = LIFECYCLE_STAGES.indexOf(eventData.status);
@@ -244,7 +244,7 @@ export function EventDetail() {
 
       {/* 7-Stage Lifecycle Bar */}
       <Card className="p-4 bg-surface border-border">
-        <div className="text-xs font-semibold text-charcoal-700 mb-3 uppercase tracking-wider">
+        <div className="text-xs font-semibold text-charcoal-700 mb-3">
           Event Lifecycle Progression
         </div>
         <div className="flex items-center justify-between relative overflow-x-auto gap-2">
