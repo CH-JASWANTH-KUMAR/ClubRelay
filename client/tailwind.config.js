@@ -1,0 +1,72 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        canvas: '#FBFBF9',
+        surface: '#FFFFFF',
+        subtle: '#F4F3F0',
+        muted: '#EAE8E3',
+        border: '#E2E0D8',
+        forest: {
+          50: '#E8F5EE',
+          100: '#D8F3DC',
+          200: '#B7E4C7',
+          300: '#74C69D',
+          400: '#52B788',
+          500: '#2D6A4F',
+          600: '#1E533C',
+          700: '#1B4332',
+          800: '#153628',
+          900: '#10281E',
+        },
+        charcoal: {
+          50: '#F7F7F6',
+          100: '#EAEBEA',
+          200: '#D4D6D4',
+          300: '#A6ABA8',
+          400: '#7A807D',
+          500: '#5F6662',
+          600: '#474D4A',
+          700: '#343836',
+          800: '#242926',
+          900: '#141716',
+        },
+        amberGold: {
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          500: '#F59E0B',
+          700: '#B45309',
+          800: '#92400E',
+        },
+      },
+      fontFamily: {
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          'sans-serif',
+        ],
+        mono: [
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          'monospace',
+        ],
+      },
+      boxShadow: {
+        subtle: '0 1px 2px 0 rgba(20, 23, 22, 0.04)',
+        card: '0 1px 3px 0 rgba(20, 23, 22, 0.05), 0 1px 2px -1px rgba(20, 23, 22, 0.05)',
+        elevated: '0 4px 6px -1px rgba(20, 23, 22, 0.07), 0 2px 4px -2px rgba(20, 23, 22, 0.07)',
+      },
+    },
+  },
+  plugins: [],
+};

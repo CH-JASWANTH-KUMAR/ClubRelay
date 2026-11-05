@@ -1,0 +1,65 @@
+/* Hallmark · v2.0.0 · ClubRelay B2B Productivity System */
+/* theme: bespoke-forest · genre: modern-minimal · job: university organization continuity */
+
+:root {
+  --cr-bg-canvas: #FBFBF9;
+  --cr-bg-surface: #FFFFFF;
+  --cr-bg-subtle: #F4F3F0;
+  --cr-bg-muted: #EAE8E3;
+  --cr-border: #E2E0D8;
+  --cr-border-focus: #1B4332;
+
+  --cr-primary: #1B4332;
+  --cr-primary-hover: #2D6A4F;
+  --cr-primary-active: #143326;
+  --cr-primary-soft: #E8F5EE;
+  --cr-primary-contrast: #FFFFFF;
+
+  --cr-text-heading: #141716;
+  --cr-text-body: #242926;
+  --cr-text-muted: #5F6662;
+  --cr-text-faint: #8E9692;
+
+  --cr-status-draft-bg: #F1F1EF;
+  --cr-status-draft-fg: #5F6662;
+  --cr-status-proposed-bg: #FEF3C7;
+  --cr-status-proposed-fg: #92400E;
+  --cr-status-approved-bg: #E8F5EE;
+  --cr-status-approved-fg: #1B4332;
+  --cr-status-progress-bg: #E0EDF8;
+  --cr-status-progress-fg: #1E40AF;
+  --cr-status-danger-bg: #FEE2E2;
+  --cr-status-danger-fg: #991B1B;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  overflow-x: clip;
+  background-color: var(--cr-bg-canvas);
+  color: var(--cr-text-body);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hallmark rule: focus-visible appearing instantly */
+:focus-visible {
+  outline: 2px solid var(--cr-border-focus);
+  outline-offset: 2px;
+}
+
+/* Reduced motion guarantee */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
