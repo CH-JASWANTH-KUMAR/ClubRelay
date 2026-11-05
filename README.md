@@ -153,3 +153,4 @@ ClubRelay/
 
 ## 📄 License
 MIT License. Built for university student organization continuity.
+

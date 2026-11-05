@@ -38,3 +38,4 @@ describe('ClubRelay Design System UI Primitives', () => {
     expect(screen.getByText('DevFest 2026')).toBeInTheDocument();
   });
 });
+

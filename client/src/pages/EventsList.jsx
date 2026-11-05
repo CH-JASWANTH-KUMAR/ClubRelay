@@ -341,3 +341,4 @@ export function EventsList() {
     </div>
   );
 }
+
