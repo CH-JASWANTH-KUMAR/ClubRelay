@@ -22,7 +22,7 @@ router.get(
 
 router.post(
   '/clubs/:clubId/handovers',
-  requireClubRole('PRESIDENT', { allowCampusAdmin: true }),
+  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
   createHandover
 );
 

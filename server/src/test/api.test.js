@@ -867,23 +867,37 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
         const rajUser = await User.findOne({ email: 'raj.ieee@pcu.edu' });
         const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
 
-        // Ensure Sam has an active membership in IEEE for testing
-        const existingSamMembership = await Membership.findOne({
-          campusId: pcuCampusId,
-          clubId: ieeeClubId,
-          userId: samUser._id,
-        });
-        if (!existingSamMembership) {
-          await Membership.create({
+        // Ensure Raj has active PRESIDENT membership for pastTerm (outgoing term)
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: ieeeClubId,
+            userId: rajUser._id,
+            academicTermId: pastTerm._id,
+          },
+          {
+            clubRole: 'PRESIDENT',
+            status: 'ACTIVE',
+            title: 'Branch Chairperson',
+          },
+          { upsert: true, new: true }
+        );
+
+        // Ensure Sam has an active CORE_TEAM membership in IEEE for currentTerm (incoming term)
+        await Membership.findOneAndUpdate(
+          {
             campusId: pcuCampusId,
             clubId: ieeeClubId,
             userId: samUser._id,
             academicTermId: currentTerm._id,
+          },
+          {
             clubRole: 'CORE_TEAM',
             title: 'Incoming Test Officer',
             status: 'ACTIVE',
-          });
-        }
+          },
+          { upsert: true, new: true }
+        );
 
         const sectionsComplete = {
           roleResponsibilities: { content: 'Done', completed: true },
@@ -1024,9 +1038,9 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
         const rajUser = await User.findOne({ email: 'raj.ieee@pcu.edu' });
         const mayaUser = await User.findOne({ email: 'maya.tech@pcu.edu' });
 
-        // Ensure Raj is PRESIDENT for this test
+        // Ensure Raj is PRESIDENT for this test in pastTerm
         await Membership.updateOne(
-          { campusId: pcuCampusId, clubId: ieeeClubId, userId: rajUser._id },
+          { campusId: pcuCampusId, clubId: ieeeClubId, userId: rajUser._id, academicTermId: pastTerm._id },
           { clubRole: 'PRESIDENT', status: 'ACTIVE' }
         );
 
@@ -1088,6 +1102,7 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
           campusId: pcuCampusId,
           clubId: ieeeClubId,
           userId: rajUser._id,
+          academicTermId: pastTerm._id,
         });
         expect(checkRajMembership.clubRole).toBe('PRESIDENT');
 
@@ -1113,9 +1128,9 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
         const pastTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: false });
         const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
 
-        // Ensure Sam is CORE_TEAM (not PRESIDENT) for this test
+        // Ensure Sam is CORE_TEAM (not PRESIDENT) for this test in currentTerm
         await Membership.updateOne(
-          { campusId: pcuCampusId, clubId: ieeeClubId, userId: samUser._id },
+          { campusId: pcuCampusId, clubId: ieeeClubId, userId: samUser._id, academicTermId: currentTerm._id },
           { clubRole: 'CORE_TEAM', status: 'ACTIVE' }
         );
 
@@ -1166,6 +1181,7 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
           campusId: pcuCampusId,
           clubId: ieeeClubId,
           userId: samUser._id,
+          academicTermId: currentTerm._id,
         });
         expect(checkSamMembership.clubRole).not.toBe('PRESIDENT');
 
@@ -1175,6 +1191,488 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
           action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
         });
         expect(auditLog).toBeNull();
+      });
+    });
+
+    describe('Handover Workflow Role Mapping & Academic Term Integrity', () => {
+      it('transitions CORE_LEAD to CORE_TEAM with proper titles and never SECRETARY', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const mayaUser = await User.findOne({ email: 'maya.tech@pcu.edu' });
+        const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+
+        // Ensure Maya is active CORE_TEAM in GDG for currentTerm
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: mayaUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'CORE_TEAM',
+            title: 'Lead Workshop Organizer',
+            status: 'ACTIVE',
+          },
+          { upsert: true, new: true }
+        );
+
+        // Ensure Sam is active GENERAL_MEMBER in GDG for currentTerm
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: samUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'GENERAL_MEMBER',
+            title: 'General Member',
+            status: 'ACTIVE',
+          },
+          { upsert: true, new: true }
+        );
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Responsibilities transferred', completed: true },
+          outstandingTasks: { content: 'No open tasks', completed: true },
+          pendingCommitments: { content: 'All commitments fulfilled', completed: true },
+          futureEventSchedules: { content: 'Upcoming workshop calendar finalized', completed: true },
+          importantDocuments: { content: 'Drive folders shared', completed: true },
+          contactsAndPartners: { content: 'Speaker contacts listed', completed: true },
+          reusablePlaybooks: { content: 'SOPs up to date', completed: true },
+          recommendationsAndAdvice: { content: 'Handover complete', completed: true },
+        };
+
+        const coreLeadHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          fromTermId: currentTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: mayaUser._id,
+          incomingLeaderId: samUser._id,
+          roleHandover: 'CORE_LEAD',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+
+        // Campus admin completes handover
+        const res = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers/${coreLeadHandover._id}/complete`)
+          .set('Cookie', campusAdminCookie);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+
+        // Verify incoming membership is CORE_TEAM, NEVER SECRETARY
+        const updatedSam = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: samUser._id,
+          academicTermId: currentTerm._id,
+        });
+        expect(updatedSam.clubRole).toBe('CORE_TEAM');
+        expect(updatedSam.clubRole).not.toBe('SECRETARY');
+        expect(updatedSam.title).toBe('Core Team Lead');
+
+        // Verify outgoing membership is CORE_TEAM with Former Core Lead title
+        const updatedMaya = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: mayaUser._id,
+          academicTermId: currentTerm._id,
+        });
+        expect(updatedMaya.clubRole).toBe('CORE_TEAM');
+        expect(updatedMaya.title).toBe('Former Core Lead / Senior Advisor');
+
+        // Verify audit log metadata
+        const auditLog = await AuditLog.findOne({
+          targetId: coreLeadHandover._id,
+          action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
+        });
+        expect(auditLog).not.toBeNull();
+        expect(auditLog.metadata.roleHandover).toBe('CORE_LEAD');
+        expect(auditLog.metadata.incomingRole).toBe('CORE_TEAM');
+        expect(auditLog.metadata.outgoingRole).toBe('CORE_TEAM');
+      });
+
+      it('transitions SECRETARY role mapping correctly', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const davidUser = await User.findOne({ email: 'david.sec@pcu.edu' });
+        const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+
+        // Ensure David is active SECRETARY in GDG for currentTerm
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: davidUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'SECRETARY',
+            title: 'General Secretary',
+            status: 'ACTIVE',
+          },
+          { upsert: true, new: true }
+        );
+
+        // Ensure Sam is active GENERAL_MEMBER in GDG for currentTerm
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: samUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'GENERAL_MEMBER',
+            title: 'General Member',
+            status: 'ACTIVE',
+          },
+          { upsert: true, new: true }
+        );
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Responsibilities transferred', completed: true },
+          outstandingTasks: { content: 'No open tasks', completed: true },
+          pendingCommitments: { content: 'All commitments fulfilled', completed: true },
+          futureEventSchedules: { content: 'Minutes and calendar documented', completed: true },
+          importantDocuments: { content: 'Drive folders shared', completed: true },
+          contactsAndPartners: { content: 'Faculty contacts listed', completed: true },
+          reusablePlaybooks: { content: 'Meeting templates up to date', completed: true },
+          recommendationsAndAdvice: { content: 'Handover complete', completed: true },
+        };
+
+        const secretaryHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          fromTermId: currentTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: davidUser._id,
+          incomingLeaderId: samUser._id,
+          roleHandover: 'SECRETARY',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+
+        const res = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers/${secretaryHandover._id}/complete`)
+          .set('Cookie', campusAdminCookie);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+
+        const updatedSam = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: samUser._id,
+          academicTermId: currentTerm._id,
+        });
+        expect(updatedSam.clubRole).toBe('SECRETARY');
+        expect(updatedSam.title).toBe('Club Secretary');
+
+        const updatedDavid = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: davidUser._id,
+          academicTermId: currentTerm._id,
+        });
+        expect(updatedDavid.clubRole).toBe('CORE_TEAM');
+        expect(updatedDavid.title).toBe('Past Secretary / Advisor');
+      });
+
+      it('rejects handover initiation when foreign-campus academic term IDs are provided', async () => {
+        const pcuTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const mtiTerm = await AcademicTerm.findOne({ campusId: mtiCampusId, isCurrent: true });
+
+        const res = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers`)
+          .set('Cookie', sarahCookie)
+          .send({
+            incomingLeaderEmail: 'alex.incoming@pcu.edu',
+            roleHandover: 'PRESIDENT',
+            fromTermId: pcuTerm._id.toString(),
+            toTermId: mtiTerm._id.toString(), // Foreign campus term
+          });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('ACADEMIC_TERM_NOT_FOUND');
+      });
+
+      it('rejects handover initiation when academic terms are nonexistent or invalid', async () => {
+        const dummyTermId = new (await import('mongoose')).default.Types.ObjectId().toString();
+
+        const res = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers`)
+          .set('Cookie', sarahCookie)
+          .send({
+            incomingLeaderEmail: 'alex.incoming@pcu.edu',
+            roleHandover: 'PRESIDENT',
+            fromTermId: 'invalid-id-format',
+            toTermId: dummyTermId,
+          });
+
+        expect(res.status).toBe(400);
+        expect(['INVALID_ACADEMIC_TERM', 'ACADEMIC_TERM_NOT_FOUND']).toContain(res.body.error.code);
+      });
+
+      it('rejects handover completion when membership is for incorrect academic term', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const rajUser = await User.findOne({ email: 'raj.ieee@pcu.edu' });
+        const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+
+        // Raj has membership in pastTerm, but NOT in currentTerm for IEEE
+        await Membership.deleteMany({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          userId: rajUser._id,
+          academicTermId: currentTerm._id,
+        });
+
+        // Ensure Sam is active in currentTerm
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: ieeeClubId,
+            userId: samUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'CORE_TEAM',
+            status: 'ACTIVE',
+            title: 'Incoming Member',
+          },
+          { upsert: true, new: true }
+        );
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Done', completed: true },
+          outstandingTasks: { content: 'Done', completed: true },
+          pendingCommitments: { content: 'Done', completed: true },
+          futureEventSchedules: { content: 'Done', completed: true },
+          importantDocuments: { content: 'Done', completed: true },
+          contactsAndPartners: { content: 'Done', completed: true },
+          reusablePlaybooks: { content: 'Done', completed: true },
+          recommendationsAndAdvice: { content: 'Done', completed: true },
+        };
+
+        // Handover specifies fromTermId = currentTerm, where Raj has NO membership
+        const mismatchHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          fromTermId: currentTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: rajUser._id,
+          incomingLeaderId: samUser._id,
+          roleHandover: 'PRESIDENT',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+
+        const res = await request(app)
+          .post(`/api/v1/clubs/${ieeeClubId}/handovers/${mismatchHandover._id}/complete`)
+          .set('Cookie', campusAdminCookie);
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('OUTGOING_MEMBERSHIP_INVALID');
+
+        // Verify handover remained ACKNOWLEDGED with zero partial state
+        const checkHandover = await Handover.findById(mismatchHandover._id);
+        expect(checkHandover.status).toBe('ACKNOWLEDGED');
+      });
+
+      it('ensures multiple term-specific memberships do not cause arbitrary records to be modified', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const pastTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: false });
+        const sarahUser = await User.findOne({ email: 'sarah.gdg@pcu.edu' });
+        const alexUser = await User.findOne({ email: 'alex.incoming@pcu.edu' });
+
+        // Sarah has memberships in BOTH pastTerm (PRESIDENT) and currentTerm (PRESIDENT)
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: sarahUser._id,
+            academicTermId: pastTerm._id,
+          },
+          {
+            clubRole: 'PRESIDENT',
+            status: 'ACTIVE',
+            title: 'Past Term President',
+          },
+          { upsert: true, new: true }
+        );
+
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: sarahUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'PRESIDENT',
+            status: 'ACTIVE',
+            title: 'Current Term President',
+          },
+          { upsert: true, new: true }
+        );
+
+        // Alex has memberships in BOTH pastTerm (CORE_TEAM) and currentTerm (CORE_TEAM)
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: alexUser._id,
+            academicTermId: pastTerm._id,
+          },
+          {
+            clubRole: 'CORE_TEAM',
+            status: 'ACTIVE',
+            title: 'Past Term Core',
+          },
+          { upsert: true, new: true }
+        );
+
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: gdgClubId,
+            userId: alexUser._id,
+            academicTermId: currentTerm._id,
+          },
+          {
+            clubRole: 'CORE_TEAM',
+            status: 'ACTIVE',
+            title: 'Current Term Core',
+          },
+          { upsert: true, new: true }
+        );
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Done', completed: true },
+          outstandingTasks: { content: 'Done', completed: true },
+          pendingCommitments: { content: 'Done', completed: true },
+          futureEventSchedules: { content: 'Done', completed: true },
+          importantDocuments: { content: 'Done', completed: true },
+          contactsAndPartners: { content: 'Done', completed: true },
+          reusablePlaybooks: { content: 'Done', completed: true },
+          recommendationsAndAdvice: { content: 'Done', completed: true },
+        };
+
+        // Handover specifies transition for pastTerm -> pastTerm only
+        const termSpecificHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          fromTermId: pastTerm._id,
+          toTermId: pastTerm._id,
+          outgoingLeaderId: sarahUser._id,
+          incomingLeaderId: alexUser._id,
+          roleHandover: 'PRESIDENT',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+
+        const res = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers/${termSpecificHandover._id}/complete`)
+          .set('Cookie', sarahCookie);
+
+        expect(res.status).toBe(200);
+
+        // 1. pastTerm memberships were updated
+        const pastSarah = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: sarahUser._id,
+          academicTermId: pastTerm._id,
+        });
+        expect(pastSarah.clubRole).toBe('CORE_TEAM');
+
+        const pastAlex = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: alexUser._id,
+          academicTermId: pastTerm._id,
+        });
+        expect(pastAlex.clubRole).toBe('PRESIDENT');
+
+        // 2. currentTerm memberships remained UNTOUCHED
+        const currentSarah = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: sarahUser._id,
+          academicTermId: currentTerm._id,
+        });
+        expect(currentSarah.clubRole).toBe('PRESIDENT');
+        expect(currentSarah.title).toBe('Current Term President');
+
+        const currentAlex = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: gdgClubId,
+          userId: alexUser._id,
+          academicTermId: currentTerm._id,
+        });
+        expect(currentAlex.clubRole).toBe('CORE_TEAM');
+        expect(currentAlex.title).toBe('Current Term Core');
+      });
+
+      it('enforces campus-admin initiation policy requiring explicit officer nomination', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const sarahUser = await User.findOne({ email: 'sarah.gdg@pcu.edu' });
+
+        // 1. Campus admin initiates WITHOUT outgoingLeaderEmail -> Rejection 400
+        const noNominationRes = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            incomingLeaderEmail: 'alex.incoming@pcu.edu',
+            roleHandover: 'PRESIDENT',
+            fromTermId: currentTerm._id.toString(),
+            toTermId: currentTerm._id.toString(),
+          });
+
+        expect(noNominationRes.status).toBe(400);
+        expect(noNominationRes.body.error.code).toBe('OUTGOING_LEADER_REQUIRED');
+
+        // 2. Campus admin initiates with nonexistent outgoing officer -> Rejection 404
+        const nonExistentRes = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            outgoingLeaderEmail: 'ghost.officer@pcu.edu',
+            incomingLeaderEmail: 'alex.incoming@pcu.edu',
+            roleHandover: 'PRESIDENT',
+            fromTermId: currentTerm._id.toString(),
+            toTermId: currentTerm._id.toString(),
+          });
+
+        expect(nonExistentRes.status).toBe(404);
+        expect(nonExistentRes.body.error.code).toBe('USER_NOT_FOUND');
+
+        // 3. Campus admin initiates with valid outgoing president nomination -> 201 Created
+        const successRes = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/handovers`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            outgoingLeaderEmail: 'sarah.gdg@pcu.edu',
+            incomingLeaderEmail: 'alex.incoming@pcu.edu',
+            roleHandover: 'PRESIDENT',
+            fromTermId: currentTerm._id.toString(),
+            toTermId: currentTerm._id.toString(),
+          });
+
+        expect(successRes.status).toBe(201);
+        expect(successRes.body.success).toBe(true);
+        // Outgoing leader is Sarah, NOT the campus admin!
+        expect(successRes.body.data.handover.outgoingLeaderId).toBe(sarahUser._id.toString());
       });
     });
   });

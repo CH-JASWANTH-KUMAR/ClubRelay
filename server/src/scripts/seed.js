@@ -295,6 +295,15 @@ export async function runSeed() {
     {
       campusId: pcu._id,
       clubId: gdgClub._id,
+      userId: alexIncoming._id,
+      academicTermId: pcuNextTerm._id,
+      clubRole: 'CORE_TEAM',
+      title: 'President-Elect',
+      status: 'ACTIVE',
+    },
+    {
+      campusId: pcu._id,
+      clubId: gdgClub._id,
       userId: davidSecretary._id,
       academicTermId: pcuCurrentTerm._id,
       clubRole: 'SECRETARY',
