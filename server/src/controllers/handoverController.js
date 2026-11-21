@@ -100,19 +100,60 @@ const updateSectionSchema = z
 
 export async function listHandovers(req, res, next) {
   try {
+    const isExecutiveOrAdmin =
+      req.user.campusRole === 'CAMPUS_ADMIN' ||
+      ['PRESIDENT', 'SECRETARY'].includes(req.userClubRole) ||
+      (req.user.campusRole === 'FACULTY_COORDINATOR' &&
+        req.club?.facultyCoordinatorId &&
+        req.club.facultyCoordinatorId.toString() === req.user._id.toString());
+
     const handovers = await Handover.find({
       clubId: req.params.clubId,
       campusId: req.campusId,
     })
-      .populate('outgoingLeaderId', 'fullName email avatarUrl')
-      .populate('incomingLeaderId', 'fullName email avatarUrl')
-      .populate('fromTermId', 'name')
-      .populate('toTermId', 'name')
+      .populate('outgoingLeaderId', isExecutiveOrAdmin ? 'fullName email avatarUrl department' : 'fullName avatarUrl')
+      .populate('incomingLeaderId', isExecutiveOrAdmin ? 'fullName email avatarUrl department' : 'fullName avatarUrl')
+      .populate('fromTermId', 'name isCurrent')
+      .populate('toTermId', 'name isCurrent')
       .sort({ createdAt: -1 });
+
+    const sanitizedHandovers = handovers.map((h) => {
+      const isParticipant =
+        h.outgoingLeaderId?._id?.toString() === req.user._id.toString() ||
+        h.incomingLeaderId?._id?.toString() === req.user._id.toString();
+
+      if (isExecutiveOrAdmin || isParticipant) {
+        return h;
+      }
+
+      // Safe sanitized summary for general club members: no private email/phone/notes
+      return {
+        _id: h._id,
+        clubId: h.clubId,
+        fromTermId: h.fromTermId,
+        toTermId: h.toTermId,
+        outgoingLeaderId: {
+          _id: h.outgoingLeaderId?._id,
+          fullName: h.outgoingLeaderId?.fullName,
+          avatarUrl: h.outgoingLeaderId?.avatarUrl,
+        },
+        incomingLeaderId: {
+          _id: h.incomingLeaderId?._id,
+          fullName: h.incomingLeaderId?.fullName,
+          avatarUrl: h.incomingLeaderId?.avatarUrl,
+        },
+        roleHandover: h.roleHandover,
+        status: h.status,
+        completionPercentage: h.completionPercentage,
+        acknowledgedAt: h.acknowledgedAt,
+        completedAt: h.completedAt,
+        createdAt: h.createdAt,
+      };
+    });
 
     return res.json({
       success: true,
-      data: { handovers },
+      data: { handovers: sanitizedHandovers },
     });
   } catch (err) {
     next(err);
@@ -342,8 +383,8 @@ export async function getHandover(req, res, next) {
     })
       .populate('outgoingLeaderId', 'fullName email avatarUrl department phone')
       .populate('incomingLeaderId', 'fullName email avatarUrl department phone')
-      .populate('fromTermId', 'name')
-      .populate('toTermId', 'name')
+      .populate('fromTermId', 'name isCurrent startDate endDate')
+      .populate('toTermId', 'name isCurrent startDate endDate')
       .populate('sections.contactsAndPartners.contactIds')
       .populate('sections.reusablePlaybooks.playbookIds');
 
@@ -351,6 +392,48 @@ export async function getHandover(req, res, next) {
       return res.status(404).json({
         success: false,
         error: { code: 'NOT_FOUND', message: 'Handover package not found.' },
+      });
+    }
+
+    const isOutgoingLeader = handover.outgoingLeaderId?._id?.toString() === req.user._id.toString();
+    const isIncomingLeader = handover.incomingLeaderId?._id?.toString() === req.user._id.toString();
+    const isPresident = req.userClubRole === 'PRESIDENT';
+    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const isAssignedFaculty =
+      req.user.campusRole === 'FACULTY_COORDINATOR' &&
+      req.club?.facultyCoordinatorId &&
+      req.club.facultyCoordinatorId.toString() === req.user._id.toString();
+
+    // General members or non-participating core members cannot access private handover details
+    if (!isOutgoingLeader && !isIncomingLeader && !isPresident && !isCampusAdmin && !isAssignedFaculty) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN_HANDOVER_ACCESS',
+          message: 'Access denied: Handover transition details are private to designated participants, club leadership, and advisors.',
+        },
+      });
+    }
+
+    if (isAssignedFaculty) {
+      // Assigned faculty coordinator receives advisory overview: sanitize private review notes and private contact phones/emails
+      const facultyData = handover.toObject();
+      delete facultyData.reviewNotes;
+      if (facultyData.outgoingLeaderId) delete facultyData.outgoingLeaderId.phone;
+      if (facultyData.incomingLeaderId) delete facultyData.incomingLeaderId.phone;
+
+      if (facultyData.sections?.contactsAndPartners?.contactIds) {
+        facultyData.sections.contactsAndPartners.contactIds = facultyData.sections.contactsAndPartners.contactIds.map((c) => ({
+          _id: c._id,
+          organization: c.organization,
+          roleCategory: c.roleCategory,
+          servicesOffered: c.servicesOffered,
+        }));
+      }
+
+      return res.json({
+        success: true,
+        data: { handover: facultyData },
       });
     }
 

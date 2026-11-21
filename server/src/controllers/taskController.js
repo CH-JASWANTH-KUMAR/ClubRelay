@@ -259,3 +259,113 @@ export async function deleteTask(req, res, next) {
     next(err);
   }
 }
+
+export async function getMyWorkTasks(req, res, next) {
+  try {
+    // 1. Fetch user's active club memberships on this campus
+    const memberships = await Membership.find({
+      campusId: req.campusId,
+      userId: req.user._id,
+      status: 'ACTIVE',
+    }).select('clubId clubRole');
+
+    const activeClubIds = memberships.map((m) => m.clubId);
+
+    if (activeClubIds.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          tasks: [],
+          stats: {
+            total: 0,
+            dueToday: 0,
+            upcoming: 0,
+            overdue: 0,
+            blocked: 0,
+            completed: 0,
+          },
+        },
+      });
+    }
+
+    // 2. Build task filter strictly scoped to the user and their active clubs on this campus
+    const filter = {
+      campusId: req.campusId,
+      clubId: { $in: activeClubIds },
+      assigneeId: req.user._id,
+    };
+
+    if (req.query.clubId) {
+      if (!activeClubIds.some((id) => id.toString() === req.query.clubId.toString())) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN_CLUB_TASKS',
+            message: 'Access denied: You are not an active member of this organization.',
+          },
+        });
+      }
+      filter.clubId = req.query.clubId;
+    }
+
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    if (req.query.priority) {
+      filter.priority = req.query.priority;
+    }
+
+    const tasks = await EventTask.find(filter)
+      .populate('eventId', 'title startDate endDate status clubId')
+      .populate('clubId', 'name code avatarUrl')
+      .populate('prerequisiteTaskIds', 'title status')
+      .sort({ dueDate: 1, priority: -1 });
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    let dueToday = 0;
+    let upcoming = 0;
+    let overdue = 0;
+    let blocked = 0;
+    let completed = 0;
+
+    tasks.forEach((t) => {
+      if (t.status === 'DONE') {
+        completed++;
+      } else if (t.status === 'BLOCKED') {
+        blocked++;
+      } else if (t.dueDate) {
+        const due = new Date(t.dueDate);
+        if (due < startOfToday) {
+          overdue++;
+        } else if (due >= startOfToday && due <= endOfToday) {
+          dueToday++;
+        } else {
+          upcoming++;
+        }
+      } else {
+        upcoming++;
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        tasks,
+        stats: {
+          total: tasks.length,
+          dueToday,
+          upcoming,
+          overdue,
+          blocked,
+          completed,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}

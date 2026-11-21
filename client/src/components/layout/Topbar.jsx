@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, LogOut, School, Calendar, Check, ExternalLink } from 'lucide-react';
+import { Bell, LogOut, School, Calendar, Check, Search, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Avatar } from '../ui/EmptyState';
 import { useNavigate } from 'react-router-dom';
 
-export function Topbar() {
+export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -17,8 +17,8 @@ export function Topbar() {
         const res = await fetch('/api/v1/notifications');
         if (res.ok) {
           const json = await res.json();
-          setNotifications(json.data.notifications || []);
-          setUnreadCount((json.data.notifications || []).filter((n) => !n.isRead).length);
+          setNotifications(json.data?.notifications || []);
+          setUnreadCount((json.data?.notifications || []).filter((n) => !n.isRead).length);
         }
       } catch (e) {
         console.error(e);
@@ -30,9 +30,9 @@ export function Topbar() {
   const markAllRead = async () => {
     try {
       await Promise.all(
-        notifications.filter((n) => !n.isRead).map((n) =>
-          fetch(`/api/v1/notifications/${n._id}/read`, { method: 'PUT' })
-        )
+        notifications
+          .filter((n) => !n.isRead)
+          .map((n) => fetch(`/api/v1/notifications/${n._id}/read`, { method: 'PUT' }))
       );
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
@@ -42,21 +42,58 @@ export function Topbar() {
   };
 
   return (
-    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-6 sticky top-0 z-30 select-none">
-      {/* Left: Campus & Term Identity */}
+    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 select-none">
+      {/* Left: Mobile Nav Button + Campus & Term Identity */}
       <div className="flex items-center gap-3">
+        {onOpenMobileNav && (
+          <button
+            onClick={onOpenMobileNav}
+            className="md:hidden p-1.5 rounded text-charcoal-600 hover:text-charcoal-900 hover:bg-subtle"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-subtle border border-border text-xs text-charcoal-700">
           <School className="w-3.5 h-3.5 text-forest-700" />
-          <span className="font-semibold text-charcoal-900">{user?.campusId?.name || 'Campus'}</span>
+          <span className="font-semibold text-charcoal-900 truncate max-w-[160px] sm:max-w-none">
+            {user?.campusId?.name || 'Campus'}
+          </span>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 text-[11px] text-charcoal-500">
+        <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 text-[11px] text-charcoal-500">
           <Calendar className="w-3.5 h-3.5 text-charcoal-400" />
-          <span>2025-2026 Term</span>
+          <span>2025-2026 Academic Term</span>
         </div>
       </div>
 
+      {/* Middle: Command Palette Quick Search Button */}
+      <div className="flex-1 max-w-sm mx-4 hidden sm:block">
+        <button
+          onClick={onOpenCommandPalette}
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-border bg-subtle/70 hover:bg-subtle hover:border-charcoal-300 text-xs text-charcoal-500 transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Search className="w-3.5 h-3.5 text-forest-700" />
+            <span>Search or command…</span>
+          </div>
+          <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono text-charcoal-400">
+            ⌘K
+          </kbd>
+        </button>
+      </div>
+
       {/* Right: Notifications, Profile, Logout */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile Search Icon */}
+        <button
+          onClick={onOpenCommandPalette}
+          className="sm:hidden p-1.5 rounded text-charcoal-600 hover:text-charcoal-900 hover:bg-subtle"
+          aria-label="Search or command"
+        >
+          <Search className="w-4 h-4" />
+        </button>
+
         {/* Notifications Popover */}
         <div className="relative">
           <button
@@ -98,7 +135,9 @@ export function Topbar() {
                         setShowNotifications(false);
                       }}
                       className={`p-2 rounded cursor-pointer transition-colors ${
-                        n.isRead ? 'bg-transparent text-charcoal-600' : 'bg-forest-50/50 text-charcoal-900 font-medium'
+                        n.isRead
+                          ? 'bg-transparent text-charcoal-600'
+                          : 'bg-forest-50/50 text-charcoal-900 font-medium'
                       } hover:bg-subtle`}
                     >
                       <div className="text-xs font-semibold">{n.title}</div>

@@ -1675,5 +1675,156 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
         expect(successRes.body.data.handover.outgoingLeaderId).toBe(sarahUser._id.toString());
       });
     });
+
+    describe('Phase 1B: Handover Privacy, Term-Aware Membership & My Work API', () => {
+      it('prevents general club member from accessing private handover package details (Negative Test)', async () => {
+        // Sam is a general member of GDG
+        const sampleHandover = await Handover.findOne({ clubId: gdgClubId });
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/handovers/${sampleHandover._id}`)
+          .set('Cookie', generalMemberCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('FORBIDDEN_HANDOVER_ACCESS');
+      });
+
+      it('provides sanitized list of handovers for general club members without leaking private contact info', async () => {
+        const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+        await Membership.updateMany(
+          { campusId: pcuCampusId, clubId: gdgClubId, userId: samUser._id },
+          { clubRole: 'GENERAL_MEMBER' }
+        );
+
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/handovers`)
+          .set('Cookie', generalMemberCookie);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.data.handovers)).toBe(true);
+        if (res.body.data.handovers.length > 0) {
+          const first = res.body.data.handovers[0];
+          // Emails and phones are stripped for non-executive/non-participant members
+          expect(first.outgoingLeaderId.email).toBeUndefined();
+          expect(first.incomingLeaderId.email).toBeUndefined();
+        }
+      });
+
+      it('provides advisory view of handover details to assigned faculty coordinator without private review notes', async () => {
+        const sampleHandover = await Handover.findOne({ clubId: gdgClubId });
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/handovers/${sampleHandover._id}`)
+          .set('Cookie', facultyChenCookie); // Dr. Chen is assigned faculty for GDG
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.handover.reviewNotes).toBeUndefined();
+      });
+
+      it('allows authorized incoming and outgoing officers full access to their handover package', async () => {
+        const sampleHandover = await Handover.findOne({ clubId: gdgClubId });
+        // Sarah is outgoing leader
+        const resSarah = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/handovers/${sampleHandover._id}`)
+          .set('Cookie', sarahCookie);
+
+        expect(resSarah.status).toBe(200);
+        expect(resSarah.body.success).toBe(true);
+        expect(resSarah.body.data.handover.sections).toBeDefined();
+
+        // Alex is incoming leader
+        const resAlex = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/handovers/${sampleHandover._id}`)
+          .set('Cookie', alexCookie);
+
+        expect(resAlex.status).toBe(200);
+        expect(resAlex.body.success).toBe(true);
+      });
+
+      it('rejects adding a member with foreign-campus or nonexistent academic term', async () => {
+        const mtiTerm = await AcademicTerm.findOne({ campusId: mtiCampusId, isCurrent: true });
+
+        // Foreign campus term
+        const resForeign = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            email: 'sam.member@pcu.edu',
+            clubRole: 'CORE_TEAM',
+            title: 'Event Lead',
+            academicTermId: mtiTerm._id.toString(),
+          });
+
+        expect(resForeign.status).toBe(400);
+        expect(resForeign.body.error.code).toBe('ACADEMIC_TERM_NOT_FOUND');
+
+        // Invalid ObjectId
+        const resInvalid = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            email: 'sam.member@pcu.edu',
+            clubRole: 'CORE_TEAM',
+            academicTermId: 'invalid-id-format',
+          });
+
+        expect(resInvalid.status).toBe(400);
+        expect(resInvalid.body.error.code).toBe('INVALID_ACADEMIC_TERM');
+      });
+
+      it('enables assigning members to future/target terms and prevents duplicate active membership in the same term', async () => {
+        const pastTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: false });
+
+        // Add Sam to pastTerm
+        const resAdd = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            email: 'sam.member@pcu.edu',
+            clubRole: 'CORE_TEAM',
+            title: 'Past Term Lead',
+            academicTermId: pastTerm._id.toString(),
+          });
+
+        expect(resAdd.status).toBe(201);
+        expect(resAdd.body.success).toBe(true);
+        expect(resAdd.body.data.membership.academicTermId._id).toBe(pastTerm._id.toString());
+
+        // Attempting to add duplicate active membership in the same term returns 400
+        const resDup = await request(app)
+          .post(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', campusAdminCookie)
+          .send({
+            email: 'sam.member@pcu.edu',
+            clubRole: 'GENERAL_MEMBER',
+            academicTermId: pastTerm._id.toString(),
+          });
+
+        expect(resDup.status).toBe(400);
+        expect(resDup.body.error.code).toBe('MEMBERSHIP_ALREADY_EXISTS');
+      });
+
+      it('fetches personal tasks across authorized active clubs for My Work endpoint', async () => {
+        const res = await request(app)
+          .get('/api/v1/tasks/my-work')
+          .set('Cookie', sarahCookie);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.data.tasks)).toBe(true);
+        expect(res.body.data.stats).toBeDefined();
+        expect(typeof res.body.data.stats.total).toBe('number');
+      });
+
+      it('prevents filtering My Work tasks by a club where the user is not an active member (Cross-Club Negative Test)', async () => {
+        // Sarah is not a member of IEEE
+        const res = await request(app)
+          .get(`/api/v1/tasks/my-work?clubId=${ieeeClubId}`)
+          .set('Cookie', sarahCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('FORBIDDEN_CLUB_TASKS');
+      });
+    });
   });
 });

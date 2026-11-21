@@ -17,6 +17,7 @@ import { HandoverCenter } from './pages/HandoverCenter';
 import { FacultyApprovals } from './pages/FacultyApprovals';
 import { AnnualReports } from './pages/AnnualReports';
 import { Members } from './pages/Members';
+import { MyWork } from './pages/MyWork';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ export function App() {
               >
                 <Route index element={<Navigate to="/campus" replace />} />
                 <Route path="campus" element={<CampusDashboard />} />
+                <Route path="my-work" element={<MyWork />} />
                 <Route path="faculty/approvals" element={<FacultyApprovals />} />
                 <Route path="clubs/:clubId" element={<ClubDashboard />} />
                 <Route path="clubs/:clubId/events" element={<EventsList />} />

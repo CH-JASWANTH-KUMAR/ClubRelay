@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Card, CardHeader } from '../components/ui/Card';
+import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
@@ -14,23 +13,25 @@ import { useAnimeScope } from '../hooks/useAnimeScope';
 import {
   Calendar,
   Plus,
-  Users,
   MapPin,
   DollarSign,
   ArrowRight,
-  Filter,
   Layers,
+  Search,
+  List as ListIcon,
+  CalendarDays,
 } from 'lucide-react';
 
 export function EventsList() {
   const { clubId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { addToast } = useToast();
 
   const [events, setEvents] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeView, setActiveView] = useState('list'); // 'list' | 'calendar'
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -56,14 +57,18 @@ export function EventsList() {
         ease: 'easeOutQuad',
       });
     },
-    [filterStatus, events.length]
+    [filterStatus, events.length, activeView]
   );
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
       const [eventsRes, tmplRes] = await Promise.all([
-        fetch(`/api/v1/clubs/${clubId}/events${filterStatus !== 'ALL' ? `?status=${filterStatus}` : ''}`),
+        fetch(
+          `/api/v1/clubs/${clubId}/events${
+            filterStatus !== 'ALL' ? `?status=${filterStatus}` : ''
+          }`
+        ),
         fetch('/api/v1/event-templates'),
       ]);
 
@@ -131,50 +136,103 @@ export function EventsList() {
     ARCHIVED: 'archived',
   };
 
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        e.title.toLowerCase().includes(q) ||
+        (e.description && e.description.toLowerCase().includes(q)) ||
+        (e.venueName && e.venueName.toLowerCase().includes(q))
+      );
+    });
+  }, [events, searchQuery]);
+
   return (
     <div ref={listRef} className="space-y-6">
       <PageHeader
         title="Event Execution Workspace"
         subtitle="Manage end-to-end event lifecycles, assign tasks, and capture historical outcomes"
         actions={
-          <Button size="sm" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4" /> New Event Proposal
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-lg border border-border bg-subtle p-0.5">
+              <button
+                onClick={() => setActiveView('list')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  activeView === 'list'
+                    ? 'bg-surface text-forest-800 shadow-subtle'
+                    : 'text-charcoal-600 hover:text-charcoal-900'
+                }`}
+              >
+                <ListIcon className="w-3.5 h-3.5" /> Grid
+              </button>
+              <button
+                onClick={() => setActiveView('calendar')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  activeView === 'calendar'
+                    ? 'bg-surface text-forest-800 shadow-subtle'
+                    : 'text-charcoal-600 hover:text-charcoal-900'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" /> Timeline
+              </button>
+            </div>
+            <Button size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="w-4 h-4" /> New Event Proposal
+            </Button>
+          </div>
         }
       />
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-1 border-b border-border pb-2 overflow-x-auto text-xs font-medium">
-        {['ALL', 'DRAFT', 'PROPOSED', 'APPROVED', 'PLANNING', 'COMPLETED'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            className={`px-3 py-1.5 rounded transition-colors whitespace-nowrap ${
-              filterStatus === status
-                ? 'bg-forest-700 text-white font-semibold'
-                : 'text-charcoal-600 hover:bg-subtle hover:text-charcoal-900'
-            }`}
-          >
-            {status.replace('_', ' ')}
-          </button>
-        ))}
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+        <div className="flex items-center gap-1 overflow-x-auto text-xs font-medium">
+          {['ALL', 'DRAFT', 'PROPOSED', 'APPROVED', 'PLANNING', 'COMPLETED'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-3 py-1.5 rounded transition-colors whitespace-nowrap ${
+                filterStatus === status
+                  ? 'bg-forest-700 text-white font-semibold'
+                  : 'text-charcoal-600 hover:bg-subtle hover:text-charcoal-900'
+              }`}
+            >
+              {status.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-charcoal-400 absolute left-2.5 top-2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search events…"
+            className="text-xs rounded border border-border bg-surface pl-8 pr-3 py-1.5 text-charcoal-800 placeholder-charcoal-400 focus:outline-none focus:border-forest-700 w-44"
+          />
+        </div>
       </div>
 
-      {/* Events Grid */}
-      {events.length === 0 ? (
+      {/* Events Presentation */}
+      {loading ? (
+        <Card className="text-center py-12 text-xs text-charcoal-500 font-medium">
+          Loading events…
+        </Card>
+      ) : filteredEvents.length === 0 ? (
         <Card className="text-center py-12">
           <Calendar className="w-10 h-10 text-charcoal-300 mx-auto mb-2" />
           <h4 className="text-sm font-semibold text-charcoal-900">No events found</h4>
           <p className="text-xs text-charcoal-500 max-w-sm mx-auto mt-1 mb-4">
-            No events match the selected status filter. Click “New Event Proposal” to create one.
+            No events match the selected status or search filter. Click “New Event Proposal” to create one.
           </p>
           <Button size="sm" onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4" /> Create Event
           </Button>
         </Card>
-      ) : (
+      ) : activeView === 'list' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map((event) => (
+          {filteredEvents.map((event) => (
             <Card
               key={event._id}
               hover
@@ -232,6 +290,42 @@ export function EventsList() {
             </Card>
           ))}
         </div>
+      ) : (
+        <Card className="p-4 space-y-3">
+          {filteredEvents
+            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+            .map((event) => (
+              <div
+                key={event._id}
+                onClick={() => navigate(`/clubs/${clubId}/events/${event._id}`)}
+                className="p-3.5 rounded-lg border border-border bg-surface hover:border-forest-600 transition-colors cursor-pointer flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded bg-subtle border border-border flex flex-col items-center justify-center text-charcoal-800 flex-shrink-0">
+                    <span className="text-[10px] font-bold text-forest-700">
+                      {new Date(event.startDate).toLocaleString('default', { month: 'short' })}
+                    </span>
+                    <span className="text-sm font-bold leading-none">
+                      {new Date(event.startDate).getDate()}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-charcoal-900">{event.title}</h4>
+                    <span className="text-[11px] text-charcoal-500 block">
+                      {event.venueName || 'Venue TBD'} · {event.eventType}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Badge variant={statusVariants[event.status] || 'default'} size="sm">
+                    {event.status}
+                  </Badge>
+                  <ArrowRight className="w-3.5 h-3.5 text-charcoal-400" />
+                </div>
+              </div>
+            ))}
+        </Card>
       )}
 
       {/* Create Event Modal */}
@@ -242,7 +336,6 @@ export function EventsList() {
         maxWidth="max-w-xl"
       >
         <form onSubmit={handleCreateEvent} className="space-y-4">
-          {/* Reusable Template Selector */}
           <div>
             <label className="block text-xs font-semibold text-charcoal-700 mb-1 flex items-center gap-1">
               <Layers className="w-3.5 h-3.5 text-forest-700" /> Start from Reusable Template
@@ -250,12 +343,12 @@ export function EventsList() {
             <select
               value={formData.templateId}
               onChange={handleTemplateChange}
-              className="w-full rounded border border-border bg-white px-3 py-2 text-xs text-charcoal-800 focus:outline-none focus:border-forest-700"
+              className="w-full text-xs rounded border border-border bg-subtle px-3 py-2 text-charcoal-800 focus:outline-none focus:border-forest-700"
             >
-              <option value="">Start from Scratch (Blank)</option>
+              <option value="">-- Blank Event Template --</option>
               {templates.map((t) => (
                 <option key={t._id} value={t._id}>
-                  {t.name} (Auto-populates {t.defaultTasks?.length || 0} tasks)
+                  {t.name} ({t.eventType})
                 </option>
               ))}
             </select>
@@ -265,33 +358,41 @@ export function EventsList() {
             label="Event Title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="e.g. Distributed Systems & Rust Bootcamp"
+            placeholder="e.g. Cloud Security Summit 2026"
             required
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Textarea
+            label="Event Description & Objectives"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Provide context, target student audience, and agenda outline..."
+            rows={3}
+            required
+          />
+
+          <div className="grid grid-cols-2 gap-3">
             <Select
               label="Event Type"
               value={formData.eventType}
               onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
               options={[
                 { label: 'Technical Workshop', value: 'WORKSHOP' },
-                { label: '48-Hour Hackathon', value: 'HACKATHON' },
-                { label: 'Guest Lecture', value: 'GUEST_LECTURE' },
-                { label: 'Developer Meetup', value: 'MEETUP' },
-                { label: 'Coding Competition', value: 'COMPETITION' },
-                { label: 'Community Mixer', value: 'MIXER' },
+                { label: 'Campus Hackathon', value: 'HACKATHON' },
+                { label: 'Guest Speaker Session', value: 'SPEAKER_SESSION' },
+                { label: 'Cultural / Social Fest', value: 'CULTURAL_FEST' },
+                { label: 'Executive Meeting', value: 'EXECUTIVE_MEETING' },
               ]}
             />
             <Input
-              label="Venue / Classroom"
+              label="Venue / Campus Room"
               value={formData.venueName}
               onChange={(e) => setFormData({ ...formData, venueName: e.target.value })}
-              placeholder="e.g. Science Auditorium 201"
+              placeholder="e.g. CS Lab 301, Main Auditorium"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Start Date & Time"
               type="datetime-local"
@@ -304,41 +405,41 @@ export function EventsList() {
               type="datetime-local"
               value={formData.endDate}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              required
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Estimated Budget ($)"
               type="number"
               value={formData.estimatedBudget}
-              onChange={(e) => setFormData({ ...formData, estimatedBudget: Number(e.target.value) })}
+              onChange={(e) =>
+                setFormData({ ...formData, estimatedBudget: parseFloat(e.target.value) || 0 })
+              }
+              required
             />
             <Input
               label="Expected Attendance"
               type="number"
               value={formData.expectedAttendance}
-              onChange={(e) => setFormData({ ...formData, expectedAttendance: Number(e.target.value) })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  expectedAttendance: parseInt(e.target.value, 10) || 0,
+                })
+              }
+              required
             />
           </div>
-
-          <Textarea
-            label="Description & Learning Objectives"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Outline speakers, requirements, target audience"
-          />
 
           <div className="flex justify-end gap-2 pt-3 border-t border-border">
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
-            <Button type="submit">Initialize Event</Button>
+            <Button type="submit">Create Event</Button>
           </div>
         </form>
       </Modal>
     </div>
   );
 }
-

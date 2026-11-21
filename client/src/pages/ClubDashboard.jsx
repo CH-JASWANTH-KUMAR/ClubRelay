@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { Card, CardHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Avatar } from '../components/ui/EmptyState';
-import { PageHeader } from '../components/layout/PageHeader';
 import { useAnimeScope } from '../hooks/useAnimeScope';
 import {
   Calendar,
@@ -15,19 +13,16 @@ import {
   Users,
   BookOpen,
   ArrowRight,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  TrendingUp,
+  Tag,
 } from 'lucide-react';
 
 export function ClubDashboard() {
   const { clubId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const [clubData, setClubData] = useState(null);
   const [events, setEvents] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const containerRef = useAnimeScope(
@@ -36,7 +31,7 @@ export function ClubDashboard() {
         opacity: [0, 1],
         translateY: [8, 0],
         duration: 350,
-        delay: (el, i) => i * 40,
+        delay: (el, i) => i * 35,
         ease: 'easeOutQuad',
       });
     },
@@ -47,9 +42,10 @@ export function ClubDashboard() {
     async function fetchDashboard() {
       try {
         setLoading(true);
-        const [clubRes, eventsRes] = await Promise.all([
+        const [clubRes, eventsRes, tasksRes] = await Promise.all([
           fetch(`/api/v1/clubs/${clubId}`),
           fetch(`/api/v1/clubs/${clubId}/events`),
+          fetch(`/api/v1/tasks/my-work?clubId=${clubId}`),
         ]);
 
         if (clubRes.ok) {
@@ -58,7 +54,11 @@ export function ClubDashboard() {
         }
         if (eventsRes.ok) {
           const json = await eventsRes.json();
-          setEvents(json.data.events || []);
+          setEvents(json.data?.events || []);
+        }
+        if (tasksRes.ok) {
+          const json = await tasksRes.json();
+          setTasks(json.data?.tasks || []);
         }
       } catch (err) {
         console.error(err);
@@ -75,37 +75,74 @@ export function ClubDashboard() {
   const metrics = clubData?.metrics;
   const leadership = clubData?.leadership || [];
 
-  const upcomingEvents = events.filter((e) => ['PLANNING', 'APPROVED', 'PROPOSED'].includes(e.status));
+  const upcomingEvents = events.filter((e) =>
+    ['PLANNING', 'APPROVED', 'PROPOSED'].includes(e.status)
+  );
   const completedEvents = events.filter((e) => e.status === 'COMPLETED');
+
+  // Engineering Community Tags based on category
+  const defaultTags =
+    club?.category === 'TECHNICAL'
+      ? ['Open Source', 'Software Eng', 'Workshops', 'Hackathons']
+      : club?.category === 'CULTURAL'
+      ? ['Arts & Music', 'Stage', 'Exhibitions', 'Campus Life']
+      : club?.category === 'ACADEMIC'
+      ? ['Research', 'Seminars', 'Peer Tutoring', 'Publications']
+      : ['Student Leadership', 'Operations', 'Community Outreach'];
 
   return (
     <div ref={containerRef} className="space-y-6">
-      <PageHeader
-        title={club?.name || 'Club Workspace'}
-        subtitle={`Organization code: ${club?.code || ''} · ${club?.category || ''} Category`}
-        badge={
-          <Badge variant="approved" size="md">
-            Active Term: 2025-2026
-          </Badge>
-        }
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/clubs/${clubId}/handover`)}
-            >
-              <ArrowRightLeft className="w-3.5 h-3.5" /> Handover Center
-            </Button>
-            <Button size="sm" onClick={() => navigate(`/clubs/${clubId}/events`)}>
-              <Calendar className="w-3.5 h-3.5" /> Manage Events
-            </Button>
+      {/* Organization Header & Community Identity */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-surface border border-border shadow-subtle">
+        <div className="flex items-start sm:items-center gap-4">
+          <div className="w-14 h-14 rounded-xl bg-forest-700 text-white font-bold text-xl flex items-center justify-center shadow-subtle flex-shrink-0">
+            {club?.code || 'CR'}
           </div>
-        }
-      />
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-bold text-charcoal-900 tracking-tight">
+                {club?.name || 'Club Workspace'}
+              </h2>
+              <Badge variant="approved" size="sm">
+                {club?.category || 'General'}
+              </Badge>
+              <Badge variant="default" size="sm">
+                Term: 2025/2026
+              </Badge>
+            </div>
+            <p className="text-xs text-charcoal-600 mt-1 max-w-2xl">
+              {club?.description || 'Active campus student organization repository and continuity workspace.'}
+            </p>
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              <Tag className="w-3 h-3 text-charcoal-400" />
+              {defaultTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[10px] font-medium bg-subtle text-charcoal-600 px-2 py-0.5 rounded border border-border"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/clubs/${clubId}/handover`)}
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5" /> Handover
+          </Button>
+          <Button size="sm" onClick={() => navigate(`/clubs/${clubId}/events`)}>
+            <Calendar className="w-3.5 h-3.5" /> Manage Events
+          </Button>
+        </div>
+      </div>
 
       {/* Succession Alert Widget (Core Differentiator Banner) */}
-      <Card className="dash-widget bg-gradient-to-r from-forest-50/70 to-subtle border-forest-200">
+      <Card className="dash-widget bg-gradient-to-r from-forest-50/80 via-subtle to-surface border-forest-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -123,7 +160,9 @@ export function ClubDashboard() {
           <div className="flex items-center gap-4 flex-shrink-0">
             <div className="text-right">
               <span className="text-xs font-semibold text-charcoal-900">
-                {metrics?.handoverProgress !== null ? `${metrics?.handoverProgress}% Ready` : 'Not Initiated'}
+                {metrics?.handoverProgress !== null && metrics?.handoverProgress !== undefined
+                  ? `${metrics?.handoverProgress}% Ready`
+                  : 'Not Initiated'}
               </span>
               <div className="w-32 mt-1">
                 <Progress value={metrics?.handoverProgress || 0} />
@@ -142,8 +181,9 @@ export function ClubDashboard() {
 
       {/* Primary 3-Column Operational Flight Deck */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Upcoming Events Flight Deck (2 cols on lg) */}
+        {/* Left Column: Scheduled Events & Open Tasks (2 cols on lg) */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Upcoming Events Flight Deck */}
           <Card className="dash-widget">
             <CardHeader
               title="Scheduled Events Flight Deck"
@@ -168,11 +208,11 @@ export function ClubDashboard() {
                   <div
                     key={event._id}
                     onClick={() => navigate(`/clubs/${clubId}/events/${event._id}`)}
-                    className="p-3.5 rounded border border-border bg-surface hover:border-forest-600 hover:shadow-subtle transition-colors cursor-pointer flex items-center justify-between gap-4"
+                    className="p-3.5 rounded-lg border border-border bg-surface hover:border-forest-600 hover:shadow-subtle transition-colors cursor-pointer flex items-center justify-between gap-4"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-charcoal-900 hover:text-forest-700">
+                        <span className="text-xs font-bold text-charcoal-900 hover:text-forest-700">
                           {event.title}
                         </span>
                         <Badge
@@ -190,7 +230,7 @@ export function ClubDashboard() {
                       </div>
                       <div className="flex items-center gap-3 text-[11px] text-charcoal-500">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                          <Calendar className="w-3 h-3 text-forest-700" />
                           {new Date(event.startDate).toLocaleDateString()}
                         </span>
                         <span>·</span>
@@ -214,6 +254,66 @@ export function ClubDashboard() {
             )}
           </Card>
 
+          {/* Open Organization Tasks Widget */}
+          <Card className="dash-widget">
+            <CardHeader
+              title={`Open Organization Tasks (${tasks.length})`}
+              subtitle="Action items assigned across current events and club milestones"
+              action={
+                <Link
+                  to="/my-work"
+                  className="text-xs font-semibold text-forest-700 hover:underline flex items-center gap-1"
+                >
+                  My Work Board <ArrowRight className="w-3 h-3" />
+                </Link>
+              }
+            />
+
+            {tasks.length === 0 ? (
+              <div className="text-center py-6 text-charcoal-400 text-xs">
+                No active tasks assigned for this organization.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {tasks.slice(0, 4).map((task) => (
+                  <div
+                    key={task._id}
+                    onClick={() => navigate('/my-work')}
+                    className="p-2.5 rounded border border-border bg-surface hover:bg-subtle transition-colors cursor-pointer flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5 truncate">
+                      <CheckSquare className="w-3.5 h-3.5 text-forest-700 flex-shrink-0" />
+                      <span className="font-semibold text-charcoal-900 truncate">
+                        {task.title}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge
+                        variant={
+                          task.priority === 'URGENT'
+                            ? 'urgent'
+                            : task.priority === 'HIGH'
+                            ? 'high'
+                            : 'medium'
+                        }
+                        size="sm"
+                      >
+                        {task.priority}
+                      </Badge>
+                      <Badge
+                        variant={task.status === 'DONE' ? 'approved' : 'default'}
+                        size="sm"
+                      >
+                        {task.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
           {/* Quick Memory & Playbook Links */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card
@@ -222,7 +322,7 @@ export function ClubDashboard() {
               className="dash-widget cursor-pointer p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-forest-50 border border-forest-100 text-forest-700 flex items-center justify-center">
+                <div className="w-9 h-9 rounded bg-forest-50 border border-forest-100 text-forest-700 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <div>
@@ -238,7 +338,7 @@ export function ClubDashboard() {
               className="dash-widget cursor-pointer p-4"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-amber-50 border border-amber-100 text-amber-700 flex items-center justify-center">
+                <div className="w-9 h-9 rounded bg-amberGold-50 border border-amberGold-100 text-amberGold-700 flex items-center justify-center flex-shrink-0">
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
@@ -250,7 +350,7 @@ export function ClubDashboard() {
           </div>
         </div>
 
-        {/* Right Column: Active Leadership Roster & Metrics */}
+        {/* Right Column: Active Leadership Roster & Historical Continuity */}
         <div className="space-y-6">
           {/* Executive Leadership Team */}
           <Card className="dash-widget">
@@ -268,24 +368,30 @@ export function ClubDashboard() {
             />
 
             <div className="space-y-3">
-              {leadership.map((m) => (
-                <div key={m._id} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar
-                      name={m.userId?.fullName || 'Member'}
-                      size="sm"
-                      src={m.userId?.avatarUrl}
-                    />
-                    <div>
-                      <div className="font-semibold text-charcoal-900">{m.userId?.fullName}</div>
-                      <div className="text-[10px] text-charcoal-400">{m.title || m.clubRole}</div>
-                    </div>
-                  </div>
-                  <Badge variant="default" size="sm">
-                    {m.clubRole.replace('_', ' ')}
-                  </Badge>
+              {leadership.length === 0 ? (
+                <div className="text-center py-4 text-xs text-charcoal-400">
+                  No active executive officers recorded.
                 </div>
-              ))}
+              ) : (
+                leadership.map((m) => (
+                  <div key={m._id} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar
+                        name={m.userId?.fullName || 'Member'}
+                        size="sm"
+                        src={m.userId?.avatarUrl}
+                      />
+                      <div>
+                        <div className="font-semibold text-charcoal-900">{m.userId?.fullName}</div>
+                        <div className="text-[10px] text-charcoal-400">{m.title || m.clubRole}</div>
+                      </div>
+                    </div>
+                    <Badge variant="default" size="sm">
+                      {m.clubRole.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                ))
+              )}
             </div>
           </Card>
 
@@ -317,7 +423,7 @@ export function ClubDashboard() {
                   className="w-full text-xs"
                   onClick={() => navigate(`/clubs/${clubId}/reports`)}
                 >
-                  Generate Annual Report
+                  Generate Report
                 </Button>
               </div>
             </div>
@@ -327,4 +433,3 @@ export function ClubDashboard() {
     </div>
   );
 }
-

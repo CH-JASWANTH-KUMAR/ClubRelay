@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Modal } from '../components/ui/Modal';
 import { Input, Textarea } from '../components/ui/Input';
+import { Select } from '../components/ui/Select';
 import { Avatar } from '../components/ui/EmptyState';
 import { PageHeader } from '../components/layout/PageHeader';
 import { useAnimeScope } from '../hooks/useAnimeScope';
@@ -17,14 +18,12 @@ import {
   AlertCircle,
   FileText,
   Printer,
-  Send,
   ShieldCheck,
   UserCheck,
   Calendar,
   CheckSquare,
   BookOpen,
   Users,
-  ExternalLink,
   Lock,
 } from 'lucide-react';
 
@@ -48,6 +47,12 @@ export function HandoverCenter() {
   const [activeHandover, setActiveHandover] = useState(null);
   const [activeSectionKey, setActiveSectionKey] = useState('roleResponsibilities');
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [isAdvisoryView, setIsAdvisoryView] = useState(false);
+
+  // Terms and eligible officers
+  const [terms, setTerms] = useState([]);
+  const [clubMembers, setClubMembers] = useState([]);
 
   // Modals
   const [showInitiateModal, setShowInitiateModal] = useState(false);
@@ -56,8 +61,11 @@ export function HandoverCenter() {
 
   // Forms
   const [initiateForm, setInitiateForm] = useState({
-    incomingLeaderEmail: 'alex.incoming@pcu.edu',
+    incomingLeaderEmail: '',
+    outgoingLeaderEmail: '',
     roleHandover: 'PRESIDENT',
+    fromTermId: '',
+    toTermId: '',
   });
   const [reviewNotes, setReviewNotes] = useState('');
   const [sectionContent, setSectionContent] = useState('');
@@ -76,17 +84,61 @@ export function HandoverCenter() {
     [activeHandover?._id, activeSectionKey]
   );
 
+  const fetchTerms = async () => {
+    try {
+      const campusId = user?.campusId?._id || user?.campusId;
+      if (!campusId) return;
+      const res = await fetch(`/api/v1/campuses/${campusId}/terms`);
+      if (res && res.ok) {
+        const json = await res.json();
+        const loadedTerms = json.data?.terms || [];
+        setTerms(loadedTerms);
+        const current = loadedTerms.find((t) => t.isCurrent) || loadedTerms[0];
+        const future = loadedTerms.find((t) => !t.isCurrent) || current;
+        setInitiateForm((prev) => ({
+          ...prev,
+          fromTermId: prev.fromTermId || current?._id || '',
+          toTermId: prev.toTermId || future?._id || '',
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchClubMembers = async (termId) => {
+    try {
+      if (!clubId) return;
+      const url = termId
+        ? `/api/v1/clubs/${clubId}/members?academicTermId=${termId}`
+        : `/api/v1/clubs/${clubId}/members`;
+      const res = await fetch(url);
+      if (res && res.ok) {
+        const json = await res.json();
+        setClubMembers(json.data?.members || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchHandovers = async () => {
     try {
       setLoading(true);
+      setAccessDenied(false);
       const res = await fetch(`/api/v1/clubs/${clubId}/handovers`);
-      if (res.ok) {
+      if (res && res.status === 403) {
+        setAccessDenied(true);
+        setHandovers([]);
+        setActiveHandover(null);
+        return;
+      }
+      if (res && res.ok) {
         const json = await res.json();
-        setHandovers(json.data.handovers || []);
-        if (json.data.handovers?.length > 0) {
-          // Select first active or completed handover
-          const firstId = json.data.handovers[0]._id;
-          fetchHandoverDetail(firstId);
+        const list = json.data?.handovers || [];
+        setHandovers(list);
+        if (list.length > 0) {
+          fetchHandoverDetail(list[0]._id);
         } else {
           setActiveHandover(null);
         }
@@ -101,10 +153,22 @@ export function HandoverCenter() {
   const fetchHandoverDetail = async (id) => {
     try {
       const res = await fetch(`/api/v1/clubs/${clubId}/handovers/${id}`);
-      if (res.ok) {
+      if (res && res.status === 403) {
+        setAccessDenied(true);
+        setActiveHandover(null);
+        return;
+      }
+      if (res && res.ok) {
+        setAccessDenied(false);
         const json = await res.json();
-        setActiveHandover(json.data.handover);
-        const currentSec = json.data.handover.sections?.[activeSectionKey];
+        const h = json.data?.handover;
+        setActiveHandover(h);
+        setIsAdvisoryView(
+          user?.campusRole === 'FACULTY_COORDINATOR' &&
+            !h?.reviewNotes &&
+            !h?.outgoingLeaderId?.email
+        );
+        const currentSec = h?.sections?.[activeSectionKey];
         setSectionContent(currentSec?.content || '');
         setIsSectionCompleted(!!currentSec?.completed);
       }
@@ -114,8 +178,17 @@ export function HandoverCenter() {
   };
 
   useEffect(() => {
-    if (clubId) fetchHandovers();
+    if (clubId) {
+      fetchHandovers();
+      fetchTerms();
+    }
   }, [clubId]);
+
+  useEffect(() => {
+    if (user?.campusRole === 'CAMPUS_ADMIN' && initiateForm.fromTermId) {
+      fetchClubMembers(initiateForm.fromTermId);
+    }
+  }, [user?.campusRole, initiateForm.fromTermId, clubId]);
 
   useEffect(() => {
     if (activeHandover) {
@@ -141,7 +214,7 @@ export function HandoverCenter() {
       if (!res.ok) throw new Error(json.error?.message || 'Failed to save section');
 
       addToast(json.message || 'Section saved successfully', 'success');
-      setActiveHandover(json.data.handover);
+      setActiveHandover(json.data?.handover);
       setIsSectionCompleted(completed);
     } catch (err) {
       addToast(err.message, 'error');
@@ -161,7 +234,7 @@ export function HandoverCenter() {
 
       addToast('Handover formally acknowledged by incoming officer!', 'success');
       setShowAcknowledgeModal(false);
-      setActiveHandover(json.data.handover);
+      setActiveHandover(json.data?.handover);
     } catch (err) {
       addToast(err.message, 'error');
     }
@@ -188,32 +261,84 @@ export function HandoverCenter() {
   const handleInitiate = async (e) => {
     e.preventDefault();
     try {
-      // Find term IDs
-      const termsRes = await fetch(`/api/v1/campuses/${user?.campusId?._id}/terms`);
-      const termsJson = await termsRes.json();
-      const currentTerm = termsJson.data.terms.find((t) => t.isCurrent) || termsJson.data.terms[0];
-      const nextTerm = termsJson.data.terms.find((t) => !t.isCurrent) || currentTerm;
+      if (!initiateForm.fromTermId || !initiateForm.toTermId) {
+        throw new Error('Please select both from and to academic terms.');
+      }
+      if (!initiateForm.incomingLeaderEmail.trim()) {
+        throw new Error('Please enter incoming leader university email.');
+      }
+      if (user?.campusRole === 'CAMPUS_ADMIN' && !initiateForm.outgoingLeaderEmail.trim()) {
+        throw new Error('Campus administrators must nominate an eligible outgoing officer.');
+      }
+
+      const payload = {
+        incomingLeaderEmail: initiateForm.incomingLeaderEmail.trim(),
+        roleHandover: initiateForm.roleHandover,
+        fromTermId: initiateForm.fromTermId,
+        toTermId: initiateForm.toTermId,
+      };
+
+      if (user?.campusRole === 'CAMPUS_ADMIN') {
+        payload.outgoingLeaderEmail = initiateForm.outgoingLeaderEmail.trim();
+      }
 
       const res = await fetch(`/api/v1/clubs/${clubId}/handovers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          incomingLeaderEmail: initiateForm.incomingLeaderEmail,
-          roleHandover: initiateForm.roleHandover,
-          fromTermId: currentTerm._id,
-          toTermId: nextTerm._id,
-        }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error?.message || 'Failed to initiate handover');
 
       addToast('Leadership transition package initialized!', 'success');
       setShowInitiateModal(false);
+      setInitiateForm((prev) => ({
+        ...prev,
+        incomingLeaderEmail: '',
+        outgoingLeaderEmail: '',
+      }));
       fetchHandovers();
     } catch (err) {
       addToast(err.message, 'error');
     }
   };
+
+  // Eligible outgoing officers for campus admin
+  const eligibleRoles =
+    initiateForm.roleHandover === 'PRESIDENT'
+      ? ['PRESIDENT']
+      : initiateForm.roleHandover === 'SECRETARY'
+      ? ['SECRETARY']
+      : ['CORE_TEAM', 'PRESIDENT', 'SECRETARY'];
+
+  const eligibleOutgoingOfficers = clubMembers.filter(
+    (m) => m.status === 'ACTIVE' && eligibleRoles.includes(m.clubRole)
+  );
+
+  if (accessDenied) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Leadership Handover Center"
+          subtitle="Restricted executive succession and institutional continuity workspace"
+        />
+        <Card className="text-center py-12 p-6 max-w-2xl mx-auto">
+          <Lock className="w-10 h-10 text-charcoal-400 mx-auto mb-3" />
+          <h3 className="text-sm font-bold text-charcoal-900 mb-1">
+            Executive Privacy Protected
+          </h3>
+          <p className="text-xs text-charcoal-600 leading-relaxed mb-4">
+            Handover packages contain confidential leadership notes, account credential instructions, and
+            governance details. Access is restricted to transitioning officers, current club executives, and
+            authorized campus administrators.
+          </p>
+          <Badge variant="default" size="sm">
+            Access Level: General Club Member
+          </Badge>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="space-y-6">
@@ -250,6 +375,17 @@ export function HandoverCenter() {
         }
       />
 
+      {/* Advisory Access Banner for Faculty */}
+      {isAdvisoryView && (
+        <div className="flex items-center gap-2 p-3 rounded bg-amberGold-50 border border-amberGold-100 text-xs text-amberGold-800">
+          <ShieldCheck className="w-4 h-4 text-amberGold-700 flex-shrink-0" />
+          <span>
+            <strong>Faculty Advisory Access:</strong> You are viewing this handover package in advisory oversight mode.
+            Private officer review notes and confidential phone/email records remain restricted to the transitioning student leaders.
+          </span>
+        </div>
+      )}
+
       {/* Security Guidance Alert */}
       <div className="flex items-center gap-2 p-2.5 rounded bg-forest-50/70 border border-forest-200 text-xs text-forest-900">
         <Lock className="w-4 h-4 text-forest-700 flex-shrink-0" />
@@ -259,7 +395,11 @@ export function HandoverCenter() {
         </span>
       </div>
 
-      {!activeHandover ? (
+      {loading ? (
+        <Card className="text-center py-12 text-xs text-charcoal-500 font-medium">
+          Loading handover packages…
+        </Card>
+      ) : !activeHandover ? (
         <Card className="text-center py-12">
           <ArrowRightLeft className="w-10 h-10 text-charcoal-300 mx-auto mb-2" />
           <h4 className="text-sm font-semibold text-charcoal-900">No active handover initiated</h4>
@@ -288,8 +428,13 @@ export function HandoverCenter() {
                       Outgoing {activeHandover.roleHandover}
                     </span>
                     <span className="text-xs font-bold text-charcoal-900">
-                      {activeHandover.outgoingLeaderId?.fullName}
+                      {activeHandover.outgoingLeaderId?.fullName || 'Outgoing Leader'}
                     </span>
+                    {activeHandover.outgoingLeaderId?.email && (
+                      <span className="text-[11px] text-charcoal-400 block">
+                        {activeHandover.outgoingLeaderId.email}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -306,8 +451,13 @@ export function HandoverCenter() {
                       Incoming {activeHandover.roleHandover}
                     </span>
                     <span className="text-xs font-bold text-charcoal-900">
-                      {activeHandover.incomingLeaderId?.fullName}
+                      {activeHandover.incomingLeaderId?.fullName || 'Incoming Leader'}
                     </span>
+                    {activeHandover.incomingLeaderId?.email && (
+                      <span className="text-[11px] text-charcoal-400 block">
+                        {activeHandover.incomingLeaderId.email}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -321,7 +471,7 @@ export function HandoverCenter() {
                       variant="outline"
                       onClick={() => setShowAcknowledgeModal(true)}
                     >
-                      <UserCheck className="w-3.5 h-3.5" /> Incoming Leader Sign-Off
+                      <UserCheck className="w-3.5 h-3.5" /> Sign-Off
                     </Button>
                     <Button
                       size="sm"
@@ -329,13 +479,13 @@ export function HandoverCenter() {
                       onClick={handleCompleteTransition}
                       disabled={activeHandover.completionPercentage < 100}
                     >
-                      Complete & Transfer Roles
+                      Complete Handover
                     </Button>
                   </>
                 )}
                 {activeHandover.status === 'COMPLETED' && (
                   <Badge variant="approved" size="md">
-                    Transition Finalized & Logged
+                    Transition Finalized
                   </Badge>
                 )}
               </div>
@@ -382,7 +532,7 @@ export function HandoverCenter() {
                     {isComplete ? (
                       <CheckCircle2 className="w-4 h-4 text-forest-700 flex-shrink-0" />
                     ) : (
-                      <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-amberGold-500 flex-shrink-0" />
                     )}
                   </button>
                 );
@@ -470,14 +620,28 @@ export function HandoverCenter() {
         title="Initiate Leadership Handover Package"
       >
         <form onSubmit={handleInitiate} className="space-y-4">
-          <Input
-            label="Incoming Leader University Email"
-            type="email"
-            value={initiateForm.incomingLeaderEmail}
-            onChange={(e) => setInitiateForm({ ...initiateForm, incomingLeaderEmail: e.target.value })}
-            placeholder="e.g. alex.incoming@pcu.edu"
-            required
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Select
+              label="From Academic Term"
+              value={initiateForm.fromTermId}
+              onChange={(e) => setInitiateForm({ ...initiateForm, fromTermId: e.target.value })}
+              options={terms.map((t) => ({
+                label: `${t.name}${t.isCurrent ? ' (Current)' : ''}`,
+                value: t._id,
+              }))}
+              required
+            />
+            <Select
+              label="To Academic Term"
+              value={initiateForm.toTermId}
+              onChange={(e) => setInitiateForm({ ...initiateForm, toTermId: e.target.value })}
+              options={terms.map((t) => ({
+                label: `${t.name}${t.isCurrent ? ' (Current)' : ''}`,
+                value: t._id,
+              }))}
+              required
+            />
+          </div>
 
           <Select
             label="Executive Office Being Transitioned"
@@ -490,11 +654,45 @@ export function HandoverCenter() {
             ]}
           />
 
+          {/* Campus Administrator Outgoing Officer Selector */}
+          {user?.campusRole === 'CAMPUS_ADMIN' && (
+            <Select
+              label="Nominate Outgoing Officer"
+              value={initiateForm.outgoingLeaderEmail}
+              onChange={(e) =>
+                setInitiateForm({ ...initiateForm, outgoingLeaderEmail: e.target.value })
+              }
+              options={[
+                { label: 'Select eligible outgoing officer…', value: '' },
+                ...eligibleOutgoingOfficers.map((m) => ({
+                  label: `${m.userId?.fullName || 'User'} (${m.clubRole.replace('_', ' ')}) · ${
+                    m.academicTermId?.name || 'Term'
+                  }`,
+                  value: m.userId?.email,
+                })),
+              ]}
+              helperText="Campus administrators must nominate the outgoing officer explicitly."
+              required
+            />
+          )}
+
+          <Input
+            label="Incoming Leader University Email"
+            type="email"
+            value={initiateForm.incomingLeaderEmail}
+            onChange={(e) =>
+              setInitiateForm({ ...initiateForm, incomingLeaderEmail: e.target.value })
+            }
+            placeholder="e.g. incoming.leader@pcu.edu"
+            helperText="Candidate officer must have an active student account."
+            required
+          />
+
           <div className="flex justify-end gap-2 pt-3 border-t border-border">
             <Button variant="secondary" onClick={() => setShowInitiateModal(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Transition Package</Button>
+            <Button type="submit">Create Handover</Button>
           </div>
         </form>
       </Modal>
@@ -525,7 +723,7 @@ export function HandoverCenter() {
             <Button variant="secondary" onClick={() => setShowAcknowledgeModal(false)}>
               Cancel
             </Button>
-            <Button type="submit">Digitally Sign & Acknowledge</Button>
+            <Button type="submit">Sign Handover</Button>
           </div>
         </form>
       </Modal>
@@ -553,13 +751,17 @@ export function HandoverCenter() {
           <div className="grid grid-cols-2 gap-4 bg-subtle p-3 rounded">
             <div>
               <span className="text-charcoal-500 block text-xs">Outgoing Officer:</span>
-              <span className="font-bold">{activeHandover?.outgoingLeaderId?.fullName}</span> (
-              {activeHandover?.outgoingLeaderId?.email})
+              <span className="font-bold">{activeHandover?.outgoingLeaderId?.fullName || 'Outgoing Officer'}</span>
+              {activeHandover?.outgoingLeaderId?.email && (
+                <span> ({activeHandover.outgoingLeaderId.email})</span>
+              )}
             </div>
             <div>
               <span className="text-charcoal-500 block text-xs">Incoming Officer:</span>
-              <span className="font-bold">{activeHandover?.incomingLeaderId?.fullName}</span> (
-              {activeHandover?.incomingLeaderId?.email})
+              <span className="font-bold">{activeHandover?.incomingLeaderId?.fullName || 'Incoming Officer'}</span>
+              {activeHandover?.incomingLeaderId?.email && (
+                <span> ({activeHandover.incomingLeaderId.email})</span>
+              )}
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -10,31 +10,49 @@ import {
   FileCheck2,
   ArrowRightLeft,
   BarChart3,
-  Settings,
-  ShieldCheck,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { clsx } from 'clsx';
 
-export function Sidebar() {
+export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }) {
   const { user, activeClub, memberships, switchClub } = useAuth();
-  const clubId = activeClub?._id || (memberships[0]?.clubId?._id);
+  const clubId = activeClub?._id || memberships[0]?.clubId?._id;
 
   const isCampusAdmin = user?.campusRole === 'CAMPUS_ADMIN';
   const isFaculty = user?.campusRole === 'FACULTY_COORDINATOR';
 
-  const navItems = [
+  const workspaceItems = [
+    {
+      to: '/my-work',
+      label: 'My Work',
+      icon: CheckSquare,
+      badge: 'Tasks',
+      show: true,
+    },
+  ];
+
+  const orgItems = [
     {
       to: `/clubs/${clubId}`,
       label: 'Club Overview',
       icon: LayoutDashboard,
       show: !!clubId,
+      end: true,
     },
     {
       to: `/clubs/${clubId}/events`,
       label: 'Events & Projects',
       icon: Calendar,
+      show: !!clubId,
+    },
+    {
+      to: `/clubs/${clubId}/members`,
+      label: 'Roster & Roles',
+      icon: Users,
       show: !!clubId,
     },
     {
@@ -68,12 +86,6 @@ export function Sidebar() {
       icon: BarChart3,
       show: !!clubId,
     },
-    {
-      to: `/clubs/${clubId}/members`,
-      label: 'Roster & Roles',
-      icon: Users,
-      show: !!clubId,
-    },
   ];
 
   const adminItems = [
@@ -92,24 +104,110 @@ export function Sidebar() {
     },
   ];
 
-  return (
-    <aside className="w-64 flex-shrink-0 border-r border-border bg-surface flex flex-col h-screen sticky top-0 select-none">
-      {/* Brand & Tagline */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-forest-700 text-white flex items-center justify-center font-bold text-sm shadow-subtle">
-            CR
+  const renderNavSection = (title, items) => {
+    const visible = items.filter((item) => item.show);
+    if (visible.length === 0) return null;
+
+    return (
+      <div>
+        {!collapsed && (
+          <div className="text-xs font-semibold text-charcoal-500 px-2 mb-1.5">
+            {title}
           </div>
-          <div>
-            <h1 className="font-semibold text-sm text-charcoal-900 tracking-tight">ClubRelay</h1>
-            <p className="text-[11px] text-charcoal-500">The knowledge stays.</p>
+        )}
+        <nav className="space-y-0.5">
+          {visible.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={onCloseMobile}
+                title={collapsed ? item.label : undefined}
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center rounded text-xs font-medium transition-colors duration-150',
+                    collapsed ? 'justify-center p-2' : 'justify-between px-2.5 py-1.5',
+                    isActive
+                      ? 'bg-forest-50 text-forest-800 font-semibold shadow-subtle'
+                      : 'text-charcoal-700 hover:bg-subtle hover:text-charcoal-900'
+                  )
+                }
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <Icon className="w-4 h-4 text-charcoal-500 flex-shrink-0" />
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </div>
+                {!collapsed && item.badge && (
+                  <span
+                    className={clsx(
+                      'text-[10px] font-medium px-1.5 py-0.2 rounded',
+                      item.badge === 'Review'
+                        ? 'bg-amberGold-100 text-amberGold-800'
+                        : 'bg-forest-100 text-forest-800'
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  };
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full select-none">
+      {/* Brand & Organization Switcher */}
+      <div className={clsx('border-b border-border', collapsed ? 'p-2' : 'p-4')}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-8 h-8 rounded bg-forest-700 text-white flex items-center justify-center font-bold text-sm shadow-subtle flex-shrink-0">
+              CR
+            </div>
+            {!collapsed && (
+              <div className="truncate">
+                <h1 className="font-semibold text-sm text-charcoal-900 tracking-tight leading-tight">
+                  ClubRelay
+                </h1>
+                <p className="text-[11px] text-charcoal-500">The knowledge stays.</p>
+              </div>
+            )}
           </div>
+
+          {/* Desktop Collapse Toggle */}
+          <button
+            onClick={onToggleCollapse}
+            className="hidden md:flex p-1 rounded text-charcoal-400 hover:text-charcoal-700 hover:bg-subtle"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="w-4 h-4" />
+            ) : (
+              <PanelLeftClose className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Mobile Close Button */}
+          {onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              className="md:hidden p-1 rounded text-charcoal-400 hover:text-charcoal-700 hover:bg-subtle"
+              aria-label="Close menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Club Switcher dropdown if user has clubs */}
-        {memberships.length > 0 && (
+        {!collapsed && memberships.length > 0 && (
           <div className="mt-3">
-            <label className="block text-xs font-medium text-charcoal-500 mb-1">
+            <label className="block text-[11px] font-medium text-charcoal-400 mb-1">
               Active Organization
             </label>
             <div className="relative">
@@ -133,98 +231,59 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Navigation links */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        <div>
-          <div className="text-xs font-semibold text-charcoal-500 px-2 mb-2">
-            Workspace
-          </div>
-          <nav className="space-y-1">
-            {navItems
-              .filter((item) => item.show)
-              .map((item) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === `/clubs/${clubId}`}
-                    className={({ isActive }) =>
-                      clsx(
-                        'flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-150',
-                        isActive
-                          ? 'bg-forest-50 text-forest-800 font-semibold'
-                          : 'text-charcoal-700 hover:bg-subtle hover:text-charcoal-900'
-                      )
-                    }
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <Icon className="w-4 h-4 text-charcoal-500 flex-shrink-0" />
-                      <span className="truncate">{item.label}</span>
-                    </div>
-                    {item.badge && (
-                      <span className="text-[10px] bg-forest-100 text-forest-800 font-medium px-1.5 py-0.2 rounded">
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
-                );
-              })}
-          </nav>
-        </div>
-
-        {/* Governance / Admin links */}
-        {(isCampusAdmin || isFaculty) && (
-          <div>
-            <div className="text-xs font-semibold text-charcoal-500 px-2 mb-2">
-              Campus Governance
-            </div>
-            <nav className="space-y-1">
-              {adminItems
-                .filter((item) => item.show)
-                .map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      className={({ isActive }) =>
-                        clsx(
-                          'flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium transition-colors duration-150',
-                          isActive
-                            ? 'bg-forest-50 text-forest-800 font-semibold'
-                            : 'text-charcoal-700 hover:bg-subtle hover:text-charcoal-900'
-                        )
-                      }
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <Icon className="w-4 h-4 text-charcoal-500 flex-shrink-0" />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                      {item.badge && (
-                        <span className="text-[10px] bg-amber-100 text-amber-800 font-medium px-1.5 py-0.2 rounded">
-                          {item.badge}
-                        </span>
-                      )}
-                    </NavLink>
-                  );
-                })}
-            </nav>
-          </div>
-        )}
+      {/* Navigation Sections */}
+      <div className={clsx('flex-1 overflow-y-auto space-y-5', collapsed ? 'px-2 py-3' : 'px-3 py-4')}>
+        {renderNavSection('My Workspace', workspaceItems)}
+        {renderNavSection('Organisation', orgItems)}
+        {(isCampusAdmin || isFaculty) && renderNavSection('Campus Governance', adminItems)}
       </div>
 
       {/* Footer Info */}
-      <div className="p-3 border-t border-border bg-canvas text-[11px] text-charcoal-500">
-        <div className="truncate font-medium text-charcoal-800">{user?.fullName}</div>
-        <div className="truncate text-charcoal-400">
-          {user?.campusRole === 'CAMPUS_ADMIN'
-            ? 'Campus Administrator'
-            : user?.campusRole === 'FACULTY_COORDINATOR'
-            ? 'Faculty Coordinator'
-            : 'Student Leader'}
-        </div>
+      <div className={clsx('border-t border-border bg-canvas text-[11px]', collapsed ? 'p-2 text-center' : 'p-3')}>
+        {!collapsed ? (
+          <>
+            <div className="truncate font-medium text-charcoal-800">{user?.fullName}</div>
+            <div className="truncate text-charcoal-400">
+              {user?.campusRole === 'CAMPUS_ADMIN'
+                ? 'Campus Administrator'
+                : user?.campusRole === 'FACULTY_COORDINATOR'
+                ? 'Faculty Coordinator'
+                : 'Student Leader'}
+            </div>
+          </>
+        ) : (
+          <div className="w-6 h-6 rounded-full bg-forest-100 text-forest-800 mx-auto flex items-center justify-center font-bold text-[10px]">
+            {user?.fullName?.charAt(0) || 'U'}
+          </div>
+        )}
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sticky Sidebar */}
+      <aside
+        className={clsx(
+          'hidden md:flex flex-col flex-shrink-0 border-r border-border bg-surface h-screen sticky top-0 transition-colors duration-200',
+          collapsed ? 'w-16' : 'w-64'
+        )}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Drawer Backdrop & Slide-out */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 flex md:hidden">
+          <div
+            className="fixed inset-0 bg-charcoal-900/40 backdrop-blur-xs transition-opacity"
+            onClick={onCloseMobile}
+          />
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-surface border-r border-border shadow-elevated z-50 animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

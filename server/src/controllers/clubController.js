@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { Club, Membership, User, Event, Handover, AcademicTerm } from '../models/index.js';
 
@@ -14,6 +15,7 @@ const addMemberSchema = z.object({
   email: z.string().email(),
   clubRole: z.enum(['PRESIDENT', 'SECRETARY', 'CORE_TEAM', 'GENERAL_MEMBER']),
   title: z.string().optional(),
+  academicTermId: z.string().optional(),
 });
 
 export async function listClubs(req, res, next) {
@@ -159,13 +161,19 @@ export async function getMembers(req, res, next) {
       ? 'fullName email avatarUrl department phone'
       : 'fullName email avatarUrl department'; // Protect student phone numbers from general members
 
-    const members = await Membership.find({
+    const filter = {
       clubId: req.params.clubId,
       campusId: req.campusId,
       status: 'ACTIVE',
-    })
+    };
+
+    if (req.query.academicTermId) {
+      filter.academicTermId = req.query.academicTermId;
+    }
+
+    const members = await Membership.find(filter)
       .populate('userId', selectFields)
-      .populate('academicTermId', 'name isCurrent')
+      .populate('academicTermId', 'name isCurrent startDate endDate')
       .sort({ clubRole: 1, createdAt: 1 });
 
     return res.json({
@@ -196,30 +204,101 @@ export async function addMember(req, res, next) {
       });
     }
 
-    // Get current term
-    const currentTerm = await AcademicTerm.findOne({
+    let targetTerm;
+    if (data.academicTermId) {
+      if (!mongoose.Types.ObjectId.isValid(data.academicTermId)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_ACADEMIC_TERM',
+            message: 'Academic term ID must be a valid identifier.',
+          },
+        });
+      }
+
+      targetTerm = await AcademicTerm.findOne({
+        _id: data.academicTermId,
+        campusId: req.campusId,
+      });
+
+      if (!targetTerm) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'ACADEMIC_TERM_NOT_FOUND',
+            message: 'The selected academic term does not exist on this campus.',
+          },
+        });
+      }
+    } else {
+      targetTerm = await AcademicTerm.findOne({
+        campusId: req.campusId,
+        isCurrent: true,
+      });
+
+      if (!targetTerm) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'NO_CURRENT_TERM',
+            message: 'No active academic term configured for this campus.',
+          },
+        });
+      }
+    }
+
+    // Check existing membership for this specific term
+    const existingMembership = await Membership.findOne({
       campusId: req.campusId,
-      isCurrent: true,
+      clubId: req.params.clubId,
+      userId: targetUser._id,
+      academicTermId: targetTerm._id,
     });
 
-    const membership = await Membership.findOneAndUpdate(
-      {
-        campusId: req.campusId,
-        clubId: req.params.clubId,
-        userId: targetUser._id,
-        academicTermId: currentTerm ? currentTerm._id : null,
-      },
-      {
-        clubRole: data.clubRole,
-        title: data.title || '',
-        status: 'ACTIVE',
-      },
-      { upsert: true, new: true }
-    ).populate('userId', 'fullName email avatarUrl department');
+    if (existingMembership) {
+      if (existingMembership.status === 'ACTIVE') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'MEMBERSHIP_ALREADY_EXISTS',
+            message: 'This user already holds an active membership for the selected academic term.',
+          },
+        });
+      }
+
+      // Reactivate previously inactive/revoked membership for this specific term
+      existingMembership.status = 'ACTIVE';
+      existingMembership.clubRole = data.clubRole;
+      existingMembership.title = data.title || '';
+      await existingMembership.save();
+
+      const populated = await Membership.findById(existingMembership._id)
+        .populate('userId', 'fullName email avatarUrl department phone')
+        .populate('academicTermId', 'name isCurrent');
+
+      return res.status(200).json({
+        success: true,
+        data: { membership: populated },
+      });
+    }
+
+    const membership = await Membership.create({
+      campusId: req.campusId,
+      clubId: req.params.clubId,
+      userId: targetUser._id,
+      academicTermId: targetTerm._id,
+      clubRole: data.clubRole,
+      title: data.title || '',
+      status: 'ACTIVE',
+    });
+
+    const populated = await Membership.findById(membership._id)
+      .populate('userId', 'fullName email avatarUrl department phone')
+      .populate('academicTermId', 'name isCurrent');
 
     return res.status(201).json({
       success: true,
-      data: { membership },
+      data: { membership: populated },
     });
   } catch (err) {
     next(err);
