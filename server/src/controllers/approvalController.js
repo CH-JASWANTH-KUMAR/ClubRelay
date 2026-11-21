@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Approval, Event, Club, Notification, AuditLog } from '../models/index.js';
+import { Approval, Event, Club, Membership, Notification, AuditLog } from '../models/index.js';
 import { verifyFacultyReviewerForClub } from '../middleware/tenant.js';
 
 const reviewSchema = z.object({
@@ -158,8 +158,48 @@ export async function reviewProposal(req, res, next) {
 
 export async function listEventApprovals(req, res, next) {
   try {
+    const event = await Event.findOne({
+      _id: req.params.eventId,
+      campusId: req.campusId,
+    }).populate('clubId');
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'EVENT_NOT_FOUND', message: 'Event not found in your campus.' },
+      });
+    }
+
+    const club = event.clubId;
+    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const isAssignedFaculty =
+      req.user.campusRole === 'FACULTY_COORDINATOR' &&
+      club?.facultyCoordinatorId &&
+      club.facultyCoordinatorId.toString() === req.user._id.toString();
+
+    let isMember = false;
+    if (!isCampusAdmin && !isAssignedFaculty) {
+      const membership = await Membership.findOne({
+        campusId: req.campusId,
+        clubId: club?._id || club,
+        userId: req.user._id,
+        status: 'ACTIVE',
+      });
+      isMember = !!membership;
+    }
+
+    if (!isCampusAdmin && !isAssignedFaculty && !isMember) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Access denied: You are not authorized to view approval history for this event.',
+        },
+      });
+    }
+
     const approvals = await Approval.find({
-      eventId: req.params.eventId,
+      eventId: event._id,
       campusId: req.campusId,
     })
       .populate('reviewerId', 'fullName email')

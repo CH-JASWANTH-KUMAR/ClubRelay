@@ -29,14 +29,18 @@ app.use(
 );
 
 // Explicit CORS Origin Allowlist
-const rawOrigins = env.CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
-const allowedOrigins = new Set([
-  ...rawOrigins,
+const rawOrigins = (env.CLIENT_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean);
+const devOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-]);
+];
+const allowedOrigins = new Set(
+  env.NODE_ENV === 'production'
+    ? rawOrigins
+    : [...rawOrigins, ...devOrigins]
+);
 
 app.use(
   cors({

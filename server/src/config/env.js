@@ -11,7 +11,7 @@ const envSchema = z
       .string()
       .min(16, 'JWT_SECRET must be at least 16 characters in development/test and 32 in production'),
     MONGODB_URI: z.string().optional(),
-    CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+    CLIENT_ORIGIN: z.string().optional(),
     ALLOW_SEED_IN_PROD: z.string().optional().default('false'),
   })
   .refine(
@@ -37,6 +37,23 @@ const envSchema = z
       message: 'JWT_SECRET must be at least 32 characters long in production.',
       path: ['JWT_SECRET'],
     }
+  )
+  .refine(
+    (data) => {
+      if (data.NODE_ENV === 'production') {
+        if (!data.CLIENT_ORIGIN || data.CLIENT_ORIGIN.trim().length === 0) {
+          return false;
+        }
+        const origins = data.CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
+        if (origins.length === 0) return false;
+        return origins.every((o) => !o.includes('localhost') && !o.includes('127.0.0.1'));
+      }
+      return true;
+    },
+    {
+      message: 'CLIENT_ORIGIN must be explicitly configured with valid non-localhost production origins when NODE_ENV is "production". Localhost origins are restricted to development.',
+      path: ['CLIENT_ORIGIN'],
+    }
   );
 
 // Safe fallback for dev/test environments only, NEVER in production
@@ -50,7 +67,9 @@ const rawEnv = {
   PORT: process.env.PORT || '5000',
   JWT_SECRET: process.env.JWT_SECRET || devFallbackSecret,
   MONGODB_URI: process.env.MONGODB_URI,
-  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  CLIENT_ORIGIN:
+    process.env.CLIENT_ORIGIN ||
+    (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:5173'),
   ALLOW_SEED_IN_PROD: process.env.ALLOW_SEED_IN_PROD || 'false',
 };
 
@@ -65,3 +84,4 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+

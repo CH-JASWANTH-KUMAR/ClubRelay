@@ -29,7 +29,7 @@ export async function listTasks(req, res, next) {
     const event = await Event.findOne({
       _id: req.params.eventId,
       campusId: req.campusId,
-    });
+    }).populate('clubId');
 
     if (!event) {
       return res.status(404).json({
@@ -38,20 +38,33 @@ export async function listTasks(req, res, next) {
       });
     }
 
-    // Tenant check: user must belong to club or be campus admin
-    if (req.user.campusRole !== 'CAMPUS_ADMIN') {
+    // Role check: Campus Admin, assigned Faculty Coordinator, or active Club Member
+    const club = event.clubId;
+    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const isAssignedFaculty =
+      req.user.campusRole === 'FACULTY_COORDINATOR' &&
+      club?.facultyCoordinatorId &&
+      club.facultyCoordinatorId.toString() === req.user._id.toString();
+
+    let isMember = false;
+    if (!isCampusAdmin && !isAssignedFaculty) {
       const membership = await Membership.findOne({
         campusId: req.campusId,
-        clubId: event.clubId,
+        clubId: club?._id || club,
         userId: req.user._id,
         status: 'ACTIVE',
       });
-      if (!membership && req.user.campusRole !== 'FACULTY_COORDINATOR') {
-        return res.status(403).json({
-          success: false,
-          error: { code: 'NOT_A_MEMBER', message: 'You are not a member of this club.' },
-        });
-      }
+      isMember = !!membership;
+    }
+
+    if (!isCampusAdmin && !isAssignedFaculty && !isMember) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Access denied: You are not authorized to view tasks for this organization.',
+        },
+      });
     }
 
     const tasks = await EventTask.find({ eventId: event._id })

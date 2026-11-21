@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import path from 'path';
 import fs from 'fs';
 import { env } from './env.js';
@@ -24,14 +24,20 @@ export async function connectDB() {
       const cacheDir = path.resolve(process.cwd(), '.cache/mongo-mem');
       fs.mkdirSync(cacheDir, { recursive: true });
 
-      mongod = await MongoMemoryServer.create({
-        instance: {
-          tmpDir: cacheDir,
+      mongod = await MongoMemoryReplSet.create({
+        replSet: {
+          count: 1,
+          storageEngine: 'wiredTiger',
         },
+        instanceOpts: [
+          {
+            tmpDir: cacheDir,
+          },
+        ],
       });
     }
     uri = mongod.getUri();
-    console.log(`[Database] Using isolated in-memory MongoDB at: ${uri}`);
+    console.log(`[Database] Using isolated in-memory replica set MongoDB at: ${uri}`);
   } else {
     console.log(`[Database] Connecting to MongoDB Atlas cluster...`);
   }

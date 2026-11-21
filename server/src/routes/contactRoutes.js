@@ -7,8 +7,12 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.get('/clubs/:clubId/contacts', listContacts);
-router.post('/clubs/:clubId/contacts', requireClubRole('CORE_TEAM'), createContact);
-router.put('/clubs/:clubId/contacts/:id', requireClubRole('CORE_TEAM'), updateContact);
+router.get(
+  '/clubs/:clubId/contacts',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  listContacts
+);
+router.post('/clubs/:clubId/contacts', requireClubRole('CORE_TEAM', { allowCampusAdmin: true }), createContact);
+router.put('/clubs/:clubId/contacts/:id', requireClubRole('CORE_TEAM', { allowCampusAdmin: true }), updateContact);
 
 export default router;

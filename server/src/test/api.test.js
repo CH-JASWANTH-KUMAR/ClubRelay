@@ -1,18 +1,29 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import { spawnSync } from 'child_process';
 import app from '../app.js';
 import { connectDB, disconnectDB } from '../config/db.js';
 import { runSeed } from '../scripts/seed.js';
-import { User, Club, Event, Handover, Membership, Campus, AcademicTerm } from '../models/index.js';
+import {
+  User,
+  Club,
+  Event,
+  Handover,
+  Membership,
+  Campus,
+  AcademicTerm,
+  KnowledgeItem,
+  AuditLog,
+} from '../models/index.js';
 
 describe('ClubRelay Production Engineering Hardening Test Suite', () => {
-  let sarahToken = '';
   let sarahCookie = '';
-  let alexToken = '';
   let alexCookie = '';
   let facultyChenCookie = '';
   let campusAdminCookie = '';
   let generalMemberCookie = '';
+  let ieeePresidentCookie = '';
+  let unassignedFacultySharmaCookie = '';
 
   let pcuCampusId = '';
   let mtiCampusId = '';
@@ -47,11 +58,9 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
 
     const sarahAuth = await loginPersona('sarah.gdg@pcu.edu');
     sarahCookie = sarahAuth.cookie;
-    sarahToken = sarahAuth.token;
 
     const alexAuth = await loginPersona('alex.incoming@pcu.edu');
     alexCookie = alexAuth.cookie;
-    alexToken = alexAuth.token;
 
     const facultyAuth = await loginPersona('advisor.chen@pcu.edu');
     facultyChenCookie = facultyAuth.cookie;
@@ -61,6 +70,12 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
 
     const generalAuth = await loginPersona('sam.member@pcu.edu');
     generalMemberCookie = generalAuth.cookie;
+
+    const ieeeAuth = await loginPersona('raj.ieee@pcu.edu');
+    ieeePresidentCookie = ieeeAuth.cookie;
+
+    const sharmaAuth = await loginPersona('advisor.sharma@pcu.edu');
+    unassignedFacultySharmaCookie = sharmaAuth.cookie;
   });
 
   afterAll(async () => {
@@ -595,6 +610,352 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('HANDOVER_LOCKED');
+    });
+  });
+
+  // ==========================================
+  // Priority 5: Security Regressions & ACID Handover Integrity
+  // ==========================================
+  describe('Priority 5: Cross-Club Read Authorization & Handover Transaction Integrity', () => {
+    let gdgKnowledgeId = '';
+    let gdgEventId = '';
+
+    beforeAll(async () => {
+      const gdgDoc = await KnowledgeItem.findOne({ clubId: gdgClubId });
+      if (gdgDoc) gdgKnowledgeId = gdgDoc._id.toString();
+
+      const gdgEvent = await Event.findOne({ clubId: gdgClubId });
+      if (gdgEvent) gdgEventId = gdgEvent._id.toString();
+    });
+
+    describe('CORS Origin Controls & Production Configuration', () => {
+      it('permits development/test localhost requests', async () => {
+        const res = await request(app)
+          .get('/api/health')
+          .set('Origin', 'http://localhost:5173');
+        expect(res.status).toBe(200);
+        expect(res.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+      });
+
+      it('rejects unpermitted third-party origins under CORS policy', async () => {
+        const res = await request(app)
+          .get('/api/health')
+          .set('Origin', 'https://malicious-cross-origin.com');
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('CORS_FORBIDDEN');
+      });
+
+      it('enforces strict production environment configuration schema (requires non-localhost CLIENT_ORIGIN, 32-char JWT, and MONGODB_URI)', () => {
+        const testRes = spawnSync(
+          'node',
+          ['-e', 'import("./src/config/env.js");'],
+          {
+            cwd: process.cwd(),
+            env: {
+              ...process.env,
+              NODE_ENV: 'production',
+              JWT_SECRET: 'a_very_long_production_secret_32_characters_minimum!',
+              CLIENT_ORIGIN: 'http://localhost:5173',
+              MONGODB_URI: 'mongodb+srv://user:pass@cluster0.mongodb.net/prod',
+            },
+          }
+        );
+        expect(testRes.status).not.toBe(0);
+        const errOutput = testRes.stderr.toString() + testRes.stdout.toString();
+        expect(errOutput).toContain('Localhost origins are restricted to development');
+
+        const validRes = spawnSync(
+          'node',
+          ['-e', 'import("./src/config/env.js");'],
+          {
+            cwd: process.cwd(),
+            env: {
+              ...process.env,
+              NODE_ENV: 'production',
+              JWT_SECRET: 'a_very_long_production_secret_32_characters_minimum!',
+              CLIENT_ORIGIN: 'https://clubrelay.edu,https://admin.clubrelay.edu',
+              MONGODB_URI: 'mongodb+srv://user:pass@cluster0.mongodb.net/prod',
+            },
+          }
+        );
+        expect(validRes.status).toBe(0);
+      });
+    });
+
+    describe('Cross-Club Read Authorization Isolation', () => {
+      it('prevents same-campus user from accessing another club private knowledge list (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/knowledge`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('prevents same-campus user from accessing another club private knowledge item detail (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/knowledge/${gdgKnowledgeId}`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('prevents same-campus user from accessing another club vendor contacts (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/contacts`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('prevents same-campus user from accessing another club meeting decisions (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/decisions`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('prevents same-campus user from accessing another club annual reports (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/reports/annual`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('prevents same-campus user from exporting another club annual reports CSV (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/reports/export/csv`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('prevents unauthorized same-campus non-member from accessing another club event details (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/events/${gdgEventId}`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('FORBIDDEN');
+      });
+
+      it('prevents unauthorized same-campus non-member from accessing another club event approval history (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/approvals/events/${gdgEventId}`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('FORBIDDEN');
+      });
+
+      it('prevents unassigned faculty coordinator from accessing another club event tasks (Negative Test)', async () => {
+        // advisor.sharma is assigned to IEEE, but unassigned to GDG
+        const res = await request(app)
+          .get(`/api/v1/events/${gdgEventId}/tasks`)
+          .set('Cookie', unassignedFacultySharmaCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('FORBIDDEN');
+      });
+
+      it('allows assigned faculty coordinator, club member, and campus admin intended access', async () => {
+        // Assigned faculty (Chen) can access GDG tasks and event details
+        const facultyTasksRes = await request(app)
+          .get(`/api/v1/events/${gdgEventId}/tasks`)
+          .set('Cookie', facultyChenCookie);
+        expect(facultyTasksRes.status).toBe(200);
+
+        const facultyEventRes = await request(app)
+          .get(`/api/v1/events/${gdgEventId}`)
+          .set('Cookie', facultyChenCookie);
+        expect(facultyEventRes.status).toBe(200);
+
+        // Campus admin has campus-wide oversight
+        const adminEventRes = await request(app)
+          .get(`/api/v1/events/${gdgEventId}`)
+          .set('Cookie', campusAdminCookie);
+        expect(adminEventRes.status).toBe(200);
+
+        const adminTasksRes = await request(app)
+          .get(`/api/v1/events/${gdgEventId}/tasks`)
+          .set('Cookie', campusAdminCookie);
+        expect(adminTasksRes.status).toBe(200);
+
+        // Active member (Alex) can access event details and tasks
+        const memberEventRes = await request(app)
+          .get(`/api/v1/events/${gdgEventId}`)
+          .set('Cookie', alexCookie);
+        expect(memberEventRes.status).toBe(200);
+      });
+    });
+
+    describe('Handover Transaction Integrity & Concurrency', () => {
+      let rollbackHandoverId = '';
+      let concurrentHandoverId = '';
+
+      beforeAll(async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const pastTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: false });
+        const rajUser = await User.findOne({ email: 'raj.ieee@pcu.edu' });
+        const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+
+        // Ensure Sam has an active membership in IEEE for testing
+        const existingSamMembership = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          userId: samUser._id,
+        });
+        if (!existingSamMembership) {
+          await Membership.create({
+            campusId: pcuCampusId,
+            clubId: ieeeClubId,
+            userId: samUser._id,
+            academicTermId: currentTerm._id,
+            clubRole: 'CORE_TEAM',
+            title: 'Incoming Test Officer',
+            status: 'ACTIVE',
+          });
+        }
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Done', completed: true },
+          outstandingTasks: { content: 'Done', completed: true },
+          pendingCommitments: { content: 'Done', completed: true },
+          futureEventSchedules: { content: 'Done', completed: true },
+          importantDocuments: { content: 'Done', completed: true },
+          contactsAndPartners: { content: 'Done', completed: true },
+          reusablePlaybooks: { content: 'Done', completed: true },
+          recommendationsAndAdvice: { content: 'Done', completed: true },
+        };
+
+        // 1. Create a handover for failure/rollback test
+        const rollbackHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          fromTermId: pastTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: rajUser._id,
+          incomingLeaderId: samUser._id,
+          roleHandover: 'PRESIDENT',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+        rollbackHandoverId = rollbackHandover._id.toString();
+
+        // 2. Create another handover for concurrent completion test
+        const concurrentHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          fromTermId: pastTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: rajUser._id,
+          incomingLeaderId: samUser._id,
+          roleHandover: 'PRESIDENT',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+        concurrentHandoverId = concurrentHandover._id.toString();
+      });
+
+      it('aborts cleanly and leaves zero partial state upon handover transaction failure', async () => {
+        // Temporarily spy on AuditLog.create to simulate an unexpected error during the transaction
+        const originalAuditCreate = AuditLog.create;
+        let failTriggered = false;
+
+        AuditLog.create = async function (...args) {
+          if (!failTriggered) {
+            failTriggered = true;
+            throw new Error('Simulated database write error inside atomic transaction');
+          }
+          return originalAuditCreate.apply(this, args);
+        };
+
+        try {
+          const res = await request(app)
+            .post(`/api/v1/clubs/${ieeeClubId}/handovers/${rollbackHandoverId}/complete`)
+            .set('Cookie', ieeePresidentCookie);
+
+          // Should have failed and rolled back
+          expect(res.status).toBe(500);
+
+          // VERIFY ACID TRANSACTION GUARANTEES:
+          // 1. Handover status must NOT be COMPLETED
+          const checkHandover = await Handover.findById(rollbackHandoverId);
+          expect(checkHandover.status).toBe('ACKNOWLEDGED');
+          expect(checkHandover.completedAt).toBeNull();
+
+          // 2. Outgoing leader (Raj) must still be PRESIDENT (NOT demoted to CORE_TEAM)
+          const rajUser = await User.findOne({ email: 'raj.ieee@pcu.edu' });
+          const rajMembership = await Membership.findOne({
+            campusId: pcuCampusId,
+            clubId: ieeeClubId,
+            userId: rajUser._id,
+          });
+          expect(rajMembership.clubRole).toBe('PRESIDENT');
+
+          // 3. Incoming leader (Sam) must NOT have received PRESIDENT role
+          const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+          const samMembership = await Membership.findOne({
+            campusId: pcuCampusId,
+            clubId: ieeeClubId,
+            userId: samUser._id,
+          });
+          expect(samMembership.clubRole).not.toBe('PRESIDENT');
+
+          // 4. No transfer audit record was recorded
+          const auditRecord = await AuditLog.findOne({
+            targetId: rollbackHandoverId,
+            action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
+          });
+          expect(auditRecord).toBeNull();
+        } finally {
+          AuditLog.create = originalAuditCreate;
+        }
+      });
+
+      it('prevents concurrent duplicate handover completion and preserves single role transition', async () => {
+        // Dispatch 2 concurrent completion requests for the exact same handover
+        const [res1, res2] = await Promise.all([
+          request(app)
+            .post(`/api/v1/clubs/${ieeeClubId}/handovers/${concurrentHandoverId}/complete`)
+            .set('Cookie', ieeePresidentCookie),
+          request(app)
+            .post(`/api/v1/clubs/${ieeeClubId}/handovers/${concurrentHandoverId}/complete`)
+            .set('Cookie', ieeePresidentCookie),
+        ]);
+
+        const statuses = [res1.status, res2.status].sort();
+        // One must succeed with 200, one must fail with 400
+        expect(statuses).toEqual([200, 400]);
+
+        const successRes = res1.status === 200 ? res1 : res2;
+        const rejectedRes = res1.status === 400 ? res1 : res2;
+
+        expect(successRes.body.success).toBe(true);
+        expect(rejectedRes.body.error.code).toBe('HANDOVER_ALREADY_COMPLETED');
+
+        // Verify final state in database
+        const finalHandover = await Handover.findById(concurrentHandoverId);
+        expect(finalHandover.status).toBe('COMPLETED');
+
+        // Audit log must have recorded exactly one transition event for this handover
+        const auditCount = await AuditLog.countDocuments({
+          targetId: concurrentHandoverId,
+          action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
+        });
+        expect(auditCount).toBe(1);
+      });
     });
   });
 });

@@ -30,6 +30,17 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
+  // Handle CORS policy errors
+  if (err.message && err.message.includes('not permitted by ClubRelay CORS policy')) {
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'CORS_FORBIDDEN',
+        message: err.message,
+      },
+    });
+  }
+
   // Handle known HTTP errors
   const status = err.statusCode || err.status || 500;
   const message = err.message || 'Internal Server Error';

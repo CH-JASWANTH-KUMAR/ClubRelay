@@ -188,6 +188,34 @@ export async function getEvent(req, res, next) {
       });
     }
 
+    const club = event.clubId;
+    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const isAssignedFaculty =
+      req.user.campusRole === 'FACULTY_COORDINATOR' &&
+      club?.facultyCoordinatorId &&
+      club.facultyCoordinatorId.toString() === req.user._id.toString();
+
+    let isMember = false;
+    if (!isCampusAdmin && !isAssignedFaculty) {
+      const membership = await Membership.findOne({
+        campusId: req.campusId,
+        clubId: club?._id || club,
+        userId: req.user._id,
+        status: 'ACTIVE',
+      });
+      isMember = !!membership;
+    }
+
+    if (!isCampusAdmin && !isAssignedFaculty && !isMember) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Access denied: You are not authorized to view this event.',
+        },
+      });
+    }
+
     const [tasks, approvals] = await Promise.all([
       EventTask.find({ eventId: event._id })
         .populate('assigneeId', 'fullName email avatarUrl')

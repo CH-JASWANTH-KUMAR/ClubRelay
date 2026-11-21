@@ -12,9 +12,25 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.get('/clubs/:clubId/knowledge', listKnowledge);
-router.post('/clubs/:clubId/knowledge', requireClubRole('CORE_TEAM'), createKnowledge);
-router.get('/clubs/:clubId/knowledge/:id', getKnowledge);
-router.put('/clubs/:clubId/knowledge/:id', requireClubRole('CORE_TEAM'), updateKnowledge);
+router.get(
+  '/clubs/:clubId/knowledge',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  listKnowledge
+);
+router.post(
+  '/clubs/:clubId/knowledge',
+  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
+  createKnowledge
+);
+router.get(
+  '/clubs/:clubId/knowledge/:id',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  getKnowledge
+);
+router.put(
+  '/clubs/:clubId/knowledge/:id',
+  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
+  updateKnowledge
+);
 
 export default router;

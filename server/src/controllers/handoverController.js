@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import {
   Handover,
@@ -451,25 +452,45 @@ export async function completeHandover(req, res, next) {
       });
     }
 
-    // Safe Atomic Role Transition with Error Rollback
-    const previousOutgoingMembership = await Membership.findOne({
-      campusId: req.campusId,
-      clubId: handover.clubId,
-      userId: handover.outgoingLeaderId,
-    });
-
-    const previousIncomingMembership = await Membership.findOne({
-      campusId: req.campusId,
-      clubId: handover.clubId,
-      userId: handover.incomingLeaderId,
-    });
+    // Execute genuine ACID multi-document MongoDB transaction with replica-set support
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
     try {
-      handover.status = 'COMPLETED';
-      handover.completedAt = new Date();
-      await handover.save();
+      // Concurrency guard: atomically lock and transition handover status only if currently ACKNOWLEDGED
+      const updatedHandover = await Handover.findOneAndUpdate(
+        {
+          _id: handover._id,
+          clubId: req.params.clubId,
+          campusId: req.campusId,
+          status: 'ACKNOWLEDGED',
+        },
+        {
+          $set: {
+            status: 'COMPLETED',
+            completedAt: new Date(),
+          },
+        },
+        {
+          new: true,
+          session,
+        }
+      );
 
-      // Transition outgoing leader to advisory role
+      if (!updatedHandover) {
+        // Document was already updated concurrently or status transitioned
+        await session.abortTransaction();
+        await session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'HANDOVER_ALREADY_COMPLETED',
+            message: 'This handover has already been completed. Role transition was executed previously.',
+          },
+        });
+      }
+
+      // Transition outgoing leader to advisory role within transaction
       await Membership.findOneAndUpdate(
         {
           campusId: req.campusId,
@@ -477,12 +498,15 @@ export async function completeHandover(req, res, next) {
           userId: handover.outgoingLeaderId,
         },
         {
-          clubRole: 'CORE_TEAM',
-          title: 'Past President / Senior Advisor',
-        }
+          $set: {
+            clubRole: 'CORE_TEAM',
+            title: 'Past President / Senior Advisor',
+          },
+        },
+        { session }
       );
 
-      // Transition incoming leader to executive role
+      // Transition incoming leader to executive role within transaction
       await Membership.findOneAndUpdate(
         {
           campusId: req.campusId,
@@ -490,50 +514,70 @@ export async function completeHandover(req, res, next) {
           userId: handover.incomingLeaderId,
         },
         {
-          clubRole: handover.roleHandover === 'PRESIDENT' ? 'PRESIDENT' : 'SECRETARY',
-          title: handover.roleHandover === 'PRESIDENT' ? 'Club President' : 'Club Secretary',
-          academicTermId: handover.toTermId,
-          status: 'ACTIVE',
+          $set: {
+            clubRole: handover.roleHandover === 'PRESIDENT' ? 'PRESIDENT' : 'SECRETARY',
+            title: handover.roleHandover === 'PRESIDENT' ? 'Club President' : 'Club Secretary',
+            academicTermId: handover.toTermId,
+            status: 'ACTIVE',
+          },
         },
-        { upsert: true }
+        { upsert: true, session }
       );
-    } catch (transitionErr) {
-      // Rollback on failure
-      console.error('[Handover Atomic Failure] Rolling back role changes:', transitionErr);
-      if (previousOutgoingMembership) {
-        await Membership.findByIdAndUpdate(previousOutgoingMembership._id, {
-          clubRole: previousOutgoingMembership.clubRole,
-          title: previousOutgoingMembership.title,
-        });
+
+      // Record audit log within transaction
+      await AuditLog.create(
+        [
+          {
+            campusId: req.campusId,
+            clubId: req.params.clubId,
+            actorId: req.user._id,
+            action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
+            targetType: 'Handover',
+            targetId: handover._id,
+            metadata: {
+              outgoingLeaderId: handover.outgoingLeaderId,
+              incomingLeaderId: handover.incomingLeaderId,
+              roleHandover: handover.roleHandover,
+            },
+          },
+        ],
+        { session }
+      );
+
+      await session.commitTransaction();
+      await session.endSession();
+
+      return res.json({
+        success: true,
+        data: { handover: updatedHandover },
+        message: 'Handover completed! Executive roles have successfully transferred.',
+      });
+    } catch (transactionErr) {
+      await session.abortTransaction();
+      await session.endSession();
+
+      // Check for concurrent write conflict from a competing completion request
+      const isConflict =
+        transactionErr.code === 112 ||
+        transactionErr.hasErrorLabel?.('TransientTransactionError') ||
+        (transactionErr.message && transactionErr.message.includes('Write conflict'));
+
+      if (isConflict) {
+        await new Promise((resolve) => setTimeout(resolve, 60));
+        const currentHandover = await Handover.findById(handover._id);
+        if (currentHandover && currentHandover.status === 'COMPLETED') {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'HANDOVER_ALREADY_COMPLETED',
+              message: 'This handover has already been completed. Role transition was executed previously.',
+            },
+          });
+        }
       }
-      if (previousIncomingMembership) {
-        await Membership.findByIdAndUpdate(previousIncomingMembership._id, {
-          clubRole: previousIncomingMembership.clubRole,
-          title: previousIncomingMembership.title,
-        });
-      }
-      throw transitionErr;
+
+      throw transactionErr;
     }
-
-    await AuditLog.create({
-      campusId: req.campusId,
-      clubId: req.params.clubId,
-      actorId: req.user._id,
-      action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
-      targetType: 'Handover',
-      targetId: handover._id,
-      metadata: {
-        outgoingLeaderId: handover.outgoingLeaderId,
-        incomingLeaderId: handover.incomingLeaderId,
-        roleHandover: handover.roleHandover,
-      },
-    });
-
-    return res.json({
-      success: true,
-      data: { handover },
-      message: 'Handover completed! Executive roles have successfully transferred.',
-    });
   } catch (err) {
     next(err);
   }

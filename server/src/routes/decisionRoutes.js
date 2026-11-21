@@ -7,7 +7,11 @@ const router = express.Router();
 
 router.use(requireAuth);
 
-router.get('/clubs/:clubId/decisions', listDecisions);
-router.post('/clubs/:clubId/decisions', requireClubRole('SECRETARY'), recordDecision);
+router.get(
+  '/clubs/:clubId/decisions',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  listDecisions
+);
+router.post('/clubs/:clubId/decisions', requireClubRole('SECRETARY', { allowCampusAdmin: true }), recordDecision);
 
 export default router;
