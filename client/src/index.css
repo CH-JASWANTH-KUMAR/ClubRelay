@@ -54,6 +54,17 @@ body {
   outline-offset: 2px;
 }
 
+/* Hallmark rule: active & disabled states */
+:active {
+  transform: translateY(0.5px);
+}
+
+:disabled,
+[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* Reduced motion guarantee */
 @media (prefers-reduced-motion: reduce) {
   *,

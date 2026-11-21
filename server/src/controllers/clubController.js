@@ -24,7 +24,7 @@ export async function listClubs(req, res, next) {
     }
 
     const clubs = await Club.find(filter)
-      .populate('facultyCoordinatorId', 'fullName email department avatarUrl')
+      .populate('facultyCoordinatorId', 'fullName department avatarUrl')
       .sort({ name: 1 });
 
     return res.json({
@@ -64,7 +64,7 @@ export async function getClub(req, res, next) {
     const club = await Club.findOne({
       _id: req.params.clubId,
       campusId: req.campusId,
-    }).populate('facultyCoordinatorId', 'fullName email department avatarUrl');
+    }).populate('facultyCoordinatorId', 'fullName department avatarUrl email');
 
     if (!club) {
       return res.status(404).json({
@@ -73,34 +73,75 @@ export async function getClub(req, res, next) {
       });
     }
 
+    // Role check: Campus Admin, explicitly assigned Faculty Coordinator, or active Club Member
+    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const isAssignedFaculty =
+      req.user.campusRole === 'FACULTY_COORDINATOR' &&
+      club.facultyCoordinatorId &&
+      (club.facultyCoordinatorId._id || club.facultyCoordinatorId).toString() === req.user._id.toString();
+
+    let isMember = false;
+    if (!isCampusAdmin && !isAssignedFaculty) {
+      const membership = await Membership.findOne({
+        campusId: req.campusId,
+        clubId: club._id,
+        userId: req.user._id,
+        status: 'ACTIVE',
+      });
+      isMember = !!membership;
+    }
+
+    const isAuthorized = isCampusAdmin || isAssignedFaculty || isMember;
+
     // Fetch leadership team
-    const leadership = await Membership.find({
+    const leadershipQuery = Membership.find({
       clubId: club._id,
       campusId: req.campusId,
       status: 'ACTIVE',
       clubRole: { $in: ['PRESIDENT', 'SECRETARY', 'CORE_TEAM'] },
-    }).populate('userId', 'fullName email avatarUrl department');
+    });
 
-    const [memberCount, eventCount, latestHandover] = await Promise.all([
+    if (isAuthorized) {
+      leadershipQuery.populate('userId', 'fullName email avatarUrl department');
+    } else {
+      // Do not expose member emails, phone numbers, or private contact details to unrelated campus users
+      leadershipQuery.populate('userId', 'fullName avatarUrl department');
+    }
+
+    const [leadership, memberCount, eventCount, latestHandover] = await Promise.all([
+      leadershipQuery,
       Membership.countDocuments({ clubId: club._id, status: 'ACTIVE' }),
       Event.countDocuments({ clubId: club._id }),
-      Handover.findOne({ clubId: club._id })
-        .populate('outgoingLeaderId', 'fullName email')
-        .populate('incomingLeaderId', 'fullName email')
-        .sort({ createdAt: -1 }),
+      isAuthorized
+        ? Handover.findOne({ clubId: club._id })
+            .populate('outgoingLeaderId', 'fullName email')
+            .populate('incomingLeaderId', 'fullName email')
+            .sort({ createdAt: -1 })
+        : null,
     ]);
+
+    // Sanitize club object if not authorized: strip sensitive contact details
+    const sanitizedClub = club.toObject();
+    if (!isAuthorized && sanitizedClub.facultyCoordinatorId) {
+      delete sanitizedClub.facultyCoordinatorId.email;
+      delete sanitizedClub.facultyCoordinatorId.phone;
+    }
+
+    const metrics = {
+      memberCount,
+      eventCount,
+      // Private handover information is strictly reserved for authorized members, assigned faculty, and campus admins
+      handoverProgress: isAuthorized && latestHandover ? latestHandover.completionPercentage : null,
+      latestHandoverStatus: isAuthorized && latestHandover ? latestHandover.status : null,
+    };
 
     return res.json({
       success: true,
       data: {
-        club,
+        club: sanitizedClub,
         leadership,
-        metrics: {
-          memberCount,
-          eventCount,
-          handoverProgress: latestHandover ? latestHandover.completionPercentage : null,
-          latestHandoverStatus: latestHandover ? latestHandover.status : null,
-        },
+        metrics,
+        isAuthorized,
       },
     });
   } catch (err) {
@@ -110,12 +151,20 @@ export async function getClub(req, res, next) {
 
 export async function getMembers(req, res, next) {
   try {
+    const isExecutiveOrAdmin =
+      req.user.campusRole === 'CAMPUS_ADMIN' ||
+      ['PRESIDENT', 'SECRETARY'].includes(req.userClubRole);
+
+    const selectFields = isExecutiveOrAdmin
+      ? 'fullName email avatarUrl department phone'
+      : 'fullName email avatarUrl department'; // Protect student phone numbers from general members
+
     const members = await Membership.find({
       clubId: req.params.clubId,
       campusId: req.campusId,
       status: 'ACTIVE',
     })
-      .populate('userId', 'fullName email avatarUrl department phone')
+      .populate('userId', selectFields)
       .populate('academicTermId', 'name isCurrent')
       .sort({ clubRole: 1, createdAt: 1 });
 

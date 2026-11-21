@@ -490,12 +490,66 @@ export async function completeHandover(req, res, next) {
         });
       }
 
-      // Transition outgoing leader to advisory role within transaction
-      await Membership.findOneAndUpdate(
+      // 1. Verify outgoing leader membership record inside transaction
+      const outgoingMembership = await Membership.findOne({
+        campusId: req.campusId,
+        clubId: handover.clubId,
+        userId: handover.outgoingLeaderId,
+        status: 'ACTIVE',
+      }).session(session);
+
+      if (!outgoingMembership) {
+        await session.abortTransaction();
+        await session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'OUTGOING_MEMBERSHIP_INVALID',
+            message: 'Outgoing leader membership record is missing or not active.',
+          },
+        });
+      }
+
+      // 2. Verify incoming leader membership record inside transaction
+      const incomingMembership = await Membership.findOne({
+        campusId: req.campusId,
+        clubId: handover.clubId,
+        userId: handover.incomingLeaderId,
+      }).session(session);
+
+      if (!incomingMembership) {
+        await session.abortTransaction();
+        await session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INCOMING_MEMBERSHIP_NOT_FOUND',
+            message: 'Incoming leader membership record not found.',
+          },
+        });
+      }
+
+      // Require the incoming member to remain active
+      if (incomingMembership.status !== 'ACTIVE') {
+        await session.abortTransaction();
+        await session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INCOMING_MEMBER_INACTIVE',
+            message: 'Incoming leader is no longer an active member of this organization.',
+          },
+        });
+      }
+
+      // 3. Verify the outgoing membership update matched exactly one record
+      const outgoingUpdate = await Membership.updateOne(
         {
+          _id: outgoingMembership._id,
           campusId: req.campusId,
           clubId: handover.clubId,
           userId: handover.outgoingLeaderId,
+          status: 'ACTIVE',
         },
         {
           $set: {
@@ -506,23 +560,48 @@ export async function completeHandover(req, res, next) {
         { session }
       );
 
-      // Transition incoming leader to executive role within transaction
-      await Membership.findOneAndUpdate(
+      if (outgoingUpdate.matchedCount !== 1 || outgoingUpdate.modifiedCount !== 1) {
+        await session.abortTransaction();
+        await session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'OUTGOING_MEMBERSHIP_UPDATE_FAILED',
+            message: 'Failed to update outgoing leader membership record consistently.',
+          },
+        });
+      }
+
+      // 4. Update incoming leader without upsert, verifying update matched exactly one record
+      const incomingUpdate = await Membership.updateOne(
         {
+          _id: incomingMembership._id,
           campusId: req.campusId,
           clubId: handover.clubId,
           userId: handover.incomingLeaderId,
+          status: 'ACTIVE',
         },
         {
           $set: {
             clubRole: handover.roleHandover === 'PRESIDENT' ? 'PRESIDENT' : 'SECRETARY',
             title: handover.roleHandover === 'PRESIDENT' ? 'Club President' : 'Club Secretary',
             academicTermId: handover.toTermId,
-            status: 'ACTIVE',
           },
         },
-        { upsert: true, session }
+        { session }
       );
+
+      if (incomingUpdate.matchedCount !== 1 || incomingUpdate.modifiedCount !== 1) {
+        await session.abortTransaction();
+        await session.endSession();
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INCOMING_MEMBERSHIP_UPDATE_FAILED',
+            message: 'Failed to update incoming leader membership record consistently.',
+          },
+        });
+      }
 
       // Record audit log within transaction
       await AuditLog.create(

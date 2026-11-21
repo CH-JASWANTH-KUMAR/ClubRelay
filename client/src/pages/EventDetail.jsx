@@ -258,7 +258,7 @@ export function EventDetail() {
                     isCompleted
                       ? 'bg-forest-700'
                       : isCurrent
-                      ? 'bg-amber-500'
+                      ? 'bg-amberGold-500'
                       : 'bg-muted'
                   }`}
                 />
@@ -281,15 +281,15 @@ export function EventDetail() {
 
       {/* Faculty Advisor Feedback Banner (if approvals exist) */}
       {approvals.length > 0 && (
-        <Card className="border-l-4 border-l-amber-600 bg-amber-50/40 p-4">
+        <Card className="border-l-4 border-l-amberGold-700 bg-amberGold-50/40 p-4">
           <div className="flex items-start gap-3">
-            <FileCheck2 className="w-5 h-5 text-amber-800 flex-shrink-0 mt-0.5" />
+            <FileCheck2 className="w-5 h-5 text-amberGold-800 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h4 className="text-xs font-bold text-amber-900">
+                <h4 className="text-xs font-bold text-amberGold-800">
                   Faculty Advisor Review ({approvals[0].decision})
                 </h4>
-                <span className="text-[11px] text-amber-700">
+                <span className="text-[11px] text-amberGold-700">
                   by {approvals[0].reviewerId?.fullName}
                 </span>
               </div>
@@ -364,7 +364,7 @@ export function EventDetail() {
                   <p className="text-charcoal-700">{eventData.retrospective.whatWentWell}</p>
                 </div>
                 <div>
-                  <span className="font-semibold text-amber-900 block mb-0.5">What Could Improve:</span>
+                  <span className="font-semibold text-amberGold-800 block mb-0.5">What Could Improve:</span>
                   <p className="text-charcoal-700">{eventData.retrospective.whatCouldImprove}</p>
                 </div>
                 {eventData.retrospective.sponsorSatisfaction && (

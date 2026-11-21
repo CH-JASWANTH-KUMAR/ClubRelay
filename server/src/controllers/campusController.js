@@ -47,6 +47,9 @@ export async function getCampusStats(req, res, next) {
       });
     }
 
+    const facultyFields =
+      req.user?.campusRole === 'CAMPUS_ADMIN' ? 'fullName email department' : 'fullName department';
+
     const [activeClubsCount, totalEvents, pendingApprovalsCount, activeHandoversCount, clubs] =
       await Promise.all([
         Club.countDocuments({ campusId, status: 'ACTIVE' }),
@@ -54,7 +57,7 @@ export async function getCampusStats(req, res, next) {
         Approval.countDocuments({ campusId, decision: 'PENDING' }),
         Handover.countDocuments({ campusId, status: { $in: ['DRAFT', 'IN_REVIEW'] } }),
         Club.find({ campusId, status: 'ACTIVE' })
-          .populate('facultyCoordinatorId', 'fullName email')
+          .populate('facultyCoordinatorId', facultyFields)
           .sort({ name: 1 }),
       ]);
 

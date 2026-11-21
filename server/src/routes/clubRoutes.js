@@ -19,7 +19,11 @@ router.get('/', listClubs);
 router.post('/', requireCampusRole('CAMPUS_ADMIN'), createClub);
 
 router.get('/:clubId', getClub);
-router.get('/:clubId/members', getMembers);
+router.get(
+  '/:clubId/members',
+  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  getMembers
+);
 router.post('/:clubId/members', requireClubRole('SECRETARY', { allowCampusAdmin: true }), addMember);
 router.put('/:clubId/members/:memberId', requireClubRole('PRESIDENT', { allowCampusAdmin: true }), updateMemberRole);
 router.delete('/:clubId/members/:memberId', requireClubRole('PRESIDENT', { allowCampusAdmin: true }), removeMember);

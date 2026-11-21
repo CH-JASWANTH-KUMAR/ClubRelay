@@ -794,6 +794,67 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
           .set('Cookie', alexCookie);
         expect(memberEventRes.status).toBe(200);
       });
+
+      it('returns sanitized response for non-member accessing club details (Preserves public directory without leaking PII or handover data)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.isAuthorized).toBe(false);
+        // Sensitive private handover information is hidden from non-members
+        expect(res.body.data.metrics.handoverProgress).toBeNull();
+        expect(res.body.data.metrics.latestHandoverStatus).toBeNull();
+        // Faculty email and phone are not exposed to unrelated users
+        if (res.body.data.club.facultyCoordinatorId) {
+          expect(res.body.data.club.facultyCoordinatorId.email).toBeUndefined();
+          expect(res.body.data.club.facultyCoordinatorId.phone).toBeUndefined();
+        }
+        // Leadership contacts are sanitized (no emails or phones exposed)
+        res.body.data.leadership.forEach((leader) => {
+          expect(leader.userId?.email).toBeUndefined();
+          expect(leader.userId?.phone).toBeUndefined();
+        });
+      });
+
+      it('prevents non-member from accessing club member rosters (Negative Test)', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(403);
+        expect(res.body.error.code).toBe('NOT_A_MEMBER');
+      });
+
+      it('allows authorized member to access their club roster', async () => {
+        const res = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', alexCookie);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.data.members)).toBe(true);
+        expect(res.body.data.members.length).toBeGreaterThan(0);
+      });
+
+      it('allows campus administrator to access authorized campus clubs and full details', async () => {
+        const clubRes = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}`)
+          .set('Cookie', campusAdminCookie);
+
+        expect(clubRes.status).toBe(200);
+        expect(clubRes.body.data.isAuthorized).toBe(true);
+        expect(clubRes.body.data.metrics.handoverProgress).not.toBeNull();
+
+        const membersRes = await request(app)
+          .get(`/api/v1/clubs/${gdgClubId}/members`)
+          .set('Cookie', campusAdminCookie);
+
+        expect(membersRes.status).toBe(200);
+        expect(Array.isArray(membersRes.body.data.members)).toBe(true);
+        expect(membersRes.body.data.members.length).toBeGreaterThan(0);
+      });
     });
 
     describe('Handover Transaction Integrity & Concurrency', () => {
@@ -955,6 +1016,165 @@ describe('ClubRelay Production Engineering Hardening Test Suite', () => {
           action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
         });
         expect(auditCount).toBe(1);
+      });
+
+      it('rejects handover completion when incoming member is revoked and leaves zero partial changes', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const pastTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: false });
+        const rajUser = await User.findOne({ email: 'raj.ieee@pcu.edu' });
+        const mayaUser = await User.findOne({ email: 'maya.tech@pcu.edu' });
+
+        // Ensure Raj is PRESIDENT for this test
+        await Membership.updateOne(
+          { campusId: pcuCampusId, clubId: ieeeClubId, userId: rajUser._id },
+          { clubRole: 'PRESIDENT', status: 'ACTIVE' }
+        );
+
+        // Create an inactive/revoked membership for Maya in IEEE
+        await Membership.findOneAndUpdate(
+          {
+            campusId: pcuCampusId,
+            clubId: ieeeClubId,
+            userId: mayaUser._id,
+          },
+          {
+            clubRole: 'GENERAL_MEMBER',
+            status: 'REVOKED',
+            academicTermId: currentTerm._id,
+          },
+          { upsert: true, new: true }
+        );
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Done', completed: true },
+          outstandingTasks: { content: 'Done', completed: true },
+          pendingCommitments: { content: 'Done', completed: true },
+          futureEventSchedules: { content: 'Done', completed: true },
+          importantDocuments: { content: 'Done', completed: true },
+          contactsAndPartners: { content: 'Done', completed: true },
+          reusablePlaybooks: { content: 'Done', completed: true },
+          recommendationsAndAdvice: { content: 'Done', completed: true },
+        };
+
+        const revokedTestHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          fromTermId: pastTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: rajUser._id,
+          incomingLeaderId: mayaUser._id,
+          roleHandover: 'PRESIDENT',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+
+        const res = await request(app)
+          .post(`/api/v1/clubs/${ieeeClubId}/handovers/${revokedTestHandover._id}/complete`)
+          .set('Cookie', ieeePresidentCookie);
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('INCOMING_MEMBER_INACTIVE');
+
+        // ZERO PARTIAL CHANGES VERIFICATION:
+        // 1. Handover status remained ACKNOWLEDGED
+        const checkHandover = await Handover.findById(revokedTestHandover._id);
+        expect(checkHandover.status).toBe('ACKNOWLEDGED');
+        expect(checkHandover.completedAt).toBeNull();
+
+        // 2. Outgoing leader remained PRESIDENT
+        const checkRajMembership = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          userId: rajUser._id,
+        });
+        expect(checkRajMembership.clubRole).toBe('PRESIDENT');
+
+        // 3. Incoming member remained REVOKED
+        const checkMayaMembership = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          userId: mayaUser._id,
+        });
+        expect(checkMayaMembership.status).toBe('REVOKED');
+        expect(checkMayaMembership.clubRole).not.toBe('PRESIDENT');
+
+        // 4. Zero transfer audit log recorded
+        const auditLog = await AuditLog.findOne({
+          targetId: revokedTestHandover._id,
+          action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
+        });
+        expect(auditLog).toBeNull();
+      });
+
+      it('rejects handover completion when outgoing membership record is missing and leaves zero partial changes', async () => {
+        const currentTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: true });
+        const pastTerm = await AcademicTerm.findOne({ campusId: pcuCampusId, isCurrent: false });
+        const samUser = await User.findOne({ email: 'sam.member@pcu.edu' });
+
+        // Ensure Sam is CORE_TEAM (not PRESIDENT) for this test
+        await Membership.updateOne(
+          { campusId: pcuCampusId, clubId: ieeeClubId, userId: samUser._id },
+          { clubRole: 'CORE_TEAM', status: 'ACTIVE' }
+        );
+
+        // Use a dummy user ID that has NO membership record in IEEE
+        const dummyOutgoingUserId = new (await import('mongoose')).default.Types.ObjectId();
+
+        const sectionsComplete = {
+          roleResponsibilities: { content: 'Done', completed: true },
+          outstandingTasks: { content: 'Done', completed: true },
+          pendingCommitments: { content: 'Done', completed: true },
+          futureEventSchedules: { content: 'Done', completed: true },
+          importantDocuments: { content: 'Done', completed: true },
+          contactsAndPartners: { content: 'Done', completed: true },
+          reusablePlaybooks: { content: 'Done', completed: true },
+          recommendationsAndAdvice: { content: 'Done', completed: true },
+        };
+
+        const missingOutgoingHandover = await Handover.create({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          fromTermId: pastTerm._id,
+          toTermId: currentTerm._id,
+          outgoingLeaderId: dummyOutgoingUserId,
+          incomingLeaderId: samUser._id,
+          roleHandover: 'PRESIDENT',
+          status: 'ACKNOWLEDGED',
+          sections: sectionsComplete,
+          completionPercentage: 100,
+          acknowledgedAt: new Date(),
+        });
+
+        // Campus admin attempts completion on this inconsistent record
+        const res = await request(app)
+          .post(`/api/v1/clubs/${ieeeClubId}/handovers/${missingOutgoingHandover._id}/complete`)
+          .set('Cookie', campusAdminCookie);
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('OUTGOING_MEMBERSHIP_INVALID');
+
+        // ZERO PARTIAL CHANGES VERIFICATION:
+        // 1. Handover status remained ACKNOWLEDGED
+        const checkHandover = await Handover.findById(missingOutgoingHandover._id);
+        expect(checkHandover.status).toBe('ACKNOWLEDGED');
+        expect(checkHandover.completedAt).toBeNull();
+
+        // 2. Incoming member was NOT promoted to PRESIDENT
+        const checkSamMembership = await Membership.findOne({
+          campusId: pcuCampusId,
+          clubId: ieeeClubId,
+          userId: samUser._id,
+        });
+        expect(checkSamMembership.clubRole).not.toBe('PRESIDENT');
+
+        // 3. Zero transfer audit log recorded
+        const auditLog = await AuditLog.findOne({
+          targetId: missingOutgoingHandover._id,
+          action: 'HANDOVER_COMPLETED_ROLES_TRANSFERRED',
+        });
+        expect(auditLog).toBeNull();
       });
     });
   });

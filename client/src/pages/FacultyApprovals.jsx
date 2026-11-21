@@ -219,11 +219,11 @@ export function FacultyApprovals() {
                 onClick={() => setDecision('MODIFICATIONS_REQUESTED')}
                 className={`p-2.5 rounded border text-xs font-semibold flex flex-col items-center gap-1 transition-colors ${
                   decision === 'MODIFICATIONS_REQUESTED'
-                    ? 'border-amber-600 bg-amber-50 text-amber-900'
+                    ? 'border-amberGold-700 bg-amberGold-50 text-amberGold-800'
                     : 'border-border bg-white text-charcoal-600 hover:bg-subtle'
                 }`}
               >
-                <AlertTriangle className="w-4 h-4 text-amber-700" />
+                <AlertTriangle className="w-4 h-4 text-amberGold-700" />
                 <span>Request Changes</span>
               </button>
 

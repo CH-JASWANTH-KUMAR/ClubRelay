@@ -104,7 +104,7 @@ export function Login() {
               >
                 <div className="flex items-center gap-2 truncate">
                   <UserCheck className="w-3.5 h-3.5 text-forest-700 flex-shrink-0" />
-                  <span className="truncate">Sarah Jenkins (Outgoing President · GDG)</span>
+                  <span className="truncate">Sarah (GDG)</span>
                 </div>
                 <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Student</span>
               </button>
@@ -120,7 +120,7 @@ export function Login() {
               >
                 <div className="flex items-center gap-2 truncate">
                   <UserCheck className="w-3.5 h-3.5 text-forest-700 flex-shrink-0" />
-                  <span className="truncate">Alex Rivera (Incoming President · GDG)</span>
+                  <span className="truncate">Alex (GDG)</span>
                 </div>
                 <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Student</span>
               </button>
@@ -136,7 +136,7 @@ export function Login() {
               >
                 <div className="flex items-center gap-2 truncate">
                   <GraduationCap className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
-                  <span className="truncate">Dr. Evelyn Chen (Faculty Coordinator)</span>
+                  <span className="truncate">Dr. Chen</span>
                 </div>
                 <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Faculty</span>
               </button>
@@ -152,7 +152,7 @@ export function Login() {
               >
                 <div className="flex items-center gap-2 truncate">
                   <Building2 className="w-3.5 h-3.5 text-charcoal-700 flex-shrink-0" />
-                  <span className="truncate">Dean Marcus Vance (Campus Administrator)</span>
+                  <span className="truncate">Dean Vance</span>
                 </div>
                 <span className="text-[10px] text-charcoal-400 ml-2 flex-shrink-0">Admin</span>
               </button>
