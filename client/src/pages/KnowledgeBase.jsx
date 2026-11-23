@@ -396,7 +396,7 @@ export function KnowledgeBase() {
       <Modal
         isOpen={showVersionModal}
         onClose={() => setShowVersionModal(false)}
-        title={`Version History — ${selectedItem?.title}`}
+        title={`Version History: ${selectedItem?.title}`}
       >
         <div className="space-y-3 max-h-96 overflow-y-auto text-xs">
           {selectedItem?.revisionHistory?.map((rev, idx) => (

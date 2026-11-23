@@ -3,7 +3,7 @@ import { BrandMark } from './BrandMark';
 import { BrandWordmark } from './BrandWordmark';
 
 /**
- * BrandLockup — Official horizontal combination of BrandMark + BrandWordmark.
+ * BrandLockup: Official horizontal combination of BrandMark + BrandWordmark.
  */
 export function BrandLockup({
   size = 'md',
@@ -31,3 +31,4 @@ export function BrandLockup({
 }
 
 export default BrandLockup;
+

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 /**
- * SplitText — Word-level staggered entrance animation
+ * SplitText: Word-level staggered entrance animation
  * Respects prefers-reduced-motion to guarantee accessibility.
  */
 export function SplitText({

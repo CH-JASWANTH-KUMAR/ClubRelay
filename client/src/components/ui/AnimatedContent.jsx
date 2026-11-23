@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 /**
- * AnimatedContent — Viewport reveal animation triggered upon scrolling into view
+ * AnimatedContent: Viewport reveal animation triggered upon scrolling into view
  * Seamlessly honors prefers-reduced-motion.
  */
 export function AnimatedContent({

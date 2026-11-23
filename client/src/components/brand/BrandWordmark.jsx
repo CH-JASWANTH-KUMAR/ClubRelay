@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * BrandWordmark — Typography wordmark for ClubRelay.
+ * BrandWordmark: Typography wordmark for ClubRelay.
  * Features high-contrast display weights with signature Campus Energy accents.
  */
 export function BrandWordmark({
@@ -36,3 +36,4 @@ export function BrandWordmark({
 }
 
 export default BrandWordmark;
+

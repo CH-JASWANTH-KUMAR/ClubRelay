@@ -29,7 +29,7 @@ export function computeClampedPupilOffset(deltaX, deltaY, reach = 180) {
 }
 
 /**
- * RelayMascot — The official interactive character for ClubRelay.
+ * RelayMascot: The official interactive character for ClubRelay.
  * Features:
  * - Geometric ellipse clamp in SVG viewBox coordinates (pupil never crosses aperture border)
  * - Resolution-independent scaling across all sizes (sm, md, lg, hero)

@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * BrandMark — Official geometric vector logo for ClubRelay.
+ * BrandMark: Official geometric vector logo for ClubRelay.
  * Represents continuity, connected pathways, and passing institutional memory forward.
  */
 export function BrandMark({
@@ -72,3 +72,4 @@ export function BrandMark({
 }
 
 export default BrandMark;
+

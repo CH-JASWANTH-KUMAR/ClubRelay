@@ -47,7 +47,7 @@ export async function cleanDemoData({
   isTest = false,
 } = {}) {
   console.log('='.repeat(72));
-  console.log(' ClubRelay — Safe Local Demo Data Cleanup Utility');
+  console.log(' ClubRelay: Safe Local Demo Data Cleanup Utility');
   console.log('='.repeat(72));
 
   // Security Guard 1: Refuse production execution
@@ -81,7 +81,7 @@ export async function cleanDemoData({
   }
 
   console.log(`[Target Database] Verified local host: ${dbUri}`);
-  console.log(`[Mode] ${dryRun || !confirm ? 'DRY RUN (Simulated — No database records will be modified)' : 'LIVE EXECUTION (Destructive Deletion)'}`);
+  console.log(`[Mode] ${dryRun || !confirm ? 'DRY RUN (Simulated: No database records will be modified)' : 'LIVE EXECUTION (Destructive Deletion)'}`);
 
   // Step 1: Identify target demo campuses
   const demoCampuses = await Campus.find({

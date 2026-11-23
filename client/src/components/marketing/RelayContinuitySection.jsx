@@ -3,7 +3,7 @@ import { RelayMascot } from '../brand/RelayMascot';
 import { CheckCircle2, ShieldCheck, ArrowRightLeft, BookOpen, Users } from 'lucide-react';
 
 /**
- * RelayContinuitySection — The dedicated home for the Relay Mascot.
+ * RelayContinuitySection: The dedicated home for the Relay Mascot.
  * "Good clubs don't start from zero. They pick up where the last team left off."
  * Features scoped pointer tracking within the mascot area, obeying strict boundary & reduced-motion rules.
  */

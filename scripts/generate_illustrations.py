@@ -359,3 +359,4 @@ for name, width, height in [
     print(f"Rendered PNG and WebP for: {name}")
 
 print("Custom visual assets generated successfully.")
+

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 /**
- * Magnet — Subtle magnetic pull interaction for primary buttons
+ * Magnet: Subtle magnetic pull interaction for primary buttons
  * Pulls the button towards the cursor on proximity, spring-snapping back on exit.
  */
 export function Magnet({

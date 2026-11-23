@@ -164,7 +164,7 @@ export function CampusDashboard() {
             <Building2 className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
-            {loading ? '—' : stats?.activeClubsCount || 0}
+            {loading ? '-' : stats?.activeClubsCount || 0}
           </div>
           <p className="text-[11px] text-charcoal-400 mt-1">Recognized student societies</p>
         </Card>
@@ -175,7 +175,7 @@ export function CampusDashboard() {
             <Calendar className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
-            {loading ? '—' : stats?.totalEvents || 0}
+            {loading ? '-' : stats?.totalEvents || 0}
           </div>
           <p className="text-[11px] text-charcoal-400 mt-1">Across 2025-2026 academic term</p>
         </Card>
@@ -186,7 +186,7 @@ export function CampusDashboard() {
             <FileCheck2 className="w-4 h-4 text-amberGold-700" />
           </div>
           <div className="text-2xl font-bold text-amberGold-800">
-            {loading ? '—' : stats?.pendingApprovalsCount || 0}
+            {loading ? '-' : stats?.pendingApprovalsCount || 0}
           </div>
           <p className="text-[11px] text-charcoal-400 mt-1">Requiring advisor evaluation</p>
         </Card>
@@ -197,7 +197,7 @@ export function CampusDashboard() {
             <ArrowRightLeft className="w-4 h-4 text-forest-700" />
           </div>
           <div className="text-2xl font-bold text-charcoal-900">
-            {loading ? '—' : stats?.activeHandoversCount || 0}
+            {loading ? '-' : stats?.activeHandoversCount || 0}
           </div>
           <p className="text-[11px] text-charcoal-400 mt-1">Handover packages in progress</p>
         </Card>

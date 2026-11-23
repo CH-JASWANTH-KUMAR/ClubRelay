@@ -75,7 +75,7 @@ describe('Phase 1B Frontend Components & Workflows', () => {
       );
 
       expect(screen.getByPlaceholderText(/Type a command, page, or switch club/i)).toBeInTheDocument();
-      expect(screen.getByText(/My Work — Personal Task Center/i)).toBeInTheDocument();
+      expect(screen.getByText(/My Work - Personal Task Center/i)).toBeInTheDocument();
       expect(screen.getByText(/Club Overview Flight Deck/i)).toBeInTheDocument();
       expect(screen.getByText(/Campus Operations & Clubs/i)).toBeInTheDocument();
     });

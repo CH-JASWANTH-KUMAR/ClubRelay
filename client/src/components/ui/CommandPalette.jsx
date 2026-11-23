@@ -40,7 +40,7 @@ export function CommandPalette({ isOpen, onClose }) {
       {
         id: 'nav-my-work',
         category: 'Personal Workspace',
-        label: 'My Work — Personal Task Center',
+        label: 'My Work - Personal Task Center',
         icon: CheckSquare,
         action: () => navigate('/my-work'),
       },

@@ -310,3 +310,4 @@ import shutil
 shutil.copy(os.path.join(OUT_DIR, 'favicon.ico'), os.path.abspath('client/public/favicon.ico'))
 shutil.copy(os.path.join(OUT_DIR, 'apple-touch-icon.png'), os.path.abspath('client/public/apple-touch-icon.png'))
 print("Copied root favicons to client/public/")
+

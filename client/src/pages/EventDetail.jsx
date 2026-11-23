@@ -511,7 +511,7 @@ export function EventDetail() {
                   ? `${Math.round(
                       ((eventData.actualAttendance || 0) / eventData.expectedAttendance) * 100
                     )}%`
-                  : '—'}
+                  : '-'}
               </span>
               <p className="text-[11px] text-charcoal-400 mt-1">Attendance fulfillment rate</p>
             </Card>
