@@ -1,5 +1,4 @@
 import React from 'react';
-import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function Progress({ value = 0, max = 100, className = '', barClassName = '' }) {
@@ -15,7 +14,7 @@ export function Progress({ value = 0, max = 100, className = '', barClassName = 
     >
       <div
         className={twMerge(
-          'h-full bg-forest-700 origin-left transition-transform duration-300 ease-out rounded-full w-full',
+          'h-full bg-brand-500 origin-left transition-transform duration-300 ease-out rounded-full w-full',
           barClassName
         )}
         style={{ transform: `scaleX(${percentage / 100})` }}

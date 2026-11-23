@@ -44,10 +44,10 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg',
         aria-modal="true"
       >
         <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
-          <h3 className="text-base font-semibold text-charcoal-900">{title}</h3>
+          <h3 className="font-heading text-base font-bold text-ink">{title}</h3>
           <button
             onClick={onClose}
-            className="text-charcoal-400 hover:text-charcoal-700 rounded p-1 focus-visible:outline-forest-700"
+            className="text-mutedSlate hover:text-ink rounded-lg p-1 focus-visible:outline-brand-500"
             aria-label="Close dialog"
           >
             <X className="w-5 h-5" />

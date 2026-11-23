@@ -11,7 +11,7 @@ export const Input = forwardRef(function Input(
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-medium text-charcoal-700 mb-1">
+        <label htmlFor={inputId} className="block text-xs font-semibold text-ink mb-1">
           {label}
         </label>
       )}
@@ -20,8 +20,8 @@ export const Input = forwardRef(function Input(
         id={inputId}
         className={twMerge(
           clsx(
-            'w-full rounded border border-border bg-white px-3 py-2 text-sm text-charcoal-900 placeholder:text-charcoal-400',
-            'transition-colors duration-150 focus:border-forest-700 focus:outline-none focus:ring-1 focus:ring-forest-700',
+            'w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-ink placeholder:text-mutedSlate/60',
+            'transition-colors duration-150 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500',
             error && 'border-red-600 focus:border-red-600 focus:ring-red-600',
             className
           )
@@ -43,7 +43,7 @@ export const Textarea = forwardRef(function Textarea(
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-medium text-charcoal-700 mb-1">
+        <label htmlFor={inputId} className="block text-xs font-semibold text-ink mb-1">
           {label}
         </label>
       )}
@@ -53,8 +53,8 @@ export const Textarea = forwardRef(function Textarea(
         rows={rows}
         className={twMerge(
           clsx(
-            'w-full rounded border border-border bg-white px-3 py-2 text-sm text-charcoal-900 placeholder:text-charcoal-400',
-            'transition-colors duration-150 focus:border-forest-700 focus:outline-none focus:ring-1 focus:ring-forest-700',
+            'w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-ink placeholder:text-mutedSlate/60',
+            'transition-colors duration-150 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500',
             error && 'border-red-600 focus:border-red-600 focus:ring-red-600',
             className
           )

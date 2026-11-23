@@ -1,37 +1,71 @@
-/* Hallmark · v2.0.0 · ClubRelay B2B Productivity System */
-/* theme: bespoke-forest · genre: modern-minimal · job: university organization continuity */
+/* Hallmark · v2.0.0 · ClubRelay Campus Energy System */
+/* theme: bespoke-campus-energy · genre: modern-minimal · job: university organization continuity */
 
 :root {
-  --cr-bg-canvas: #FBFBF9;
-  --cr-bg-surface: #FFFFFF;
-  --cr-bg-subtle: #F4F3F0;
-  --cr-bg-muted: #EAE8E3;
-  --cr-border: #E2E0D8;
-  --cr-border-focus: #1B4332;
+  /* Campus Energy Palette */
+  --color-brand-primary: #315BDB;
+  --color-brand-primary-hover: #284DC4;
+  --color-brand-primary-active: #1F3EA8;
+  --color-brand-primary-soft: #EEF2FD;
 
-  --cr-primary: #1B4332;
-  --cr-primary-hover: #2D6A4F;
-  --cr-primary-active: #143326;
-  --cr-primary-soft: #E8F5EE;
+  --color-ink: #192B42;
+  --color-ink-deep: #0F1C2D;
+  --color-muted: #68788B;
+  --color-faint: #94A3B8;
+
+  --color-mint: #2CBF9B;
+  --color-mint-soft: #EAF8F5;
+  --color-mint-dark: #1F8A70;
+
+  --color-coral: #FF886B;
+  --color-coral-soft: #FFF3F0;
+  --color-coral-dark: #D95E41;
+
+  --color-sunshine: #F6C85F;
+  --color-sunshine-soft: #FEF8EB;
+  --color-sunshine-dark: #B88D22;
+
+  --color-canvas: #F7F8F4;
+  --color-surface: #FCFDFD;
+  --color-subtle: #F1F3EE;
+  --color-border: #E5E9E8;
+  --color-border-hover: #CBD5E1;
+  --color-border-focus: #315BDB;
+
+  /* Typography */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Semantic UI Tokens */
+  --cr-bg-canvas: var(--color-canvas);
+  --cr-bg-surface: var(--color-surface);
+  --cr-bg-subtle: var(--color-subtle);
+  --cr-bg-muted: #E2E8F0;
+  --cr-border: var(--color-border);
+  --cr-border-focus: var(--color-brand-primary);
+
+  --cr-primary: var(--color-brand-primary);
+  --cr-primary-hover: var(--color-brand-primary-hover);
+  --cr-primary-active: var(--color-brand-primary-active);
+  --cr-primary-soft: var(--color-brand-primary-soft);
   --cr-primary-contrast: #FFFFFF;
 
-  --cr-text-heading: #141716;
-  --cr-text-body: #242926;
-  --cr-text-muted: #5F6662;
-  --cr-text-faint: #8E9692;
+  --cr-text-heading: var(--color-ink);
+  --cr-text-body: var(--color-ink);
+  --cr-text-muted: var(--color-muted);
+  --cr-text-faint: var(--color-faint);
 
-  --cr-status-draft-bg: #F1F1EF;
-  --cr-status-draft-fg: #5F6662;
-  --cr-status-proposed-bg: #FEF3C7;
-  --cr-status-proposed-fg: #92400E;
-  --cr-status-approved-bg: #E8F5EE;
-  --cr-status-approved-fg: #1B4332;
-  --cr-status-progress-bg: #E0EDF8;
-  --cr-status-progress-fg: #1E40AF;
+  --cr-status-draft-bg: #F1F5F9;
+  --cr-status-draft-fg: #586B7E;
+  --cr-status-proposed-bg: var(--color-sunshine-soft);
+  --cr-status-proposed-fg: var(--color-sunshine-dark);
+  --cr-status-approved-bg: var(--color-mint-soft);
+  --cr-status-approved-fg: var(--color-mint-dark);
+  --cr-status-progress-bg: var(--color-brand-primary-soft);
+  --cr-status-progress-fg: var(--color-brand-primary);
   --cr-status-danger-bg: #FEE2E2;
   --cr-status-danger-fg: #991B1B;
-
-  --cr-font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @tailwind base;
@@ -41,16 +75,21 @@
 html,
 body {
   overflow-x: clip;
-  background-color: var(--cr-bg-canvas);
-  color: var(--cr-text-body);
-  font-family: var(--cr-font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  text-wrap: balance;
 }
 
 /* Hallmark rule: focus-visible appearing instantly */
 :focus-visible {
-  outline: 2px solid var(--cr-border-focus);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 

@@ -202,18 +202,18 @@ export function CommandPalette({ isOpen, onClose }) {
       >
         {/* Search Input Bar */}
         <div className="flex items-center px-4 py-3 border-b border-border gap-3 bg-subtle/30">
-          <Search className="w-4 h-4 text-forest-700 flex-shrink-0" />
+          <Search className="w-4 h-4 text-brand-500 flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command, page, or switch club…"
-            className="flex-1 bg-transparent text-xs text-charcoal-900 placeholder-charcoal-400 focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-ink placeholder:text-mutedSlate/60 focus:outline-none"
           />
           <button
             onClick={onClose}
-            className="p-1 rounded text-charcoal-400 hover:text-charcoal-700 hover:bg-subtle"
+            className="p-1 rounded text-mutedSlate hover:text-ink hover:bg-subtle"
             aria-label="Close command palette"
           >
             <X className="w-3.5 h-3.5" />
@@ -223,7 +223,7 @@ export function CommandPalette({ isOpen, onClose }) {
         {/* Results List */}
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filteredItems.length === 0 ? (
-            <div className="text-center py-8 text-xs text-charcoal-400">
+            <div className="text-center py-8 text-xs text-mutedSlate">
               No matching commands or pages found.
             </div>
           ) : (
@@ -240,14 +240,14 @@ export function CommandPalette({ isOpen, onClose }) {
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer text-xs transition-colors ${
                     isSelected
-                      ? 'bg-forest-50 text-forest-900 font-semibold'
-                      : 'text-charcoal-700 hover:bg-subtle'
+                      ? 'bg-brand-50 text-brand-900 font-semibold'
+                      : 'text-ink hover:bg-subtle'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     <Icon
                       className={`w-4 h-4 flex-shrink-0 ${
-                        isSelected ? 'text-forest-700' : 'text-charcoal-400'
+                        isSelected ? 'text-brand-600' : 'text-mutedSlate'
                       }`}
                     />
                     <span className="truncate">{item.label}</span>
@@ -255,8 +255,8 @@ export function CommandPalette({ isOpen, onClose }) {
                   <span
                     className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
                       isSelected
-                        ? 'bg-forest-100 text-forest-800'
-                        : 'bg-subtle text-charcoal-400'
+                        ? 'bg-brand-100 text-brand-800'
+                        : 'bg-subtle text-mutedSlate'
                     }`}
                   >
                     {item.category}

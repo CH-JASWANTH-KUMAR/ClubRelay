@@ -13,19 +13,19 @@ export function Button({
   ...props
 }) {
   const base =
-    'inline-flex items-center justify-center font-medium rounded transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none';
+    'inline-flex items-center justify-center font-medium rounded-xl transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none';
 
   const variants = {
     primary:
-      'bg-forest-700 text-white hover:bg-forest-600 active:bg-forest-800 focus-visible:outline-forest-700 shadow-subtle',
+      'bg-brand-500 bg-forest-700 text-white hover:bg-brand-600 active:bg-brand-700 focus-visible:outline-brand-500 shadow-subtle',
     secondary:
-      'bg-white text-charcoal-800 border border-border hover:bg-subtle active:bg-muted focus-visible:outline-forest-700 shadow-subtle',
+      'bg-surface text-ink border border-border hover:bg-subtle active:bg-muted focus-visible:outline-brand-500 shadow-subtle',
     outline:
-      'bg-transparent text-forest-700 border border-forest-700 hover:bg-forest-50 active:bg-forest-100 focus-visible:outline-forest-700',
+      'bg-transparent text-brand-600 border border-brand-500 hover:bg-brand-50 active:bg-brand-100 focus-visible:outline-brand-500',
     ghost:
-      'bg-transparent text-charcoal-700 hover:bg-subtle active:bg-muted focus-visible:outline-forest-700',
+      'bg-transparent text-mutedSlate hover:text-ink hover:bg-subtle active:bg-muted focus-visible:outline-brand-500',
     danger:
-      'bg-red-700 text-white hover:bg-red-800 active:bg-red-900 focus-visible:outline-red-700 shadow-subtle',
+      'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:outline-red-600 shadow-subtle',
   };
 
   const sizes = {

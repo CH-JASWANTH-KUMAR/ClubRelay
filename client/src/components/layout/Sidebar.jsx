@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { clsx } from 'clsx';
+import { RelayMascot } from '../brand/RelayMascot';
 
 export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }) {
   const { user, activeClub, memberships, switchClub } = useAuth();
@@ -127,29 +128,33 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
                 title={collapsed ? item.label : undefined}
                 className={({ isActive }) =>
                   clsx(
-                    'flex items-center rounded text-xs font-medium transition-colors duration-150',
+                    'flex items-center rounded-xl text-xs font-medium transition-colors duration-150',
                     collapsed ? 'justify-center p-2' : 'justify-between px-2.5 py-1.5',
                     isActive
-                      ? 'bg-forest-50 text-forest-800 font-semibold shadow-subtle'
-                      : 'text-charcoal-700 hover:bg-subtle hover:text-charcoal-900'
+                      ? 'bg-brand-50 text-brand-700 font-bold shadow-subtle'
+                      : 'text-ink/80 hover:bg-subtle hover:text-ink'
                   )
                 }
               >
-                <div className="flex items-center gap-2.5 truncate">
-                  <Icon className="w-4 h-4 text-charcoal-500 flex-shrink-0" />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                </div>
-                {!collapsed && item.badge && (
-                  <span
-                    className={clsx(
-                      'text-[10px] font-medium px-1.5 py-0.2 rounded',
-                      item.badge === 'Review'
-                        ? 'bg-amberGold-100 text-amberGold-800'
-                        : 'bg-forest-100 text-forest-800'
+                {({ isActive }) => (
+                  <>
+                    <div className="flex items-center gap-2.5 truncate">
+                      <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-brand-600' : 'text-mutedSlate')} />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                    </div>
+                    {!collapsed && item.badge && (
+                      <span
+                        className={clsx(
+                          'text-[10px] font-semibold px-2 py-0.5 rounded-full',
+                          item.badge === 'Review'
+                            ? 'bg-sunshine-100 text-sunshine-800'
+                            : 'bg-brand-100 text-brand-800'
+                        )}
+                      >
+                        {item.badge}
+                      </span>
                     )}
-                  >
-                    {item.badge}
-                  </span>
+                  </>
                 )}
               </NavLink>
             );
@@ -165,15 +170,13 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
       <div className={clsx('border-b border-border', collapsed ? 'p-2' : 'p-4')}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden">
-            <div className="w-8 h-8 rounded bg-forest-700 text-white flex items-center justify-center font-bold text-sm shadow-subtle flex-shrink-0">
-              CR
-            </div>
+            <RelayMascot size="sm" interactive={false} />
             {!collapsed && (
               <div className="truncate">
-                <h1 className="font-semibold text-sm text-charcoal-900 tracking-tight leading-tight">
+                <h1 className="font-heading font-extrabold text-sm text-ink tracking-tight leading-tight">
                   ClubRelay
                 </h1>
-                <p className="text-[11px] text-charcoal-500">The knowledge stays.</p>
+                <p className="text-[11px] text-mutedSlate">The knowledge stays.</p>
               </div>
             )}
           </div>
@@ -217,7 +220,7 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
                   const selected = memberships.find((m) => m.clubId?._id === e.target.value);
                   if (selected) switchClub(selected.clubId);
                 }}
-                className="w-full text-xs font-medium rounded border border-border bg-subtle px-2.5 py-1.5 text-charcoal-800 focus:outline-none focus:border-forest-700 appearance-none pr-6 cursor-pointer"
+                className="w-full text-xs font-semibold rounded-lg border border-border bg-subtle px-2.5 py-1.5 text-ink focus:outline-none focus:border-brand-500 appearance-none pr-6 cursor-pointer"
               >
                 {memberships.map((m) => (
                   <option key={m.clubId?._id} value={m.clubId?._id}>
@@ -225,7 +228,7 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-charcoal-500 absolute right-2 top-2.5 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-mutedSlate absolute right-2 top-2.5 pointer-events-none" />
             </div>
           </div>
         )}
@@ -242,8 +245,8 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
       <div className={clsx('border-t border-border bg-canvas text-[11px]', collapsed ? 'p-2 text-center' : 'p-3')}>
         {!collapsed ? (
           <>
-            <div className="truncate font-medium text-charcoal-800">{user?.fullName}</div>
-            <div className="truncate text-charcoal-400">
+            <div className="truncate font-semibold text-ink">{user?.fullName}</div>
+            <div className="truncate text-mutedSlate">
               {user?.campusRole === 'CAMPUS_ADMIN'
                 ? 'Campus Administrator'
                 : user?.campusRole === 'FACULTY_COORDINATOR'
@@ -252,7 +255,7 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
             </div>
           </>
         ) : (
-          <div className="w-6 h-6 rounded-full bg-forest-100 text-forest-800 mx-auto flex items-center justify-center font-bold text-[10px]">
+          <div className="w-6 h-6 rounded-full bg-brand-100 text-brand-800 mx-auto flex items-center justify-center font-bold text-[10px]">
             {user?.fullName?.charAt(0) || 'U'}
           </div>
         )}

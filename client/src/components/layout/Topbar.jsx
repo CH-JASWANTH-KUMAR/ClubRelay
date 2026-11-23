@@ -55,14 +55,14 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
           </button>
         )}
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-subtle border border-border text-xs text-charcoal-700">
-          <School className="w-3.5 h-3.5 text-forest-700" />
-          <span className="font-semibold text-charcoal-900 truncate max-w-[160px] sm:max-w-none">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 border border-brand-200 text-xs text-brand-800">
+          <School className="w-3.5 h-3.5 text-brand-600" />
+          <span className="font-bold text-ink truncate max-w-[160px] sm:max-w-none">
             {user?.campusId?.name || 'Campus'}
           </span>
         </div>
-        <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 text-[11px] text-charcoal-500">
-          <Calendar className="w-3.5 h-3.5 text-charcoal-400" />
+        <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 text-[11px] text-mutedSlate">
+          <Calendar className="w-3.5 h-3.5 text-mutedSlate" />
           <span>2025-2026 Academic Term</span>
         </div>
       </div>
@@ -71,13 +71,13 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
       <div className="flex-1 max-w-sm mx-4 hidden sm:block">
         <button
           onClick={onOpenCommandPalette}
-          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg border border-border bg-subtle/70 hover:bg-subtle hover:border-charcoal-300 text-xs text-charcoal-500 transition-colors cursor-pointer"
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl border border-border bg-subtle/70 hover:bg-subtle hover:border-brand-300 text-xs text-mutedSlate transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-forest-700" />
+            <Search className="w-3.5 h-3.5 text-brand-500" />
             <span>Search or command…</span>
           </div>
-          <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono text-charcoal-400">
+          <kbd className="px-1.5 py-0.5 rounded-md bg-surface border border-border text-[10px] font-mono text-mutedSlate">
             ⌘K
           </kbd>
         </button>
@@ -88,7 +88,7 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
         {/* Mobile Search Icon */}
         <button
           onClick={onOpenCommandPalette}
-          className="sm:hidden p-1.5 rounded text-charcoal-600 hover:text-charcoal-900 hover:bg-subtle"
+          className="sm:hidden p-1.5 rounded-lg text-mutedSlate hover:text-ink hover:bg-subtle"
           aria-label="Search or command"
         >
           <Search className="w-4 h-4" />
@@ -98,23 +98,23 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-1.5 rounded text-charcoal-600 hover:text-charcoal-900 hover:bg-subtle relative focus-visible:outline-forest-700"
+            className="p-1.5 rounded-lg text-mutedSlate hover:text-ink hover:bg-subtle relative focus-visible:outline-brand-500"
             aria-label="View notifications"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-600" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-500" />
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-lg bg-surface border border-border shadow-elevated p-3 z-50 text-xs animate-in fade-in duration-150">
+            <div className="absolute right-0 mt-2 w-80 rounded-xl bg-surface border border-border shadow-elevated p-3 z-50 text-xs animate-in fade-in duration-150">
               <div className="flex items-center justify-between pb-2 border-b border-border mb-2">
-                <span className="font-semibold text-charcoal-900">Notifications ({unreadCount})</span>
+                <span className="font-heading font-bold text-ink">Notifications ({unreadCount})</span>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="text-[11px] text-forest-700 hover:underline flex items-center gap-1"
+                    className="text-[11px] text-brand-600 hover:underline flex items-center gap-1 font-semibold"
                   >
                     <Check className="w-3 h-3" /> Mark all read
                   </button>
@@ -123,7 +123,7 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
 
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {notifications.length === 0 ? (
-                  <div className="text-center py-4 text-charcoal-400 text-xs">
+                  <div className="text-center py-4 text-mutedSlate text-xs">
                     No new notifications
                   </div>
                 ) : (
@@ -134,14 +134,14 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
                         if (n.link) navigate(n.link);
                         setShowNotifications(false);
                       }}
-                      className={`p-2 rounded cursor-pointer transition-colors ${
+                      className={`p-2 rounded-lg cursor-pointer transition-colors ${
                         n.isRead
-                          ? 'bg-transparent text-charcoal-600'
-                          : 'bg-forest-50/50 text-charcoal-900 font-medium'
+                          ? 'bg-transparent text-mutedSlate'
+                          : 'bg-brand-50/70 text-ink font-semibold'
                       } hover:bg-subtle`}
                     >
                       <div className="text-xs font-semibold">{n.title}</div>
-                      <div className="text-[11px] text-charcoal-500 mt-0.5">{n.message}</div>
+                      <div className="text-[11px] text-mutedSlate mt-0.5">{n.message}</div>
                     </div>
                   ))
                 )}

@@ -95,12 +95,12 @@ export function ClubDashboard() {
       {/* Organization Header & Community Identity */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-surface border border-border shadow-subtle">
         <div className="flex items-start sm:items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-forest-700 text-white font-bold text-xl flex items-center justify-center shadow-subtle flex-shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-brand-500 text-white font-extrabold text-xl flex items-center justify-center shadow-subtle flex-shrink-0">
             {club?.code || 'CR'}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold text-charcoal-900 tracking-tight">
+              <h2 className="font-heading text-xl font-bold text-ink tracking-tight">
                 {club?.name || 'Club Workspace'}
               </h2>
               <Badge variant="approved" size="sm">
@@ -142,16 +142,16 @@ export function ClubDashboard() {
       </div>
 
       {/* Succession Alert Widget (Core Differentiator Banner) */}
-      <Card className="dash-widget bg-gradient-to-r from-forest-50/80 via-subtle to-surface border-forest-200">
+      <Card className="dash-widget bg-gradient-to-r from-brand-50/80 via-canvas to-surface border-brand-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-forest-700 animate-pulse" />
-              <h4 className="text-sm font-bold text-forest-900">
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+              <h4 className="font-heading text-sm font-bold text-brand-900">
                 Annual Leadership Transition Health
               </h4>
             </div>
-            <p className="text-xs text-charcoal-600 max-w-2xl">
+            <p className="text-xs text-mutedSlate max-w-2xl">
               Preserve institutional memory before outgoing board members step down. Section-by-section
               knowledge, playbooks, vendor notes, and digital sign-off.
             </p>

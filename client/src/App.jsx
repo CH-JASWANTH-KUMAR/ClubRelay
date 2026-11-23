@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 
 import { AppLayout } from './components/layout/AppLayout';
+import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
 import { CampusDashboard } from './pages/CampusDashboard';
 import { ClubDashboard } from './pages/ClubDashboard';
@@ -33,7 +34,7 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-canvas flex items-center justify-center text-xs text-charcoal-500 font-medium">
+      <div className="min-h-screen bg-canvas flex items-center justify-center text-xs text-mutedSlate font-medium">
         Verifying session…
       </div>
     );
@@ -53,34 +54,36 @@ export function App() {
         <ToastProvider>
           <BrowserRouter>
             <Routes>
+              {/* Public Marketing Landing Page */}
+              <Route path="/" element={<LandingPage />} />
+
+              {/* Public Login */}
               <Route path="/login" element={<Login />} />
 
               {/* Protected Application Workspace */}
               <Route
-                path="/"
                 element={
                   <ProtectedRoute>
                     <AppLayout />
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Navigate to="/campus" replace />} />
-                <Route path="campus" element={<CampusDashboard />} />
-                <Route path="my-work" element={<MyWork />} />
-                <Route path="faculty/approvals" element={<FacultyApprovals />} />
-                <Route path="clubs/:clubId" element={<ClubDashboard />} />
-                <Route path="clubs/:clubId/events" element={<EventsList />} />
-                <Route path="clubs/:clubId/events/:eventId" element={<EventDetail />} />
-                <Route path="clubs/:clubId/memory" element={<KnowledgeBase />} />
-                <Route path="clubs/:clubId/directory" element={<Directory />} />
-                <Route path="clubs/:clubId/decisions" element={<Decisions />} />
-                <Route path="clubs/:clubId/handover" element={<HandoverCenter />} />
-                <Route path="clubs/:clubId/reports" element={<AnnualReports />} />
-                <Route path="clubs/:clubId/members" element={<Members />} />
+                <Route path="/campus" element={<CampusDashboard />} />
+                <Route path="/my-work" element={<MyWork />} />
+                <Route path="/faculty/approvals" element={<FacultyApprovals />} />
+                <Route path="/clubs/:clubId" element={<ClubDashboard />} />
+                <Route path="/clubs/:clubId/events" element={<EventsList />} />
+                <Route path="/clubs/:clubId/events/:eventId" element={<EventDetail />} />
+                <Route path="/clubs/:clubId/memory" element={<KnowledgeBase />} />
+                <Route path="/clubs/:clubId/directory" element={<Directory />} />
+                <Route path="/clubs/:clubId/decisions" element={<Decisions />} />
+                <Route path="/clubs/:clubId/handover" element={<HandoverCenter />} />
+                <Route path="/clubs/:clubId/reports" element={<AnnualReports />} />
+                <Route path="/clubs/:clubId/members" element={<Members />} />
               </Route>
 
               {/* Fallback */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
         </ToastProvider>

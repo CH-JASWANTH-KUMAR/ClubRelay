@@ -28,7 +28,7 @@ export function ToastProvider({ children }) {
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
         {toasts.map((toast) => {
           const icons = {
-            success: <CheckCircle2 className="w-4 h-4 text-forest-700 flex-shrink-0" />,
+            success: <CheckCircle2 className="w-4 h-4 text-mint-600 flex-shrink-0" />,
             error: <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />,
             info: <Info className="w-4 h-4 text-blue-600 flex-shrink-0" />,
           };

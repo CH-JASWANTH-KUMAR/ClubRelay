@@ -6,18 +6,18 @@ export function Badge({ children, variant = 'default', size = 'md', className = 
   const base = 'inline-flex items-center font-medium rounded-full';
 
   const variants = {
-    default: 'bg-subtle text-charcoal-700 border border-border',
-    draft: 'bg-[#F1F1EF] text-[#5F6662] border border-border',
-    proposed: 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]',
-    approved: 'bg-[#E8F5EE] text-[#1B4332] border border-[#B7E4C7]',
-    planning: 'bg-[#E0EDF8] text-[#1E40AF] border border-[#BFDBFE]',
-    inProgress: 'bg-[#E0F2FE] text-[#0369A1] border border-[#BAE6FD]',
-    completed: 'bg-[#E8F5EE] text-[#1B4332] border border-[#B7E4C7]',
-    archived: 'bg-[#F3F4F6] text-[#6B7280] border border-border',
-    urgent: 'bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]',
-    high: 'bg-[#FFEDD5] text-[#C2410C] border border-[#FED7AA]',
-    medium: 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]',
-    low: 'bg-[#F1F5F9] text-[#475569] border border-border',
+    default: 'bg-subtle text-ink border border-border',
+    draft: 'bg-[#F1F3EE] text-[#586B7E] border border-border',
+    proposed: 'bg-[#FEF8EB] text-[#B88D22] border border-[#F6C85F]/50',
+    approved: 'bg-[#EAF8F5] text-[#1F8A70] border border-[#2CBF9B]/40',
+    planning: 'bg-[#EEF2FD] text-[#1F3EA8] border border-[#315BDB]/30',
+    inProgress: 'bg-[#EEF2FD] text-[#315BDB] border border-[#315BDB]/40',
+    completed: 'bg-[#EAF8F5] text-[#1F8A70] border border-[#2CBF9B]/40',
+    archived: 'bg-[#F1F3EE] text-[#68788B] border border-border',
+    urgent: 'bg-[#FFF3F0] text-[#D95E41] border border-[#FF886B]/40',
+    high: 'bg-[#FFF3F0] text-[#D95E41] border border-[#FF886B]/40',
+    medium: 'bg-[#FEF8EB] text-[#B88D22] border border-[#F6C85F]/50',
+    low: 'bg-[#EEF2FD] text-[#586B7E] border border-border',
   };
 
   const sizes = {

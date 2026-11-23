@@ -128,17 +128,17 @@ export function CampusDashboard() {
       />
 
       {/* Governance Bulletin Announcement Banner */}
-      <Card className="bg-gradient-to-r from-forest-50/80 via-subtle to-surface border-forest-200">
+      <Card className="bg-gradient-to-r from-brand-50/80 via-canvas to-surface border-brand-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-forest-100 text-forest-800 flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center flex-shrink-0">
               <BellRing className="w-4 h-4" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-forest-900">
+              <h4 className="font-heading text-xs font-bold text-brand-900">
                 Annual Leadership Handover Window: 2025-2026 Academic Term
               </h4>
-              <p className="text-[11px] text-charcoal-600">
+              <p className="text-[11px] text-mutedSlate">
                 All outgoing student leadership boards must complete formal handover packages before the term boundary.
               </p>
             </div>
