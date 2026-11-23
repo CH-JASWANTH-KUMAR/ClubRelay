@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { RelayMascot } from '../components/brand/RelayMascot';
+import { BrandMark } from '../components/brand/BrandMark';
 
 export function Login() {
   const navigate = useNavigate();
@@ -106,7 +106,7 @@ export function Login() {
     <div className="min-h-screen dark-grid-viewport text-ink-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative select-none">
       <div className="relative sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="flex justify-center mb-3">
-          <RelayMascot size="md" interactive={true} />
+          <BrandMark size="lg" variant="light" />
         </div>
         <h1 className="font-heading text-3xl font-extrabold text-white tracking-tight">ClubRelay</h1>
         <p className="mt-1 text-xs text-ink-200 font-medium">Build the club. Keep the momentum.</p>

@@ -3,57 +3,21 @@ import {
   LayoutDashboard,
   Calendar,
   CheckSquare,
+  Users,
   ArrowRightLeft,
   Building2,
+  CheckCircle2,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 
 export function ProductPreview() {
   const [activeTab, setActiveTab] = useState('club');
 
   const previews = {
-    campus: {
-      title: 'Campus Operations Flight Deck',
-      subtitle: 'Multi-club compliance oversight, recognized societies, and pending approvals',
-      render: () => (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3 rounded-xl bg-canvas border border-border">
-              <span className="text-[11px] font-semibold text-mutedSlate block">Active Clubs</span>
-              <span className="text-2xl font-extrabold text-ink block mt-0.5">4 Clubs</span>
-            </div>
-            <div className="p-3 rounded-xl bg-canvas border border-border">
-              <span className="text-[11px] font-semibold text-brand-600 block">Events Conducted</span>
-              <span className="text-2xl font-extrabold text-brand-600 block mt-0.5">14 Events</span>
-            </div>
-            <div className="p-3 rounded-xl bg-canvas border border-border">
-              <span className="text-[11px] font-semibold text-sunshine-700 block">Pending Reviews</span>
-              <span className="text-2xl font-extrabold text-sunshine-700 block mt-0.5">2 Holds</span>
-            </div>
-            <div className="p-3 rounded-xl bg-canvas border border-border">
-              <span className="text-[11px] font-semibold text-mint-600 block">Handovers Active</span>
-              <span className="text-2xl font-extrabold text-mint-600 block mt-0.5">3 Ready</span>
-            </div>
-          </div>
-          <div className="p-3.5 rounded-xl bg-canvas border border-border flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-brand-500 text-white font-bold text-xs flex items-center justify-center">
-                GDG
-              </div>
-              <div>
-                <span className="font-bold text-ink text-xs block">Google Developer Group</span>
-                <span className="text-[10px] text-mutedSlate">Pacific Coast University · 24 Active Members</span>
-              </div>
-            </div>
-            <span className="text-[10px] bg-mint-50 text-mint-700 font-semibold px-2 py-0.5 rounded-full border border-mint-200">
-              Active Term
-            </span>
-          </div>
-        </div>
-      ),
-    },
     club: {
       title: 'Club Operational Workspace',
-      subtitle: 'Scheduled events flight deck, executive board roster, and handover health',
+      subtitle: 'Scheduled events flight deck, executive board roster, and succession readiness',
       render: () => (
         <div className="space-y-4">
           {/* Handover Alert Widget */}
@@ -63,12 +27,13 @@ export function ProductPreview() {
               <span className="text-[11px] text-mutedSlate">Preserve institutional playbooks and verified contacts</span>
             </div>
             <div className="text-right">
-              <span className="text-xs font-bold text-mint-600">85% Complete</span>
+              <span className="text-xs font-bold text-mint-600">7 of 7 Verified</span>
               <div className="w-24 h-1.5 bg-border rounded-full mt-1 overflow-hidden">
-                <div className="w-[85%] h-full bg-mint-500 rounded-full" />
+                <div className="w-full h-full bg-mint-500 rounded-full" />
               </div>
             </div>
           </div>
+
           {/* Upcoming Event Item */}
           <div className="p-3 rounded-xl bg-canvas border border-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -90,9 +55,25 @@ export function ProductPreview() {
               Approved
             </span>
           </div>
+
+          <div className="p-3.5 rounded-xl bg-canvas border border-border flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-brand-500 text-white font-bold text-xs flex items-center justify-center">
+                GDG
+              </div>
+              <div>
+                <span className="font-bold text-ink text-xs block">Google Developer Group</span>
+                <span className="text-[10px] text-mutedSlate">Pacific Coast University · 24 Active Members</span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-mint-50 text-mint-700 font-semibold px-2 py-0.5 rounded-full border border-mint-200">
+              Active Term
+            </span>
+          </div>
         </div>
       ),
     },
+
     events: {
       title: '7-Tab Event Cockpit',
       subtitle: 'Overview, Tasks, Attendees, Budget, Resources, Approvals, and Retrospectives',
@@ -107,15 +88,17 @@ export function ProductPreview() {
             <span>In Progress</span>
             <span>Completed</span>
           </div>
+
           {/* 7 Tabs Preview */}
           <div className="flex items-center gap-1 overflow-x-auto text-[11px] font-semibold border-b border-border pb-1">
             <span className="px-2.5 py-1 text-brand-600 border-b-2 border-brand-600">Overview</span>
-            <span className="px-2.5 py-1 text-mutedSlate">Tasks (6)</span>
+            <span className="px-2.5 py-1 text-mutedSlate">Tasks (18/20)</span>
             <span className="px-2.5 py-1 text-mutedSlate">Attendees</span>
             <span className="px-2.5 py-1 text-mutedSlate">Budget</span>
             <span className="px-2.5 py-1 text-mutedSlate">Approvals</span>
             <span className="px-2.5 py-1 text-mutedSlate">Retrospective</span>
           </div>
+
           <div className="p-3 rounded-xl bg-canvas border border-border text-xs space-y-1">
             <span className="font-bold text-ink block">Logistics & Venue Hold</span>
             <span className="text-[11px] text-mutedSlate block">
@@ -125,6 +108,7 @@ export function ProductPreview() {
         </div>
       ),
     },
+
     work: {
       title: 'My Work Personal Cockpit',
       subtitle: 'Unified task board across all your active student societies with Kanban & Calendar views',
@@ -153,6 +137,50 @@ export function ProductPreview() {
         </div>
       ),
     },
+
+    members: {
+      title: 'Privacy-Hardened Member Roster',
+      subtitle: 'Manage active student memberships, recruitment pipelines, and sub-team leads',
+      render: () => (
+        <div className="space-y-2.5 text-xs">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-canvas border border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center font-bold text-[10px]">
+                MC
+              </div>
+              <div>
+                <span className="font-bold text-ink block">Maya Chen</span>
+                <span className="text-[10px] text-mutedSlate">President · Google Developer Group</span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-brand-50 text-brand-700 font-semibold px-2 py-0.5 rounded-full border border-brand-200">
+              PRESIDENT
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-canvas border border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-mint-100 text-mint-800 flex items-center justify-center font-bold text-[10px]">
+                AL
+              </div>
+              <div>
+                <span className="font-bold text-ink block">Alex Liu</span>
+                <span className="text-[10px] text-mutedSlate">Technical Lead · Cloud Sprints</span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-mint-50 text-mint-700 font-semibold px-2 py-0.5 rounded-full border border-mint-200">
+              CORE LEAD
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-subtle border border-border flex items-center justify-between text-[11px] text-mutedSlate">
+            <span>Roster Privacy: PII & Phone numbers strictly protected</span>
+            <span className="text-brand-600 font-semibold">24 Verified Members</span>
+          </div>
+        </div>
+      ),
+    },
+
     handover: {
       title: 'Digital Leadership Handover Center',
       subtitle: '7-section succession dossier, atomic role transfer, and structured memory handoff',
@@ -173,6 +201,7 @@ export function ProductPreview() {
               <span className="font-bold text-ink">Incoming President</span>
             </div>
           </div>
+
           <div className="p-3 rounded-xl bg-subtle border border-border flex items-center justify-between">
             <span className="font-semibold text-ink text-xs">Verified Sign-Off Status</span>
             <span className="text-[10px] bg-mint-50 text-mint-700 font-bold px-2 py-0.5 rounded-full border border-mint-200">
@@ -188,28 +217,28 @@ export function ProductPreview() {
     { key: 'club', label: 'Club Workspace', icon: LayoutDashboard },
     { key: 'events', label: 'Event Cockpit', icon: Calendar },
     { key: 'work', label: 'My Work', icon: CheckSquare },
-    { key: 'handover', label: 'Handover Center', icon: ArrowRightLeft },
-    { key: 'campus', label: 'Campus Operations', icon: Building2 },
+    { key: 'members', label: 'Members', icon: Users },
+    { key: 'handover', label: 'Handover', icon: ArrowRightLeft },
   ];
 
   const current = previews[activeTab];
 
   return (
-    <section id="preview" className="py-20 md:py-28 bg-surface border-t border-border select-none">
+    <section id="product-preview" className="py-20 md:py-28 bg-surface border-t border-border select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto space-y-3 mb-12">
-          <div className="flex items-center justify-center gap-2 mb-1">
+          <div className="inline-flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-200">
-              Interactive preview
+              Interactive tour
             </span>
             <span className="text-[11px] font-medium text-mutedSlate bg-subtle px-2.5 py-1 rounded-full border border-border">
-              Illustrative workflows
+              Actual application screens
             </span>
           </div>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
-            Designed for student leaders. Built to last.
+          <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold text-ink tracking-tight">
+            See how your club works with ClubRelay.
           </h2>
-          <p className="text-sm sm:text-base text-mutedSlate leading-relaxed">
+          <p className="text-sm sm:text-base text-mutedSlate leading-relaxed font-sans">
             Inspect the actual operational screens powering student organizations across events, tasks,
             and leadership successions.
           </p>
@@ -224,7 +253,7 @@ export function ProductPreview() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                   isActive
                     ? 'bg-brand-500 text-white shadow-subtle'
                     : 'bg-canvas text-ink hover:bg-subtle border border-border'
@@ -260,3 +289,5 @@ export function ProductPreview() {
     </section>
   );
 }
+
+export default ProductPreview;

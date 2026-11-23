@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { RelayMascot } from '../brand/RelayMascot';
+import { BrandLockup } from '../brand/BrandLockup';
 import { Menu, X, ArrowRight, LayoutDashboard } from 'lucide-react';
 
 export function MarketingNavbar() {
@@ -22,31 +22,23 @@ export function MarketingNavbar() {
     <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand identity */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <RelayMascot size="sm" interactive={false} />
-          <div>
-            <span className="font-heading font-extrabold text-base tracking-tight text-ink block leading-none">
-              ClubRelay
-            </span>
-            <span className="text-[10px] font-medium text-brand-600 block mt-0.5">
-              Campus Energy
-            </span>
-          </div>
+        <Link to="/" className="flex items-center gap-2 group">
+          <BrandLockup size="md" />
         </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-ink/80">
-          <a href="#product-pillars" className="hover:text-brand-600 transition-colors">
+          <a href="#product-preview" className="hover:text-brand-600 transition-colors">
             Product
+          </a>
+          <a href="#product-pillars" className="hover:text-brand-600 transition-colors">
+            Features
           </a>
           <a href="#how-it-works" className="hover:text-brand-600 transition-colors">
             How It Works
           </a>
           <a href="#communities" className="hover:text-brand-600 transition-colors">
             Communities
-          </a>
-          <a href="#preview" className="hover:text-brand-600 transition-colors">
-            Workspace Preview
           </a>
         </nav>
 
@@ -55,10 +47,10 @@ export function MarketingNavbar() {
           {user ? (
             <button
               onClick={() => navigate(getWorkspaceLink())}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-medium text-xs transition-colors shadow-subtle"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-medium text-xs transition-colors shadow-subtle"
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Go to Workspace</span>
+              <span>Open Your Workspace</span>
             </button>
           ) : (
             <>
@@ -70,9 +62,9 @@ export function MarketingNavbar() {
               </Link>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-xs transition-colors shadow-subtle"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-xs transition-colors shadow-subtle"
               >
-                <span>Explore Platform</span>
+                <span>Explore ClubRelay</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </>
@@ -94,11 +86,18 @@ export function MarketingNavbar() {
         <div className="md:hidden border-b border-border bg-surface px-4 py-4 space-y-3">
           <nav className="flex flex-col space-y-2 text-xs font-semibold text-ink/80">
             <a
+              href="#product-preview"
+              onClick={() => setMobileMenuOpen(false)}
+              className="py-1.5 hover:text-brand-600 transition-colors"
+            >
+              Product
+            </a>
+            <a
               href="#product-pillars"
               onClick={() => setMobileMenuOpen(false)}
               className="py-1.5 hover:text-brand-600 transition-colors"
             >
-              Product Pillars
+              Features
             </a>
             <a
               href="#how-it-works"
@@ -112,14 +111,7 @@ export function MarketingNavbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="py-1.5 hover:text-brand-600 transition-colors"
             >
-              Target Communities
-            </a>
-            <a
-              href="#preview"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-1.5 hover:text-brand-600 transition-colors"
-            >
-              Workspace Preview
+              Communities
             </a>
           </nav>
           <div className="pt-3 border-t border-border flex flex-col gap-2">
@@ -129,25 +121,25 @@ export function MarketingNavbar() {
                   setMobileMenuOpen(false);
                   navigate(getWorkspaceLink());
                 }}
-                className="w-full py-2 rounded-lg bg-brand-500 text-white font-semibold text-xs text-center"
+                className="w-full py-2.5 rounded-xl bg-brand-500 text-white font-semibold text-xs text-center"
               >
-                Go to Workspace
+                Open Your Workspace
               </button>
             ) : (
               <>
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2 rounded-lg border border-border text-center text-xs font-semibold text-ink"
+                  className="w-full py-2.5 rounded-xl border border-border text-center text-xs font-semibold text-ink"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2 rounded-lg bg-brand-500 text-white text-center text-xs font-semibold"
+                  className="w-full py-2.5 rounded-xl bg-brand-500 text-white text-center text-xs font-semibold"
                 >
-                  Explore Platform
+                  Explore ClubRelay
                 </Link>
               </>
             )}

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#192B42" />
+      <stop offset="100%" stop-color="#0F1C2D" />
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="rgba(49, 91, 219, 0.35)" />
+      <stop offset="100%" stop-color="rgba(49, 91, 219, 0)" />
+    </radialGradient>
+    <linearGradient id="iconBlue" x1="120" y1="120" x2="392" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5D8BEE" />
+      <stop offset="100%" stop-color="#315BDB" />
+    </linearGradient>
+    <linearGradient id="iconMint" x1="392" y1="392" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#52C9B0" />
+      <stop offset="100%" stop-color="#2CBF9B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Squircle Base -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)" />
+  <rect width="512" height="512" rx="115" fill="url(#glowGrad)" />
+  <rect x="1" y="1" width="510" height="510" rx="114" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
+
+  <!-- Scaled Centered Symbol -->
+  <g transform="translate(256, 256) scale(2.5) translate(-64, -64)">
+    <path d="M 32 64 C 32 38 48 24 72 24 C 92 24 104 36 104 52 C 104 68 88 80 64 80 L 40 80"
+          stroke="url(#iconBlue)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 96 64 C 96 90 80 104 56 104 C 36 104 24 92 24 76 C 24 60 40 48 64 48 L 88 48"
+          stroke="url(#iconMint)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="64" cy="64" r="8" fill="#FF886B" />
+    <circle cx="64" cy="64" r="3.5" fill="#FFFFFF" />
+  </g>
+</svg>

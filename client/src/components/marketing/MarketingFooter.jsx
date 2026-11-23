@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { RelayMascot } from '../brand/RelayMascot';
+import { BrandLockup } from '../brand/BrandLockup';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 export function MarketingFooter() {
@@ -62,13 +62,10 @@ export function MarketingFooter() {
       <div className="border-t border-border bg-surface py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Col 1: Brand & Mascot */}
+            {/* Col 1: Brand Identity */}
             <div className="space-y-3 md:col-span-1">
               <div className="flex items-center gap-2">
-                <RelayMascot size="sm" interactive={false} />
-                <span className="font-heading font-extrabold text-base tracking-tight text-ink">
-                  ClubRelay
-                </span>
+                <BrandLockup size="md" />
               </div>
               <p className="text-xs text-mutedSlate leading-relaxed">
                 The university student organization continuity and operations platform.

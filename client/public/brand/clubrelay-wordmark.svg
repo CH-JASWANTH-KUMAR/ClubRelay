@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <text x="0" y="58" font-family="'Outfit', 'DM Sans', -apple-system, sans-serif" font-size="52" font-weight="800" letter-spacing="-1.2">
+    <tspan fill="#192B42">Club</tspan><tspan fill="#315BDB">Relay</tspan>
+  </text>
+  <circle cx="274" cy="22" r="5" fill="#2CBF9B" />
+</svg>

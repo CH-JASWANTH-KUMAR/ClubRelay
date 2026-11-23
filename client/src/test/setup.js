@@ -27,3 +27,12 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
 };
 
+// Mock ResizeObserver for jsdom
+global.ResizeObserver = class ResizeObserver {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

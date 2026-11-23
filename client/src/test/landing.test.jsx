@@ -6,6 +6,13 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { LandingPage } from '../pages/LandingPage';
 import { RelayMascot, computeClampedPupilOffset, PUPIL_MAX_X, PUPIL_MAX_Y } from '../components/brand/RelayMascot';
+import { BrandMark } from '../components/brand/BrandMark';
+import { BrandWordmark } from '../components/brand/BrandWordmark';
+import { BrandLockup } from '../components/brand/BrandLockup';
+import { RelayContinuitySection } from '../components/marketing/RelayContinuitySection';
+import { FinalCtaSection } from '../components/marketing/FinalCtaSection';
+import { ProblemSection } from '../components/marketing/ProblemSection';
+import { CampusCommunities } from '../components/marketing/CampusCommunities';
 
 const mockToast = {
   addToast: vi.fn(),
@@ -38,6 +45,36 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
     vi.clearAllMocks();
   });
 
+  describe('Brand System Components', () => {
+    it('renders BrandMark in all standard sizes and variants', () => {
+      const sizes = ['xs', 'sm', 'md', 'lg', 'xl', 'hero'];
+      sizes.forEach((size) => {
+        const { container } = render(<BrandMark size={size} variant="color" />);
+        const svg = container.querySelector('svg');
+        expect(svg).toBeInTheDocument();
+      });
+
+      const variants = ['color', 'dark', 'light', 'monochrome'];
+      variants.forEach((variant) => {
+        const { container } = render(<BrandMark size="md" variant={variant} />);
+        const svg = container.querySelector('svg');
+        expect(svg).toBeInTheDocument();
+      });
+    });
+
+    it('renders BrandWordmark with dot accent', () => {
+      const { container } = render(<BrandWordmark size="md" variant="color" />);
+      expect(container.textContent).toContain('ClubRelay');
+    });
+
+    it('renders BrandLockup combining mark and wordmark', () => {
+      const { container } = render(<BrandLockup size="md" variant="color" showText={true} />);
+      const svg = container.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+      expect(container.textContent).toContain('ClubRelay');
+    });
+  });
+
   describe('Relay Mascot Component', () => {
     it('renders vector SVG mascot without crashing', () => {
       const { container } = render(<RelayMascot size="md" interactive={true} />);
@@ -53,7 +90,6 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
     });
 
     it('strictly clamps pupil offsets within the eye aperture boundary for all directions', () => {
-      // Test directions: Right, Left, Down, Up, and 4 Diagonals
       const testVectors = [
         { dx: 500, dy: 0, label: 'Right' },
         { dx: -500, dy: 0, label: 'Left' },
@@ -68,7 +104,6 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
 
       testVectors.forEach(({ dx, dy, label }) => {
         const offset = computeClampedPupilOffset(dx, dy, 180);
-        // Normalize: (x / maxX)^2 + (y / maxY)^2 must be <= 1.0001
         const normalizedRadiusSq = (offset.x / PUPIL_MAX_X) ** 2 + (offset.y / PUPIL_MAX_Y) ** 2;
         expect(normalizedRadiusSq, `Pupil clamped for direction ${label}`).toBeLessThanOrEqual(1.0001);
       });
@@ -91,7 +126,49 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
     });
   });
 
-  describe('Public Landing Page', () => {
+  describe('Editorial Marketing Sections', () => {
+    it('renders ProblemSection with comparative transition and editorial visual', () => {
+      render(<ProblemSection />);
+      expect(screen.getByText(/the semester ends\./i)).toBeInTheDocument();
+      expect(screen.getByText(/the knowledge shouldn['’]t\./i)).toBeInTheDocument();
+      expect(screen.getByText(/where context disappears/i)).toBeInTheDocument();
+      expect(screen.getByText(/how clubrelay keeps momentum/i)).toBeInTheDocument();
+    });
+
+    it('renders RelayContinuitySection with mascot and 4 continuity pillars', () => {
+      render(<RelayContinuitySection />);
+      expect(screen.getByText(/continuity companion/i)).toBeInTheDocument();
+      expect(screen.getByText(/good clubs don['’]t start from zero\./i)).toBeInTheDocument();
+      expect(screen.getByText(/they pick up where the last team left off\./i)).toBeInTheDocument();
+      expect(screen.getByText(/7-section successor dossier/i)).toBeInTheDocument();
+      expect(screen.getByText(/atomic role handover/i)).toBeInTheDocument();
+    });
+
+    it('renders CampusCommunities with 8 student technical community sectors', () => {
+      render(<CampusCommunities />);
+      expect(screen.getByText(/built for collegiate tech culture/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/developer communities/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/robotics & hardware labs/i)).toBeInTheDocument();
+      expect(screen.getByText(/ai & data science guilds/i)).toBeInTheDocument();
+      expect(screen.getByText(/cloud & cyber security/i)).toBeInTheDocument();
+    });
+
+    it('renders FinalCtaSection with dual actions and brand mark', () => {
+      render(
+        <MemoryRouter>
+          <AuthContext.Provider value={mockGuestAuth}>
+            <FinalCtaSection />
+          </AuthContext.Provider>
+        </MemoryRouter>
+      );
+      expect(screen.getByText(/your next batch should start ahead/i)).toBeInTheDocument();
+      expect(screen.getByText(/not from scratch\./i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /explore clubrelay/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Public Landing Page Integration', () => {
     it('renders hero headline, tagline, and CTA for guest visitors', () => {
       render(
         <MemoryRouter initialEntries={['/']}>
@@ -176,6 +253,29 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
 
       const workspaceButtons = screen.getAllByRole('button', { name: /open your workspace/i });
       expect(workspaceButtons.length).toBeGreaterThan(0);
+    });
+
+    it('toggles mobile menu drawer on hamburger button click', () => {
+      render(
+        <MemoryRouter initialEntries={['/']}>
+          <ToastContext.Provider value={mockToast}>
+            <AuthContext.Provider value={mockGuestAuth}>
+              <LandingPage />
+            </AuthContext.Provider>
+          </ToastContext.Provider>
+        </MemoryRouter>
+      );
+
+      const toggleButton = screen.getByLabelText(/toggle menu/i);
+      expect(toggleButton).toBeInTheDocument();
+
+      // Open mobile drawer
+      fireEvent.click(toggleButton);
+      const navLinks = screen.getAllByRole('link', { name: /how it works/i });
+      expect(navLinks.length).toBeGreaterThan(1); // desktop + mobile
+
+      // Close mobile drawer
+      fireEvent.click(toggleButton);
     });
   });
 });

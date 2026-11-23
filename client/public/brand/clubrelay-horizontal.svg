@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 110" fill="none">
+  <defs>
+    <linearGradient id="crHBlue" x1="15" y1="15" x2="85" y2="85" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#315BDB" />
+      <stop offset="100%" stop-color="#1F3EA8" />
+    </linearGradient>
+    <linearGradient id="crHMint" x1="85" y1="85" x2="15" y2="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2CBF9B" />
+      <stop offset="100%" stop-color="#1F8A70" />
+    </linearGradient>
+  </defs>
+
+  <!-- Symbol scaled and positioned left -->
+  <g transform="translate(10, 5) scale(0.78)">
+    <path d="M 32 64 C 32 38 48 24 72 24 C 92 24 104 36 104 52 C 104 68 88 80 64 80 L 40 80"
+          stroke="url(#crHBlue)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 96 64 C 96 90 80 104 56 104 C 36 104 24 92 24 76 C 24 60 40 48 64 48 L 88 48"
+          stroke="url(#crHMint)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="64" cy="64" r="7.5" fill="#FF886B" />
+    <circle cx="64" cy="64" r="3.5" fill="#FFFFFF" />
+  </g>
+
+  <!-- Typography -->
+  <text x="124" y="68" font-family="'Outfit', 'DM Sans', -apple-system, sans-serif" font-size="44" font-weight="800" letter-spacing="-1">
+    <tspan fill="#192B42">Club</tspan><tspan fill="#315BDB">Relay</tspan>
+  </text>
+  <circle cx="362" cy="38" r="4.5" fill="#2CBF9B" />
+</svg>

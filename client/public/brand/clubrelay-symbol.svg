@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="crBlueGrad" x1="20" y1="20" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#315BDB" />
+      <stop offset="100%" stop-color="#1F3EA8" />
+    </linearGradient>
+    <linearGradient id="crMintGrad" x1="108" y1="108" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2CBF9B" />
+      <stop offset="100%" stop-color="#1F8A70" />
+    </linearGradient>
+    <linearGradient id="crCoralGrad" x1="60" y1="40" x2="84" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF886B" />
+      <stop offset="100%" stop-color="#D95E41" />
+    </linearGradient>
+    <filter id="crSubtleShadow" x="-10%" y="-10%" width="120%" height="120%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#192B42" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Track 1: Outgoing Momentum (Electric Blue Arc sweeping from top-left over to center) -->
+  <path d="M 32 64 C 32 38 48 24 72 24 C 92 24 104 36 104 52 C 104 68 88 80 64 80 L 40 80"
+        stroke="url(#crBlueGrad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"
+        filter="url(#crSubtleShadow)" />
+
+  <!-- Track 2: Incoming Continuity (Fresh Mint Arc looping from bottom-right up through center) -->
+  <path d="M 96 64 C 96 90 80 104 56 104 C 36 104 24 92 24 76 C 24 60 40 48 64 48 L 88 48"
+        stroke="url(#crMintGrad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"
+        filter="url(#crSubtleShadow)" />
+
+  <!-- Handover Nexus Spark: Passing the baton / institutional memory spark -->
+  <circle cx="64" cy="64" r="7.5" fill="url(#crCoralGrad)" />
+  <circle cx="64" cy="64" r="3.5" fill="#FFFFFF" />
+</svg>

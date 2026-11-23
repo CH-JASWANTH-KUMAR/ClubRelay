@@ -1,0 +1,27 @@
+{
+  "name": "ClubRelay",
+  "short_name": "ClubRelay",
+  "description": "The institutional memory and operations platform for collegiate organizations and student clubs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F8F4",
+  "theme_color": "#192B42",
+  "icons": [
+    {
+      "src": "/brand/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/clubrelay-app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

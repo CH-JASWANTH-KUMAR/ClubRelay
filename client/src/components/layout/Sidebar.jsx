@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { clsx } from 'clsx';
-import { RelayMascot } from '../brand/RelayMascot';
+import { BrandMark } from '../brand/BrandMark';
+import { BrandLockup } from '../brand/BrandLockup';
 
 export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }) {
   const { user, activeClub, memberships, switchClub } = useAuth();
@@ -170,14 +171,10 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
       <div className={clsx('border-b border-border', collapsed ? 'p-2' : 'p-4')}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 overflow-hidden">
-            <RelayMascot size="sm" interactive={false} />
-            {!collapsed && (
-              <div className="truncate">
-                <h1 className="font-heading font-extrabold text-sm text-ink tracking-tight leading-tight">
-                  ClubRelay
-                </h1>
-                <p className="text-[11px] text-mutedSlate">The knowledge stays.</p>
-              </div>
+            {collapsed ? (
+              <BrandMark size="sm" />
+            ) : (
+              <BrandLockup size="sm" />
             )}
           </div>
 
