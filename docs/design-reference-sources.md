@@ -42,3 +42,4 @@ All marketing and dashboard interfaces were verified with the Hallmark mechanica
 - **Balanced Headlines**: Enabled CSS `text-wrap: balance` across display headings (`h1`, `h2`, `h3`, `h4`, `.font-heading`).
 - **Concise Button Labels**: Every action button conforms to $\le 24$ characters.
 - **Typographic Characters**: Uses proper typographic quotes (`’`, `“`, `”`) rather than straight quotes in prose copy.
+

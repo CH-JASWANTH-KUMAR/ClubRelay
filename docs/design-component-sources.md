@@ -47,12 +47,65 @@ This document provides a component-by-component inventory of all primitives and 
 - **Purpose**: Tabbed preview of actual workspace screens.
 - **Features**: 5 pill tabs (Club Workspace, Event Cockpit, My Work, Handover Center, Campus Operations) with real UI states.
 
+### `DragCards` (`client/src/components/marketing/DragCards.jsx`)
+- **Purpose**: Interactive draggable showcase representing the Four Pillars of High-Performing Clubs (Community, Operations, Engineering, Continuity).
+- **Source Pattern**: Adapted from Hover.dev draggable physics card pattern, styled exclusively within Campus Energy palette.
+- **Features**:
+  - Pointer Event tracking with coordinate clamping (`Math.max(-280, Math.min(280, ...))`) to prevent card loss.
+  - Dynamic Z-Index elevation on drag and focus.
+  - Accessible keyboard tab controls (`role="tablist"`) with explicit "Bring to Front" and "Reset Positions" triggers.
+  - Mobile responsive grid fallback with zero horizontal overflow.
+
 ### `MarketingFooter` (`client/src/components/marketing/MarketingFooter.jsx`)
 - **Purpose**: Final conversion banner, product pillar directory, and university security trust statement.
 
 ---
 
-## 2. Design System UI Primitives
+## 2. React Bits Animation Components
+
+### `SplitText` (`client/src/components/ui/SplitText.jsx`)
+- **Purpose**: Word-by-word staggered entrance animation for hero headlines.
+- **Source Pattern**: React Bits text animation primitive rewritten in zero-dependency React + CSS keyframes.
+- **Features**: Configurable word stagger delay, automatic `prefers-reduced-motion` detection, balanced word wrapping.
+
+### `Magnet` (`client/src/components/ui/Magnet.jsx`)
+- **Purpose**: Subtle magnetic cursor pull interaction for primary conversion CTAs.
+- **Source Pattern**: React Bits magnetic interaction primitive.
+- **Features**: Radius proximity detection, smooth cubic-bezier spring return, honors reduced-motion preferences.
+
+### `AnimatedContent` (`client/src/components/ui/AnimatedContent.jsx`)
+- **Purpose**: Viewport scroll reveal container.
+- **Source Pattern**: React Bits scroll reveal primitive using native `IntersectionObserver`.
+- **Features**: Distance and threshold configuration, automatic unobservation once revealed, jsdom/SSR safety fallback.
+
+---
+
+## 3. Dark Grid Auth Experience
+
+### `Login` (`client/src/pages/Login.jsx`)
+- **Purpose**: Multi-tenant institutional authentication screen.
+- **Source Pattern**: Adapted from Hover.dev Dark Grid design pattern into the Campus Energy visual system.
+- **Aesthetic**:
+  - Deep Ink Navy background (`#192B42`).
+  - High-precision Electric Blue grid lines (`#315BDB` with radial focal glow).
+  - Frosted dark container (`#122033/90 backdrop-blur-md`).
+- **Features**:
+  - Provider status polling via `/api/v1/auth/providers`.
+  - Google and GitHub single-sign-on triggers with official SVGs.
+  - Institutional email credentials login.
+  - Zero pre-filled demo data (clean empty defaults).
+  - OAuth redirect error banner mapping query codes (`invalid_state`, `unverified_email`, etc.).
+  - Responsive layout with interactive Relay Mascot.
+
+---
+
+## 4. Evaluation Notes: Hover.dev Pro & Testimonials
+- **Hover.dev Pro Restrictions**: Components requiring proprietary Pro licenses (such as Flip Calendar and Stagger Testimonials) were evaluated and explicitly not copied. Instead, genuine full-fidelity components were developed natively.
+- **Anti-Fabrication Policy**: In accordance with product design ethics, no fake customer quotes, fabricated testimonials, or simulated endorsements were introduced. Future student organization testimonials will be integrated from authenticated campus reviews.
+
+---
+
+## 5. Design System UI Primitives
 
 ### `Button` (`client/src/components/ui/Button.jsx`)
 - **Variants**: `primary` (Electric Blue `#315BDB`), `secondary` (Surface with `#E5E9E8` border), `outline` (Transparent with Electric Blue border), `ghost` (Minimalist muted hover), `danger` (Crimson `#DC2626`).
@@ -101,3 +154,4 @@ This document provides a component-by-component inventory of all primitives and 
    - Consistent stroke-width (`2px`) icon system.
 4. **Google Fonts (Outfit & DM Sans)**:
    - High readability display pairing for modern educational applications.
+

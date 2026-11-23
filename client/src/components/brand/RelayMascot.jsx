@@ -1,14 +1,43 @@
 import React, { useRef, useEffect, useState } from 'react';
 
+// Clearance parameters in SVG viewBox coordinates (100 x 100)
+// Eye sockets: rx = 8, ry = 9; Pupil: r = 4.2; Stroke margin: 0.6
+export const PUPIL_MAX_X = 8 - 4.2 - 0.6; // 3.2 SVG units
+export const PUPIL_MAX_Y = 9 - 4.2 - 0.6; // 4.2 SVG units
+
+/**
+ * Computes an ellipse-aware clamped pupil offset in SVG viewBox coordinates.
+ * Guaranteed: (x / PUPIL_MAX_X)^2 + (y / PUPIL_MAX_Y)^2 <= 1.
+ */
+export function computeClampedPupilOffset(deltaX, deltaY, reach = 180) {
+  const distance = Math.hypot(deltaX, deltaY);
+  if (distance === 0) return { x: 0, y: 0 };
+
+  const angle = Math.atan2(deltaY, deltaX);
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+
+  // Exact radius of clearance ellipse along ray at angle theta
+  const rMax = (PUPIL_MAX_X * PUPIL_MAX_Y) / Math.sqrt((PUPIL_MAX_Y * cosA) ** 2 + (PUPIL_MAX_X * sinA) ** 2);
+  const intensity = Math.min(1, distance / reach);
+  const moveDist = intensity * rMax;
+
+  const x = Number((cosA * moveDist).toFixed(3));
+  const y = Number((sinA * moveDist).toFixed(3));
+
+  return { x, y };
+}
+
 /**
  * RelayMascot — The official interactive character for ClubRelay.
  * Features:
- * - Scoped pointer tracking (never global, strictly within bounding container)
- * - Smooth linear interpolation (lerp) via requestAnimationFrame
- * - Bounded pupil movement inside eye sockets
- * - Gentle periodic blink
+ * - Geometric ellipse clamp in SVG viewBox coordinates (pupil never crosses aperture border)
+ * - Resolution-independent scaling across all sizes (sm, md, lg, hero)
+ * - Idle RAF loop management: halts animation frame when gaze settles (0% idle CPU)
+ * - Smooth pointer entry/exit interpolation to neutral
+ * - Glitch-free SVG clip-path blinking without unmounting pupil refs
+ * - Clean event listener and timer cleanup on unmount or resize
  * - Respects prefers-reduced-motion and coarse touch devices
- * - Zero layout thrashing, clean unmount cleanup
  */
 export function RelayMascot({
   size = 'md',
@@ -21,8 +50,9 @@ export function RelayMascot({
   const leftPupilRef = useRef(null);
   const rightPupilRef = useRef(null);
   const animFrameRef = useRef(null);
+  const isAnimating = useRef(false);
 
-  // Pupil animation state (ref-based to prevent React re-renders)
+  // Pupil animation state
   const pupilPos = useRef({
     currentX: 0,
     currentY: 0,
@@ -32,20 +62,18 @@ export function RelayMascot({
 
   const [isBlinking, setIsBlinking] = useState(false);
 
-  // Sizing map
+  // Sizing map (width/height in CSS px; internal SVG units are 0..100)
   const sizeDimensions = {
-    sm: { width: 44, height: 44, pupilMax: 2.5 },
-    md: { width: 72, height: 72, pupilMax: 4.5 },
-    lg: { width: 120, height: 120, pupilMax: 7 },
-    hero: { width: 220, height: 220, pupilMax: 12 },
+    sm: { width: 44, height: 44 },
+    md: { width: 72, height: 72 },
+    lg: { width: 120, height: 120 },
+    hero: { width: 220, height: 220 },
   };
 
   const currentSize = sizeDimensions[size] || sizeDimensions.md;
-  const pupilMax = currentSize.pupilMax;
 
-  // Periodic gentle blink
+  // Periodic gentle blink with clean timer management
   useEffect(() => {
-    // Check reduced motion
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -53,28 +81,29 @@ export function RelayMascot({
     if (prefersReducedMotion) return;
 
     let timeoutId;
+    let closeTimeoutId;
+
     const triggerBlink = () => {
       setIsBlinking(true);
-      setTimeout(() => {
+      closeTimeoutId = setTimeout(() => {
         setIsBlinking(false);
-        // Next blink after 3.5 to 6 seconds
         const nextInterval = 3500 + Math.random() * 2500;
         timeoutId = setTimeout(triggerBlink, nextInterval);
-      }, 160);
+      }, 140);
     };
 
-    timeoutId = setTimeout(triggerBlink, 3000);
+    timeoutId = setTimeout(triggerBlink, 2800);
 
     return () => {
       clearTimeout(timeoutId);
+      clearTimeout(closeTimeoutId);
     };
   }, []);
 
-  // Eye tracking loop
+  // Eye tracking loop with RAF idle settling and resize cleanup
   useEffect(() => {
     if (!interactive) return;
 
-    // Check device capabilities and user preference
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -87,9 +116,48 @@ export function RelayMascot({
       return;
     }
 
-    // Determine tracking boundary container: passed containerRef or the mascot's own element
     const boundary = (containerRef && containerRef.current) || mascotRef.current;
     if (!boundary) return;
+
+    const updateDOM = (x, y) => {
+      const tx = x.toFixed(2);
+      const ty = y.toFixed(2);
+      const transformStr = `translate(${tx}, ${ty})`;
+      if (leftPupilRef.current) {
+        leftPupilRef.current.setAttribute('transform', transformStr);
+      }
+      if (rightPupilRef.current) {
+        rightPupilRef.current.setAttribute('transform', transformStr);
+      }
+    };
+
+    const animatePupils = () => {
+      const state = pupilPos.current;
+      const lerpFactor = 0.16;
+
+      state.currentX += (state.targetX - state.currentX) * lerpFactor;
+      state.currentY += (state.targetY - state.currentY) * lerpFactor;
+
+      const dx = Math.abs(state.targetX - state.currentX);
+      const dy = Math.abs(state.targetY - state.currentY);
+
+      if (dx < 0.005 && dy < 0.005) {
+        state.currentX = state.targetX;
+        state.currentY = state.targetY;
+        updateDOM(state.currentX, state.currentY);
+        isAnimating.current = false;
+        return; // Halt RAF loop when settled
+      }
+
+      updateDOM(state.currentX, state.currentY);
+      animFrameRef.current = requestAnimationFrame(animatePupils);
+    };
+
+    const startAnimationLoop = () => {
+      if (isAnimating.current) return;
+      isAnimating.current = true;
+      animFrameRef.current = requestAnimationFrame(animatePupils);
+    };
 
     const handlePointerMove = (e) => {
       if (!mascotRef.current) return;
@@ -99,53 +167,22 @@ export function RelayMascot({
 
       const deltaX = e.clientX - centerX;
       const deltaY = e.clientY - centerY;
-      const distance = Math.hypot(deltaX, deltaY);
 
-      if (distance === 0) {
-        pupilPos.current.targetX = 0;
-        pupilPos.current.targetY = 0;
-        return;
-      }
+      const clamped = computeClampedPupilOffset(deltaX, deltaY, 180);
+      pupilPos.current.targetX = clamped.x;
+      pupilPos.current.targetY = clamped.y;
 
-      // Smooth distance damping factor
-      const angle = Math.atan2(deltaY, deltaX);
-      const intensity = Math.min(1, distance / 180);
-      const moveDistance = pupilMax * intensity;
-
-      pupilPos.current.targetX = Math.cos(angle) * moveDistance;
-      pupilPos.current.targetY = Math.sin(angle) * moveDistance;
+      startAnimationLoop();
     };
 
     const handlePointerLeave = () => {
-      // Return gaze gently to center
       pupilPos.current.targetX = 0;
       pupilPos.current.targetY = 0;
-    };
-
-    // Animation frame loop for buttery smooth interpolation (lerp)
-    const animatePupils = () => {
-      const state = pupilPos.current;
-      const lerpFactor = 0.14; // smooth easing
-
-      state.currentX += (state.targetX - state.currentX) * lerpFactor;
-      state.currentY += (state.targetY - state.currentY) * lerpFactor;
-
-      const tx = state.currentX.toFixed(2);
-      const ty = state.currentY.toFixed(2);
-
-      if (leftPupilRef.current) {
-        leftPupilRef.current.style.transform = `translate(${tx}px, ${ty}px)`;
-      }
-      if (rightPupilRef.current) {
-        rightPupilRef.current.style.transform = `translate(${tx}px, ${ty}px)`;
-      }
-
-      animFrameRef.current = requestAnimationFrame(animatePupils);
+      startAnimationLoop();
     };
 
     boundary.addEventListener('pointermove', handlePointerMove, { passive: true });
     boundary.addEventListener('pointerleave', handlePointerLeave, { passive: true });
-    animFrameRef.current = requestAnimationFrame(animatePupils);
 
     return () => {
       boundary.removeEventListener('pointermove', handlePointerMove);
@@ -153,8 +190,9 @@ export function RelayMascot({
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
       }
+      isAnimating.current = false;
     };
-  }, [interactive, containerRef, pupilMax]);
+  }, [interactive, containerRef]);
 
   return (
     <div
@@ -187,10 +225,25 @@ export function RelayMascot({
             <stop offset="1" stopColor="#E5B445" />
           </linearGradient>
 
-          <filter id="relayGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
+          {/* Eye Socket Clipping for Seamless Blinking without unmounting pupil refs */}
+          <clipPath id="relayLeftEyeClip">
+            <ellipse
+              cx="37"
+              cy="44"
+              rx="7.4"
+              ry={isBlinking ? 1 : 8.4}
+              style={{ transition: 'ry 0.12s ease-in-out' }}
+            />
+          </clipPath>
+          <clipPath id="relayRightEyeClip">
+            <ellipse
+              cx="63"
+              cy="44"
+              rx="7.4"
+              ry={isBlinking ? 1 : 8.4}
+              style={{ transition: 'ry 0.12s ease-in-out' }}
+            />
+          </clipPath>
         </defs>
 
         {/* --- Antenna --- */}
@@ -210,7 +263,6 @@ export function RelayMascot({
         />
 
         {/* --- Side Ears / Relay Grips --- */}
-        {/* Left ear */}
         <rect
           x="10"
           y="42"
@@ -221,7 +273,6 @@ export function RelayMascot({
           stroke="#192B42"
           strokeWidth="2"
         />
-        {/* Right ear */}
         <rect
           x="83"
           y="42"
@@ -272,26 +323,21 @@ export function RelayMascot({
             cx="37"
             cy="44"
             rx="8"
-            ry={isBlinking ? 1 : 9}
+            ry={isBlinking ? 1.5 : 9}
             fill="#F7F8F4"
             stroke="#192B42"
             strokeWidth="1.5"
-            style={{ transition: 'ry 0.1s ease-in-out' }}
+            style={{ transition: 'ry 0.12s ease-in-out' }}
           />
-          {/* Pupil */}
-          {!isBlinking && (
-            <g
-              ref={leftPupilRef}
-              style={{
-                transformOrigin: '37px 44px',
-                willChange: 'transform',
-              }}
-            >
-              <circle cx="37" cy="44" r="4.2" fill="#192B42" />
-              {/* Eye Catchlight (White shine) */}
-              <circle cx="35.5" cy="42" r="1.4" fill="#FFFFFF" />
-            </g>
-          )}
+          {/* Pupil: permanently mounted, clipped by eye socket lid */}
+          <g
+            ref={leftPupilRef}
+            clipPath="url(#relayLeftEyeClip)"
+            style={{ willChange: 'transform' }}
+          >
+            <circle cx="37" cy="44" r="4.2" fill="#192B42" />
+            <circle cx="35.5" cy="42" r="1.4" fill="#FFFFFF" />
+          </g>
         </g>
 
         {/* --- Right Eye Socket --- */}
@@ -300,26 +346,21 @@ export function RelayMascot({
             cx="63"
             cy="44"
             rx="8"
-            ry={isBlinking ? 1 : 9}
+            ry={isBlinking ? 1.5 : 9}
             fill="#F7F8F4"
             stroke="#192B42"
             strokeWidth="1.5"
-            style={{ transition: 'ry 0.1s ease-in-out' }}
+            style={{ transition: 'ry 0.12s ease-in-out' }}
           />
-          {/* Pupil */}
-          {!isBlinking && (
-            <g
-              ref={rightPupilRef}
-              style={{
-                transformOrigin: '63px 44px',
-                willChange: 'transform',
-              }}
-            >
-              <circle cx="63" cy="44" r="4.2" fill="#192B42" />
-              {/* Eye Catchlight (White shine) */}
-              <circle cx="61.5" cy="42" r="1.4" fill="#FFFFFF" />
-            </g>
-          )}
+          {/* Pupil: permanently mounted, clipped by eye socket lid */}
+          <g
+            ref={rightPupilRef}
+            clipPath="url(#relayRightEyeClip)"
+            style={{ willChange: 'transform' }}
+          >
+            <circle cx="63" cy="44" r="4.2" fill="#192B42" />
+            <circle cx="61.5" cy="42" r="1.4" fill="#FFFFFF" />
+          </g>
         </g>
 
         {/* --- Blush Cheeks --- */}
@@ -341,7 +382,6 @@ export function RelayMascot({
 
         {/* --- Chest Emblem: Momentum Relay Core --- */}
         <g transform="translate(42, 72)">
-          {/* Mini pulse ring */}
           <rect
             x="0"
             y="0"
@@ -352,7 +392,6 @@ export function RelayMascot({
             stroke="#FFFFFF"
             strokeWidth="1.5"
           />
-          {/* Inner spark */}
           <circle cx="8" cy="5" r="2.5" fill="#FFFFFF" />
         </g>
       </svg>

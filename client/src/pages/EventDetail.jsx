@@ -557,25 +557,42 @@ export function EventDetail() {
           <Card className="space-y-4">
             <CardHeader
               title="Campus Facilities & Equipment Resources"
-              subtitle="Permits, auditorium holds, and AV requirements"
+              subtitle="Permits, venue holds, and equipment requirements"
             />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-3.5 rounded border border-border bg-subtle space-y-1">
-                <span className="font-bold text-charcoal-900 block">Facility Space</span>
-                <span className="text-charcoal-600 block">{eventData.venueName || 'Campus Venue TBD'}</span>
-                <Badge variant="approved" size="sm">Hold Confirmed</Badge>
+              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                <span className="font-bold text-ink block">Facility Space</span>
+                <span className="text-mutedSlate block">{eventData.venueName || 'Venue TBD'}</span>
+                <Badge
+                  variant={eventData.venueName ? (eventData.status === 'APPROVED' || eventData.status === 'COMPLETED' ? 'approved' : 'planning') : 'default'}
+                  size="sm"
+                >
+                  {eventData.venueName ? (eventData.status === 'APPROVED' || eventData.status === 'COMPLETED' ? 'Hold Verified' : 'Hold Requested') : 'Unassigned'}
+                </Badge>
               </div>
 
-              <div className="p-3.5 rounded border border-border bg-subtle space-y-1">
-                <span className="font-bold text-charcoal-900 block">AV & Stage Setup</span>
-                <span className="text-charcoal-600 block">Projector, 2 Cordless Mics, Podium</span>
-                <Badge variant="planning" size="sm">Standard Kit</Badge>
+              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                <span className="font-bold text-ink block">Audio-Visual Logistics</span>
+                <span className="text-mutedSlate block">
+                  {eventData.status === 'DRAFT' || eventData.status === 'PROPOSED'
+                    ? 'Configured during Planning stage'
+                    : 'Standard campus AV equipment requested'}
+                </span>
+                <Badge variant={eventData.status === 'DRAFT' || eventData.status === 'PROPOSED' ? 'default' : 'planning'} size="sm">
+                  {eventData.status === 'DRAFT' || eventData.status === 'PROPOSED' ? 'Pending Stage' : 'Scheduled'}
+                </Badge>
               </div>
 
-              <div className="p-3.5 rounded border border-border bg-subtle space-y-1">
-                <span className="font-bold text-charcoal-900 block">Security & Access</span>
-                <span className="text-charcoal-600 block">Campus Security Notification</span>
-                <Badge variant="approved" size="sm">Notified</Badge>
+              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1.5">
+                <span className="font-bold text-ink block">Security & Campus Access</span>
+                <span className="text-mutedSlate block">
+                  {eventData.status === 'APPROVED' || eventData.status === 'COMPLETED'
+                    ? 'Security dispatch notified'
+                    : 'Notified upon proposal approval'}
+                </span>
+                <Badge variant={eventData.status === 'APPROVED' || eventData.status === 'COMPLETED' ? 'approved' : 'default'} size="sm">
+                  {eventData.status === 'APPROVED' || eventData.status === 'COMPLETED' ? 'Permit Active' : 'Hold'}
+                </Badge>
               </div>
             </div>
           </Card>

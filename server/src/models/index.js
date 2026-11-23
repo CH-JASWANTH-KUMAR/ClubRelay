@@ -14,3 +14,4 @@ export { Handover } from './Handover.js';
 export { Notification } from './Notification.js';
 export { AuditLog } from './AuditLog.js';
 export { Attachment } from './Attachment.js';
+export { FederatedIdentity } from './FederatedIdentity.js';

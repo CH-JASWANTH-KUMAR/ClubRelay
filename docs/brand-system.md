@@ -85,3 +85,4 @@ ClubRelay pairs two Google Fonts loaded with `preconnect` and `display=swap`:
   - Semantic variants: Approved (`#EAF8F5` / `#1F8A70`), Planning (`#EEF2FD` / `#1F3EA8`), Proposed (`#FEF8EB` / `#B88D22`), Urgent (`#FFF3F0` / `#D95E41`).
 - **Focus Rings**:
   - Strict high-visibility keyboard outline: `focus-visible:outline-2 focus-visible:outline-brand-500 focus-visible:outline-offset-2`.
+

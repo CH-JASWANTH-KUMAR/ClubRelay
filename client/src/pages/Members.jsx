@@ -172,31 +172,20 @@ export function Members() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-forest-700 animate-pulse" />
-              <h4 className="text-sm font-bold text-forest-900">
+              <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+              <h4 className="font-heading text-sm font-bold text-brand-900">
                 2026 Core Leadership & Talent Onboarding
               </h4>
             </div>
-            <p className="text-xs text-charcoal-600 max-w-2xl">
+            <p className="text-xs text-mutedSlate max-w-2xl">
               Track active applicants, schedule screening interviews, and designate successor leads across
               engineering, marketing, and operations tracks.
             </p>
           </div>
 
           <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="flex items-center gap-3 text-xs bg-white/80 px-3 py-1.5 rounded border border-forest-100">
-              <div className="text-center">
-                <span className="font-bold text-forest-900 block leading-tight">18</span>
-                <span className="text-[10px] text-charcoal-400">Applications</span>
-              </div>
-              <div className="w-px h-6 bg-border" />
-              <div className="text-center">
-                <span className="font-bold text-amberGold-800 block leading-tight">6</span>
-                <span className="text-[10px] text-charcoal-400">Interviews</span>
-              </div>
-            </div>
             <Button size="sm" variant="primary" onClick={() => setShowRecruitmentModal(true)}>
-              Open Pipeline
+              Open Recruitment Pipeline
             </Button>
           </div>
         </div>

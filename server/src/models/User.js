@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: true,
+      default: null,
     },
     campusRole: {
       type: String,
@@ -62,6 +62,9 @@ userSchema.index({ campusId: 1, email: 1 }, { unique: true });
 
 // Password comparison helper
 userSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!this.passwordHash) {
+    return false;
+  }
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 

@@ -2,6 +2,8 @@ import React, { useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { RelayMascot } from '../brand/RelayMascot';
+import { SplitText } from '../ui/SplitText';
+import { Magnet } from '../ui/Magnet';
 import {
   ArrowRight,
   Sparkles,
@@ -48,8 +50,10 @@ export function MarketingHero() {
 
             {/* Hero Main Headline */}
             <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold text-ink tracking-tight leading-[1.1]">
-              Build the club. <br />
-              <span className="text-brand-500">Keep the momentum.</span>
+              <SplitText text="Build the club." className="block" />
+              <span className="text-brand-500">
+                <SplitText text="Keep the momentum." delay={200} />
+              </span>
             </h1>
 
             {/* Description */}
@@ -66,22 +70,26 @@ export function MarketingHero() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
               {user ? (
-                <button
-                  onClick={() => navigate(getWorkspaceLink())}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm transition-colors shadow-subtle"
-                >
-                  <span>Open Your Workspace</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <Magnet>
+                  <button
+                    onClick={() => navigate(getWorkspaceLink())}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm transition-colors shadow-subtle cursor-pointer"
+                  >
+                    <span>Open Your Workspace</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Magnet>
               ) : (
                 <>
-                  <a
-                    href="#preview"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm transition-colors shadow-subtle"
-                  >
-                    <span>Explore ClubRelay</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
+                  <Magnet>
+                    <a
+                      href="#preview"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm transition-colors shadow-subtle cursor-pointer"
+                    >
+                      <span>Explore ClubRelay</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </Magnet>
                   <Link
                     to="/login"
                     className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl bg-surface hover:bg-subtle active:bg-muted text-ink font-semibold text-sm border border-border transition-colors shadow-subtle"
@@ -110,25 +118,25 @@ export function MarketingHero() {
           <div className="lg:col-span-5 relative flex flex-col items-center justify-center">
             {/* Mascot Container */}
             <div className="relative p-6 rounded-3xl bg-surface border border-border shadow-elevated flex flex-col items-center">
-              {/* Floating Event Pill */}
-              <div className="absolute -top-4 -left-4 sm:-left-8 bg-surface border border-border rounded-xl p-2.5 shadow-card flex items-center gap-2 text-xs animate-in fade-in duration-300">
+              {/* Illustrative Capability Pill: Event Operations */}
+              <div className="absolute -top-4 -left-4 sm:-left-8 bg-surface border border-border rounded-xl p-2.5 shadow-card flex items-center gap-2 text-xs select-none">
                 <div className="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
                   <Calendar className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="font-bold text-ink block leading-none">DevFest 2026</span>
-                  <span className="text-[10px] text-mint-600 font-medium">Status: Approved</span>
+                  <span className="font-bold text-ink block leading-none">Event Cockpit</span>
+                  <span className="text-[10px] text-mutedSlate font-medium">Lifecycle Tracking</span>
                 </div>
               </div>
 
-              {/* Floating Handover Status Pill */}
-              <div className="absolute -bottom-4 -right-2 sm:-right-6 bg-surface border border-border rounded-xl p-2.5 shadow-card flex items-center gap-2 text-xs animate-in fade-in duration-300">
+              {/* Illustrative Capability Pill: Institutional Memory */}
+              <div className="absolute -bottom-4 -right-2 sm:-right-6 bg-surface border border-border rounded-xl p-2.5 shadow-card flex items-center gap-2 text-xs select-none">
                 <div className="w-7 h-7 rounded-lg bg-mint-50 text-mint-600 flex items-center justify-center flex-shrink-0">
                   <FileCheck2 className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="font-bold text-ink block leading-none">Succession Package</span>
-                  <span className="text-[10px] text-brand-600 font-medium">100% Handover Ready</span>
+                  <span className="font-bold text-ink block leading-none">Knowledge Vault</span>
+                  <span className="text-[10px] text-mutedSlate font-medium">Institutional Continuity</span>
                 </div>
               </div>
 

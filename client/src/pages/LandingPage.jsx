@@ -3,6 +3,7 @@ import { MarketingNavbar } from '../components/marketing/MarketingNavbar';
 import { MarketingHero } from '../components/marketing/MarketingHero';
 import { ProblemSection } from '../components/marketing/ProblemSection';
 import { BentoFeatures } from '../components/marketing/BentoFeatures';
+import { DragCards } from '../components/marketing/DragCards';
 import { HowItWorks } from '../components/marketing/HowItWorks';
 import { CampusCommunities } from '../components/marketing/CampusCommunities';
 import { ProductPreview } from '../components/marketing/ProductPreview';
@@ -16,6 +17,7 @@ export function LandingPage() {
         <MarketingHero />
         <ProblemSection />
         <BentoFeatures />
+        <DragCards />
         <HowItWorks />
         <CampusCommunities />
         <ProductPreview />
@@ -26,3 +28,4 @@ export function LandingPage() {
 }
 
 export default LandingPage;
+

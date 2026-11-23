@@ -83,6 +83,8 @@ app.get('/api/health', (req, res) => {
 // Mount Rate-Limited Auth Endpoints
 app.use('/api/v1/auth/login', authLimiter);
 app.use('/api/v1/auth/register', authLimiter);
+app.use('/api/v1/auth/google', authLimiter);
+app.use('/api/v1/auth/github', authLimiter);
 
 // Mount API v1 Endpoints
 app.use('/api/v1/auth', authRoutes);

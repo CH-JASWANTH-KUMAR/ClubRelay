@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatedContent } from '../ui/AnimatedContent';
 import {
   Users,
   Calendar,
@@ -11,18 +12,20 @@ export function BentoFeatures() {
   return (
     <section id="product-pillars" className="py-20 md:py-28 bg-canvas select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto space-y-3 mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-xs font-bold text-brand-600">
-            <Sparkles className="w-3.5 h-3.5" /> Core Platform Architecture
+        <AnimatedContent distance={24} delay={50}>
+          <div className="text-center max-w-3xl mx-auto space-y-3 mb-14">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-xs font-bold text-brand-600">
+              <Sparkles className="w-3.5 h-3.5" /> Core Platform Architecture
+            </div>
+            <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
+              Four pillars of student club momentum
+            </h2>
+            <p className="text-sm sm:text-base text-mutedSlate leading-relaxed">
+              Everything student organizations need to build active teams, execute ambitious technical initiatives,
+              and guarantee smooth continuity.
+            </p>
           </div>
-          <h2 className="font-heading text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
-            Four pillars of student club momentum
-          </h2>
-          <p className="text-sm sm:text-base text-mutedSlate leading-relaxed">
-            Everything student organizations need to build active teams, execute ambitious technical initiatives,
-            and guarantee smooth continuity.
-          </p>
-        </div>
+        </AnimatedContent>
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">

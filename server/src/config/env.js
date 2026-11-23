@@ -13,6 +13,12 @@ const envSchema = z
     MONGODB_URI: z.string().optional(),
     CLIENT_ORIGIN: z.string().optional(),
     ALLOW_SEED_IN_PROD: z.string().optional().default('false'),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_CALLBACK_URL: z.string().optional(),
+    GITHUB_CLIENT_ID: z.string().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
+    GITHUB_CALLBACK_URL: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -71,6 +77,12 @@ const rawEnv = {
     process.env.CLIENT_ORIGIN ||
     (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:5173'),
   ALLOW_SEED_IN_PROD: process.env.ALLOW_SEED_IN_PROD || 'false',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+  GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+  GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL,
 };
 
 const parsed = envSchema.safeParse(rawEnv);
