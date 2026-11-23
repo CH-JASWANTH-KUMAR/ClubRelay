@@ -1,0 +1,80 @@
+/* Midnight Workshop Visual Effects & Textures */
+
+/* Subtle film grain noise overlay */
+.marketing-noise-bg {
+  background-image: radial-gradient(rgba(212, 238, 121, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(130, 201, 174, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px, 24px 24px;
+  background-position: 0 0, 16px 16px;
+}
+
+/* Fine low-contrast technical grid */
+.marketing-tech-grid {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+
+.marketing-tech-grid-light {
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, rgba(25, 37, 31, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(25, 37, 31, 0.05) 1px, transparent 1px);
+}
+
+/* Ambient directional glow - restrained, non-distracting */
+.marketing-ambient-glow {
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(212, 238, 121, 0.06),
+    transparent 70%
+  );
+}
+
+/* Glassmorphic dark card surface */
+.marketing-glass-card {
+  background: rgba(22, 34, 28, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(47, 67, 57, 0.6);
+}
+
+.marketing-glass-card:hover {
+  border-color: rgba(130, 201, 174, 0.4);
+}
+
+/* Floating pill nav active pill backdrop */
+.marketing-pill-nav {
+  background: rgba(16, 24, 21, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(47, 67, 57, 0.7);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Warm Paper section styling */
+.marketing-warm-paper-surface {
+  background-color: #F0EDE3;
+  color: #19251F;
+}
+
+/* Beam connection pulse */
+@keyframes beamPulse {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.2;
+  }
+}
+
+.animate-beam-path {
+  stroke-dasharray: 12 12;
+  animation: beamPulse 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

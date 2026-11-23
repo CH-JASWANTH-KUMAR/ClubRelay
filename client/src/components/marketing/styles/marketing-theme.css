@@ -1,0 +1,111 @@
+/* Midnight Workshop Marketing Theme */
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource/instrument-serif';
+
+:root {
+  /* Midnight Workshop Color Tokens */
+  --marketing-midnight: #101815;
+  --marketing-forest: #19251F;
+  --marketing-graphite: #151A18;
+  --marketing-surface: #16221C;
+  --marketing-card: #131B17;
+  --marketing-border: #23322A;
+  --marketing-border-light: #2F4339;
+
+  --marketing-warm-paper: #F0EDE3;
+  --marketing-warm-paper-dark: #E4DFD3;
+  --marketing-soft-stone: #DDDCD1;
+
+  --marketing-signal-lime: #D4EE79;
+  --marketing-signal-lime-hover: #C4E15F;
+  --marketing-oxidised-mint: #82C9AE;
+  --marketing-warm-copper: #D77D5E;
+  --marketing-muted-sage: #A8B5A9;
+  --marketing-light-sand: #F0EDE3;
+  --marketing-deep-ink: #19251F;
+
+  /* Typography */
+  --font-marketing-display: 'Space Grotesk Variable', 'Space Grotesk', sans-serif;
+  --font-marketing-body: 'DM Sans Variable', 'DM Sans', sans-serif;
+  --font-marketing-serif: 'Instrument Serif', Georgia, serif;
+}
+
+/* Explicit color utility enforcement for marketing scope */
+.bg-midnight-workshop {
+  background-color: #101815 !important;
+}
+.bg-midnight-forest {
+  background-color: #19251F !important;
+}
+.bg-midnight-graphite {
+  background-color: #151A18 !important;
+}
+.bg-midnight-surface {
+  background-color: #16221C !important;
+}
+.bg-midnight-card {
+  background-color: #131B17 !important;
+}
+.bg-warmPaper {
+  background-color: #F0EDE3 !important;
+}
+.text-lightSand {
+  color: #F0EDE3 !important;
+}
+.text-signalLime {
+  color: #D4EE79 !important;
+}
+.text-oxidisedMint {
+  color: #82C9AE !important;
+}
+.text-warmCopper {
+  color: #D77D5E !important;
+}
+.text-mutedSage {
+  color: #A8B5A9 !important;
+}
+.text-deepInk {
+  color: #19251F !important;
+}
+
+
+/* Fluid responsive typography utilities */
+.text-display-hero {
+  font-family: var(--font-marketing-display);
+  font-size: clamp(2.5rem, 6vw + 1rem, 5.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+
+.text-display-section {
+  font-family: var(--font-marketing-display);
+  font-size: clamp(2rem, 4vw + 0.5rem, 3.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.text-display-feature {
+  font-family: var(--font-marketing-display);
+  font-size: clamp(1.5rem, 2.5vw + 0.25rem, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+}
+
+.text-editorial-accent {
+  font-family: var(--font-marketing-serif);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+.text-eyebrow {
+  font-family: var(--font-marketing-display);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+}

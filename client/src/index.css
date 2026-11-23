@@ -1,6 +1,9 @@
 /* Hallmark · v2.0.0 · ClubRelay Campus Energy System */
 /* theme: bespoke-campus-energy · genre: modern-minimal · job: university organization continuity */
 
+@import './components/marketing/styles/marketing-theme.css';
+@import './components/marketing/styles/marketing-effects.css';
+
 :root {
   /* Campus Energy Palette */
   --color-brand-primary: #315BDB;
