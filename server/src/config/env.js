@@ -60,6 +60,48 @@ const envSchema = z
       message: 'CLIENT_ORIGIN must be explicitly configured with valid non-localhost production origins when NODE_ENV is "production". Localhost origins are restricted to development.',
       path: ['CLIENT_ORIGIN'],
     }
+  )
+  .refine(
+    (data) => {
+      if (data.NODE_ENV === 'production' && data.GOOGLE_CLIENT_ID) {
+        if (!data.GOOGLE_CALLBACK_URL || data.GOOGLE_CALLBACK_URL.trim().length === 0) {
+          return false;
+        }
+        try {
+          const url = new URL(data.GOOGLE_CALLBACK_URL);
+          if (url.protocol !== 'https:') return false;
+          if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return false;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'GOOGLE_CALLBACK_URL must be explicitly configured with a valid HTTPS non-localhost URL when GOOGLE_CLIENT_ID is set in production.',
+      path: ['GOOGLE_CALLBACK_URL'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.NODE_ENV === 'production' && data.GITHUB_CLIENT_ID) {
+        if (!data.GITHUB_CALLBACK_URL || data.GITHUB_CALLBACK_URL.trim().length === 0) {
+          return false;
+        }
+        try {
+          const url = new URL(data.GITHUB_CALLBACK_URL);
+          if (url.protocol !== 'https:') return false;
+          if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return false;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: 'GITHUB_CALLBACK_URL must be explicitly configured with a valid HTTPS non-localhost URL when GITHUB_CLIENT_ID is set in production.',
+      path: ['GITHUB_CALLBACK_URL'],
+    }
   );
 
 // Safe fallback for dev/test environments only, NEVER in production

@@ -21,12 +21,22 @@ Federated identities are separated from the core `User` model to support multipl
 2. `{ userId: 1, provider: 1 }` (unique) — Prevents multiple accounts from the same provider being linked to the same campus user.
 
 ### Role & Multi-Tenant Invariants
-- **Strict Role Lock**: Newly registered users via OAuth are **strictly assigned `STUDENT` role**. Permissions are never elevated to `CAMPUS_ADMIN` or `FACULTY_COORDINATOR` during OAuth signup.
-- **Campus Domain Matching**: New users are automatically bound to the campus whose `domain` matches their verified email domain (e.g. `@pcu.edu` -> Pacific Coast University). If no domain match exists, an open campus permitting self-registration is selected.
+- **Strict Role Lock**: Newly registered users via OAuth are **strictly assigned `STUDENT` role**. Permissions are never elevated to `CAMPUS_ADMIN` or `FACULTY_COORDINATOR` during OAuth signup. Existing accounts preserve their pre-assigned administrative or faculty privileges upon linking.
+- **Unambiguous Campus Domain Matching**: New users are matched against active campuses whose `domain` exactly matches their verified email domain (e.g. `@pcu.edu` -> Pacific Coast University).
+  - If 0 campuses match the domain, the callback halts with `error=no_campus_found`. There is **zero arbitrary fallback** to other campuses.
+  - If $>1$ campuses share the domain, the callback halts with `error=ambiguous_campus` to prevent cross-tenant contamination.
+- **Account Linking Safety**: When an unlinked social identity signs in with a verified email:
+  - If matching user accounts exist across multiple campuses, auto-linking is refused with `error=ambiguous_account`.
+  - Linking occurs exclusively when exactly 1 account exists in the resolved campus domain.
+- **Atomic Creation & Linking**: User account creation and `FederatedIdentity` creation are executed inside a MongoDB replica-set transaction (`session.withTransaction`) to guarantee zero partial records or orphaned accounts.
 - **Registration Policy Enforcement**: If a campus has `settings.allowSelfRegistration: false`, automated signup is blocked (`error=registration_disabled`).
 - **Deactivated Account Defense**: If a linked user's `isActive` flag is `false`, the session is immediately aborted (`error=account_deactivated`).
-- **CSRF State Validation**: OAuth initiation sets a cryptographically random `cr_oauth_state` cookie (`httpOnly`, `sameSite: lax`, 10-minute expiry). Callbacks verify state matching before proceeding.
-- **Verified Email Requirement**: Only primary, verified emails from identity providers are accepted. Unverified accounts are rejected (`error=unverified_email`).
+- **Provider-Specific CSRF State Cookies**: OAuth initiation sets dedicated cookies per provider:
+  - Google: `cr_oauth_state_google` (`httpOnly`, `sameSite: lax`, 10-minute expiry).
+  - GitHub: `cr_oauth_state_github` (`httpOnly`, `sameSite: lax`, 10-minute expiry).
+  Callbacks strictly verify state matching against their respective cookie and clear the cookie upon validation.
+- **GitHub Verified Email Policy**: GitHub authentication queries the authenticated `/user/emails` endpoint and requires `verified: true`. Public profile emails (`gitHubUser.email`) are never accepted as fallbacks. If no verified email is found, the flow halts with `error=unverified_email`.
+- **Production Callback Requirements**: In production (`NODE_ENV === 'production'`), explicit HTTPS callback URLs (`GOOGLE_CALLBACK_URL` and `GITHUB_CALLBACK_URL`) are strictly required. Deriving callback URIs from dynamic request Host headers is completely disabled to prevent host-header poisoning.
 
 ---
 
@@ -118,3 +128,4 @@ Run them with:
 npm run test --workspace=server -- src/test/oauth.test.js
 npm run test --workspace=client -- src/test/auth_components.test.jsx
 ```
+

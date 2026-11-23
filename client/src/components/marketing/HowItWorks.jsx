@@ -18,7 +18,7 @@ export function HowItWorks() {
     {
       num: '03',
       title: 'Pass It Forward',
-      desc: 'Preserve SOPs, vendor contacts, and strategic playbooks. Execute atomic role transitions with cryptographic digital sign-off.',
+      desc: 'Preserve SOPs, vendor contacts, and strategic playbooks. Execute atomic role transitions with formal digital sign-off.',
       highlight: 'Verified Leadership Handover',
     },
   ];

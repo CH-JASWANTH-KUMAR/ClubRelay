@@ -62,7 +62,7 @@ This document documents the content strategy, section hierarchy, and complete co
   - **Pillar 01 — Community & Leadership Rosters**: Discover campus organizations, manage active student memberships, structure sub-team leads, and maintain privacy-hardened rosters across term boundaries.
   - **Pillar 02 — Event Execution Cockpit**: Orchestrate workshops, hackathons, and guest keynotes with a 7-stage lifecycle stepper, faculty approvals, budget variance trackers, and delegation boards.
   - **Pillar 03 — Engineering Projects & Repositories**: Link GitHub projects, open-source repositories, and technical deliverables directly to club workspaces so code ownership stays alive across graduating batches.
-  - **Pillar 04 — Institutional Memory & Handover**: Preserve compliance SOPs, vendor contracts, and meeting decisions in an institutional memory vault. Complete 8-section handovers with atomic role transfers and digital sign-off.
+  - **Pillar 04 — Institutional Memory & Handover**: Preserve compliance SOPs, vendor contracts, and meeting decisions in an institutional memory vault. Complete 7-section handovers with atomic role transfers and formal digital sign-off.
 
 ---
 
@@ -72,7 +72,7 @@ This document documents the content strategy, section hierarchy, and complete co
 - **Headline**: *How ClubRelay keeps the momentum*
 - **Step 01: Organise & Align**: Centralize student membership rosters, assign executive board roles, and map out academic semester goals.
 - **Step 02: Build & Execute**: Run events, track budget approvals, coordinate sub-team task boards, and document meeting minutes in real time.
-- **Step 03: Pass It Forward**: Run guided 8-section handovers, complete cryptographic digital sign-offs, and promote the incoming board atomically.
+- **Step 03: Pass It Forward**: Run guided 7-section handovers, complete formal digital sign-offs, and promote the incoming board atomically.
 
 ---
 

@@ -29,6 +29,10 @@ export function Login() {
         registration_disabled: 'Self-registration is disabled for this campus. Please contact your campus administrator.',
         account_deactivated: 'Your account has been deactivated. Please reach out to your campus coordinator.',
         no_campus_found: 'No campus matching your email domain could be found.',
+        ambiguous_campus: 'Multiple institutions share this domain. Please sign in with your institutional credentials.',
+        ambiguous_account: 'Multiple accounts match this email. Please sign in with your campus credentials.',
+        linking_failed: 'Failed to link social identity to existing account. Please try again or use direct login.',
+        registration_failed: 'Failed to create student account. Please contact your campus coordinator.',
         oauth_not_configured: 'This authentication provider is not yet enabled on this server.',
         token_exchange_failed: 'Authentication provider token exchange failed. Please retry.',
         userinfo_failed: 'Failed to retrieve profile information from provider.',
@@ -55,7 +59,7 @@ export function Login() {
             setProviders(json.data);
           }
         }
-      } catch (_err) {
+      } catch {
         // Fall back to disabled defaults cleanly
       }
     }

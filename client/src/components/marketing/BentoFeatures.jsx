@@ -142,7 +142,7 @@ export function BentoFeatures() {
               </h3>
               <p className="text-xs text-mutedSlate leading-relaxed mb-6">
                 Preserve compliance SOPs, vendor contracts, and meeting decisions in an institutional memory vault.
-                Complete 8-section handovers with atomic role transfers and digital sign-off.
+                Complete 7-section handovers with atomic role transfers and digital sign-off.
               </p>
             </div>
 
@@ -155,7 +155,7 @@ export function BentoFeatures() {
                 </span>
               </div>
               <div className="flex items-center justify-between text-mutedSlate text-[11px]">
-                <span>8 Sections Complete</span>
+                <span>7 Sections Complete</span>
                 <span>Formal Sign-Off</span>
               </div>
             </div>

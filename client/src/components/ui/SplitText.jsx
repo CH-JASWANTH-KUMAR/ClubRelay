@@ -48,3 +48,4 @@ export function SplitText({
 }
 
 export default SplitText;
+

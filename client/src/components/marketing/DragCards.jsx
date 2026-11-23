@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Users, Workflow, Cpu, ShieldCheck, ArrowRight, Layers } from 'lucide-react';
+import { Users, Workflow, Cpu, ShieldCheck, ArrowRight } from 'lucide-react';
 
 const PILLARS = [
   {
@@ -13,8 +13,8 @@ const PILLARS = [
     iconColor: 'text-mint-700',
     description:
       'Open, inclusive campus culture that connects senior leaders with incoming first-year builders. Eliminate knowledge silos across cohorts.',
-    metric: '100% Cohort Onboarding',
-    detail: 'Automated role rosters, peer mentorship assignments, and verified member directories.',
+    metric: 'Role-Based Membership',
+    detail: 'Officer rosters, sub-team leads, and verified member directories.',
     defaultOffset: { x: -140, y: -20, rotate: -3 },
   },
   {
@@ -28,8 +28,8 @@ const PILLARS = [
     iconColor: 'text-brand-700',
     description:
       'Standardized event lifecycles, clear faculty approval trails, and zero-loss budget records. No more frantic WhatsApp approvals.',
-    metric: '4-Stage Governance',
-    detail: 'Structured proposals, venue allocation checks, budget logs, and faculty sign-offs.',
+    metric: 'Faculty Approval Trails',
+    detail: 'Event planning, personal task assignment, and faculty sign-offs.',
     defaultOffset: { x: 120, y: -40, rotate: 2 },
   },
   {
@@ -43,8 +43,8 @@ const PILLARS = [
     iconColor: 'text-sunshine-800',
     description:
       'Technical continuity, shared knowledge repositories, and code/hardware documentation that outlasts graduation.',
-    metric: 'Zero Knowledge Loss',
-    detail: 'Markdown SOPs, credential vaulting protocols, and hardware inventory custody.',
+    metric: 'Knowledge Preservation',
+    detail: 'Markdown SOPs, project documentation, and repository references.',
     defaultOffset: { x: -60, y: 50, rotate: 1 },
   },
   {
@@ -57,9 +57,9 @@ const PILLARS = [
     icon: ShieldCheck,
     iconColor: 'text-coral-700',
     description:
-      'Formal digital handovers with term-by-term custody, cryptographic accountability, and outgoing officer sign-offs.',
-    metric: 'Verifiable Custody',
-    detail: '7-section handover dossier, incoming lead acceptance, and faculty verification.',
+      'Formal digital handovers with term-by-term custody, structured transition playbooks, and outgoing officer sign-offs.',
+    metric: 'Leadership Handover',
+    detail: '7-section handover package, incoming lead acceptance, and meeting decisions.',
     defaultOffset: { x: 160, y: 60, rotate: -2 },
   },
 ];

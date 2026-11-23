@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { User, Campus, Membership, FederatedIdentity } from '../models/index.js';
@@ -197,7 +198,32 @@ export function getClientRedirectUrl(pathAndQuery = '') {
   return `${origin}${cleanPath}`;
 }
 
-const OAUTH_STATE_COOKIE = 'cr_oauth_state';
+// Helper: Securely determine OAuth callback URL (never derived from request Host in production)
+export function getOAuthCallbackUrl(provider) {
+  if (provider === 'google') {
+    if (env.GOOGLE_CALLBACK_URL && env.GOOGLE_CALLBACK_URL.trim().length > 0) {
+      return env.GOOGLE_CALLBACK_URL.trim();
+    }
+    if (env.NODE_ENV === 'production') {
+      throw new Error('GOOGLE_CALLBACK_URL must be explicitly configured in production.');
+    }
+    return `http://localhost:${env.PORT}/api/v1/auth/google/callback`;
+  }
+  if (provider === 'github') {
+    if (env.GITHUB_CALLBACK_URL && env.GITHUB_CALLBACK_URL.trim().length > 0) {
+      return env.GITHUB_CALLBACK_URL.trim();
+    }
+    if (env.NODE_ENV === 'production') {
+      throw new Error('GITHUB_CALLBACK_URL must be explicitly configured in production.');
+    }
+    return `http://localhost:${env.PORT}/api/v1/auth/github/callback`;
+  }
+  throw new Error(`Unsupported OAuth provider: ${provider}`);
+}
+
+const GOOGLE_STATE_COOKIE = 'cr_oauth_state_google';
+const GITHUB_STATE_COOKIE = 'cr_oauth_state_github';
+
 const STATE_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
@@ -238,11 +264,9 @@ export function googleAuth(req, res) {
   }
 
   const state = crypto.randomBytes(24).toString('hex');
-  res.cookie(OAUTH_STATE_COOKIE, state, STATE_COOKIE_OPTIONS);
+  res.cookie(GOOGLE_STATE_COOKIE, state, STATE_COOKIE_OPTIONS);
 
-  const redirectUri =
-    env.GOOGLE_CALLBACK_URL ||
-    `${req.protocol}://${req.get('host')}/api/v1/auth/google/callback`;
+  const redirectUri = getOAuthCallbackUrl('google');
 
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -262,12 +286,12 @@ export async function googleCallback(req, res, next) {
     const { code, state, error: oauthError } = req.query;
 
     if (oauthError) {
-      res.clearCookie(OAUTH_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
+      res.clearCookie(GOOGLE_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
       return res.redirect(getClientRedirectUrl(`/login?error=${encodeURIComponent(oauthError)}`));
     }
 
-    const savedState = req.cookies[OAUTH_STATE_COOKIE];
-    res.clearCookie(OAUTH_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
+    const savedState = req.cookies[GOOGLE_STATE_COOKIE];
+    res.clearCookie(GOOGLE_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
 
     if (!code || !state || !savedState || state !== savedState) {
       return res.redirect(getClientRedirectUrl('/login?error=invalid_state'));
@@ -277,9 +301,7 @@ export async function googleCallback(req, res, next) {
       return res.redirect(getClientRedirectUrl('/login?error=oauth_not_configured'));
     }
 
-    const redirectUri =
-      env.GOOGLE_CALLBACK_URL ||
-      `${req.protocol}://${req.get('host')}/api/v1/auth/google/callback`;
+    const redirectUri = getOAuthCallbackUrl('google');
 
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -312,6 +334,10 @@ export async function googleCallback(req, res, next) {
 
     const userInfo = await userInfoRes.json();
 
+    if (!userInfo.sub) {
+      return res.redirect(getClientRedirectUrl('/login?error=userinfo_failed'));
+    }
+
     if (!userInfo.email || !userInfo.email_verified) {
       return res.redirect(getClientRedirectUrl('/login?error=unverified_email'));
     }
@@ -341,11 +367,9 @@ export function githubAuth(req, res) {
   }
 
   const state = crypto.randomBytes(24).toString('hex');
-  res.cookie(OAUTH_STATE_COOKIE, state, STATE_COOKIE_OPTIONS);
+  res.cookie(GITHUB_STATE_COOKIE, state, STATE_COOKIE_OPTIONS);
 
-  const redirectUri =
-    env.GITHUB_CALLBACK_URL ||
-    `${req.protocol}://${req.get('host')}/api/v1/auth/github/callback`;
+  const redirectUri = getOAuthCallbackUrl('github');
 
   const params = new URLSearchParams({
     client_id: env.GITHUB_CLIENT_ID,
@@ -362,12 +386,12 @@ export async function githubCallback(req, res, next) {
     const { code, state, error: oauthError } = req.query;
 
     if (oauthError) {
-      res.clearCookie(OAUTH_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
+      res.clearCookie(GITHUB_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
       return res.redirect(getClientRedirectUrl(`/login?error=${encodeURIComponent(oauthError)}`));
     }
 
-    const savedState = req.cookies[OAUTH_STATE_COOKIE];
-    res.clearCookie(OAUTH_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
+    const savedState = req.cookies[GITHUB_STATE_COOKIE];
+    res.clearCookie(GITHUB_STATE_COOKIE, CLEAR_STATE_COOKIE_OPTIONS);
 
     if (!code || !state || !savedState || state !== savedState) {
       return res.redirect(getClientRedirectUrl('/login?error=invalid_state'));
@@ -377,9 +401,7 @@ export async function githubCallback(req, res, next) {
       return res.redirect(getClientRedirectUrl('/login?error=oauth_not_configured'));
     }
 
-    const redirectUri =
-      env.GITHUB_CALLBACK_URL ||
-      `${req.protocol}://${req.get('host')}/api/v1/auth/github/callback`;
+    const redirectUri = getOAuthCallbackUrl('github');
 
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -422,6 +444,10 @@ export async function githubCallback(req, res, next) {
 
     const gitHubUser = await userRes.json();
 
+    if (!gitHubUser.id) {
+      return res.redirect(getClientRedirectUrl('/login?error=userinfo_failed'));
+    }
+
     const emailsRes = await fetch('https://api.github.com/user/emails', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -429,26 +455,29 @@ export async function githubCallback(req, res, next) {
       },
     });
 
+    if (!emailsRes.ok) {
+      console.error('[GitHub OAuth] Emails endpoint request failed with status:', emailsRes.status);
+      return res.redirect(getClientRedirectUrl('/login?error=unverified_email'));
+    }
+
+    const emails = await emailsRes.json();
+    if (!Array.isArray(emails) || emails.length === 0) {
+      return res.redirect(getClientRedirectUrl('/login?error=unverified_email'));
+    }
+
+    // STRICT INVARIANT: Accept only emails explicitly marked verified by GitHub
     let verifiedEmail = null;
-    if (emailsRes.ok) {
-      const emails = await emailsRes.json();
-      if (Array.isArray(emails)) {
-        const primary = emails.find((e) => e.primary && e.verified);
-        if (primary) {
-          verifiedEmail = primary.email;
-        } else {
-          const anyVerified = emails.find((e) => e.verified);
-          if (anyVerified) {
-            verifiedEmail = anyVerified.email;
-          }
-        }
+    const primaryVerified = emails.find((e) => e.primary && e.verified);
+    if (primaryVerified && primaryVerified.email) {
+      verifiedEmail = primaryVerified.email;
+    } else {
+      const anyVerified = emails.find((e) => e.verified);
+      if (anyVerified && anyVerified.email) {
+        verifiedEmail = anyVerified.email;
       }
     }
 
-    if (!verifiedEmail && gitHubUser.email) {
-      verifiedEmail = gitHubUser.email;
-    }
-
+    // NEVER trust public profile email without verified endpoint proof
     if (!verifiedEmail) {
       return res.redirect(getClientRedirectUrl('/login?error=unverified_email'));
     }
@@ -470,93 +499,202 @@ export async function handleFederatedLogin(req, res, { provider, providerUserId,
   const normalizedEmail = email.toLowerCase().trim();
   const stringId = String(providerUserId);
 
-  // 1. Check if federated identity exists
-  let federated = await FederatedIdentity.findOne({
+  // 1. Existing federated identity
+  // Look up the exact pair: provider and provider's stable user ID
+  const federated = await FederatedIdentity.findOne({
     provider,
     providerUserId: stringId,
   }).populate('userId');
 
-  let user = federated ? federated.userId : null;
-
-  // 2. If not linked, check existing user by email
-  if (!user) {
-    const existingUsers = await User.find({ email: normalizedEmail });
-    if (existingUsers.length > 0) {
-      // Pick existing user
-      user = existingUsers[0];
-      // Create federated link
-      await FederatedIdentity.create({
-        userId: user._id,
-        provider,
-        providerUserId: stringId,
-        email: normalizedEmail,
-      });
+  if (federated && federated.userId) {
+    const user = federated.userId;
+    if (!user.isActive) {
+      return res.redirect(getClientRedirectUrl('/login?error=account_deactivated'));
     }
+
+    // STRICT INVARIANT: Authenticate existing account without altering campus, role, or memberships
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    const token = generateToken(user);
+    res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
+
+    let destination = '/my-work';
+    if (user.campusRole === 'CAMPUS_ADMIN') {
+      destination = '/campus';
+    } else if (user.campusRole === 'FACULTY_COORDINATOR') {
+      destination = '/faculty/approvals';
+    } else {
+      const memberships = await Membership.find({ userId: user._id, status: 'ACTIVE' });
+      if (memberships.length > 0 && memberships[0].clubId) {
+        destination = `/clubs/${memberships[0].clubId}`;
+      }
+    }
+    return res.redirect(getClientRedirectUrl(destination));
   }
 
-  // 3. If still no user, register a new student user
-  if (!user) {
-    const emailDomain = normalizedEmail.split('@')[1];
+  // 2. Existing ClubRelay account resolution
+  const candidateUsers = await User.find({ email: normalizedEmail });
+  const emailDomain = normalizedEmail.split('@')[1];
 
-    let campus = null;
-    if (emailDomain) {
-      campus = await Campus.findOne({ domain: emailDomain.toLowerCase() });
-    }
+  if (!emailDomain) {
+    return res.redirect(getClientRedirectUrl('/login?error=invalid_email_domain'));
+  }
 
-    if (!campus) {
-      // Look for any campus allowing self registration
-      campus = await Campus.findOne({ 'settings.allowSelfRegistration': { $ne: false } });
-    }
+  // Resolve campus based on verified email domain
+  const matchingCampuses = await Campus.find({ domain: emailDomain.toLowerCase() });
 
-    if (!campus) {
+  if (candidateUsers.length > 0) {
+    // If no configured campus matches domain, do not link
+    if (matchingCampuses.length === 0) {
       return res.redirect(getClientRedirectUrl('/login?error=no_campus_found'));
     }
 
-    if (campus.settings && campus.settings.allowSelfRegistration === false) {
-      return res.redirect(getClientRedirectUrl('/login?error=registration_disabled'));
+    // If multiple campuses share the email domain, reject ambiguous linking
+    if (matchingCampuses.length > 1) {
+      return res.redirect(getClientRedirectUrl('/login?error=ambiguous_campus'));
     }
 
-    // STRICT INVARIANT: OAuth user is always assigned STUDENT role; never elevated
-    user = await User.create({
-      campusId: campus._id,
-      fullName: fullName || 'Student Member',
-      email: normalizedEmail,
-      campusRole: 'STUDENT',
-      avatarUrl: avatarUrl || '',
-      isActive: true,
-      lastLoginAt: new Date(),
-    });
+    const resolvedCampus = matchingCampuses[0];
+    const campusUsers = candidateUsers.filter((u) => u.campusId.equals(resolvedCampus._id));
 
-    await FederatedIdentity.create({
-      userId: user._id,
-      provider,
-      providerUserId: stringId,
-      email: normalizedEmail,
-    });
+    // If candidate account does not map unambiguously to exactly one account in resolved campus:
+    if (candidateUsers.length > 1 || campusUsers.length !== 1) {
+      return res.redirect(getClientRedirectUrl('/login?error=ambiguous_account'));
+    }
+
+    const user = campusUsers[0];
+
+    if (!user.isActive) {
+      return res.redirect(getClientRedirectUrl('/login?error=account_deactivated'));
+    }
+
+    // Atomically link federated identity with transaction / race handling
+    let session = null;
+    try {
+      session = await mongoose.startSession();
+      await session.withTransaction(async () => {
+        const existingLink = await FederatedIdentity.findOne({
+          provider,
+          providerUserId: stringId,
+        }).session(session);
+
+        if (!existingLink) {
+          await FederatedIdentity.create(
+            [
+              {
+                userId: user._id,
+                provider,
+                providerUserId: stringId,
+                email: normalizedEmail,
+              },
+            ],
+            { session }
+          );
+        }
+
+        user.lastLoginAt = new Date();
+        await user.save({ session });
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        console.warn('[handleFederatedLogin] Duplicate key race on FederatedIdentity linking');
+      } else {
+        console.error('[handleFederatedLogin] Transaction failed during account linking:', err);
+        return res.redirect(getClientRedirectUrl('/login?error=linking_failed'));
+      }
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
+    }
+
+    const token = generateToken(user);
+    res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
+
+    let destination = '/my-work';
+    if (user.campusRole === 'CAMPUS_ADMIN') {
+      destination = '/campus';
+    } else if (user.campusRole === 'FACULTY_COORDINATOR') {
+      destination = '/faculty/approvals';
+    } else {
+      const memberships = await Membership.find({ userId: user._id, status: 'ACTIVE' });
+      if (memberships.length > 0 && memberships[0].clubId) {
+        destination = `/clubs/${memberships[0].clubId}`;
+      }
+    }
+    return res.redirect(getClientRedirectUrl(destination));
   }
 
-  if (!user.isActive) {
-    return res.redirect(getClientRedirectUrl('/login?error=account_deactivated'));
+  // 3. New student account registration
+  // Require exactly one unambiguous campus match by verified email domain
+  if (matchingCampuses.length === 0) {
+    // NEVER choose an arbitrary campus as fallback
+    return res.redirect(getClientRedirectUrl('/login?error=no_campus_found'));
   }
 
-  user.lastLoginAt = new Date();
-  await user.save();
+  if (matchingCampuses.length > 1) {
+    // Multiple campus records share this domain: require explicit campus resolution
+    return res.redirect(getClientRedirectUrl('/login?error=ambiguous_campus'));
+  }
 
-  const token = generateToken(user);
+  const campus = matchingCampuses[0];
+
+  if (campus.settings && campus.settings.allowSelfRegistration === false) {
+    return res.redirect(getClientRedirectUrl('/login?error=registration_disabled'));
+  }
+
+  // Atomically create User and FederatedIdentity records inside transaction
+  let newUser = null;
+  let session = null;
+  try {
+    session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      const [createdUser] = await User.create(
+        [
+          {
+            campusId: campus._id,
+            fullName: fullName || 'Student Member',
+            email: normalizedEmail,
+            campusRole: 'STUDENT', // STRICT INVARIANT: Always STUDENT, never elevated
+            avatarUrl: avatarUrl || '',
+            isActive: true,
+            lastLoginAt: new Date(),
+            passwordHash: null,
+          },
+        ],
+        { session }
+      );
+
+      await FederatedIdentity.create(
+        [
+          {
+            userId: createdUser._id,
+            provider,
+            providerUserId: stringId,
+            email: normalizedEmail,
+          },
+        ],
+        { session }
+      );
+
+      newUser = createdUser;
+    });
+  } catch (err) {
+    console.error('[handleFederatedLogin] Transaction failed during new user creation:', err);
+    return res.redirect(getClientRedirectUrl('/login?error=registration_failed'));
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+
+  if (!newUser) {
+    return res.redirect(getClientRedirectUrl('/login?error=registration_failed'));
+  }
+
+  const token = generateToken(newUser);
   res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
 
-  // Determine redirect landing page based on role and club memberships
-  let destination = '/my-work';
-  if (user.campusRole === 'CAMPUS_ADMIN') {
-    destination = '/campus';
-  } else if (user.campusRole === 'FACULTY_COORDINATOR') {
-    destination = '/faculty/approvals';
-  } else {
-    const memberships = await Membership.find({ userId: user._id, status: 'ACTIVE' });
-    if (memberships.length > 0 && memberships[0].clubId) {
-      destination = `/clubs/${memberships[0].clubId}`;
-    }
-  }
-
-  return res.redirect(getClientRedirectUrl(destination));
+  return res.redirect(getClientRedirectUrl('/my-work'));
 }

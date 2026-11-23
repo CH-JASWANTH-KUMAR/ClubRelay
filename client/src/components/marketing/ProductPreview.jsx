@@ -155,7 +155,7 @@ export function ProductPreview() {
     },
     handover: {
       title: 'Digital Leadership Handover Center',
-      subtitle: '8-section succession dossier, atomic role transfer, and verifiable memory handoff',
+      subtitle: '7-section succession dossier, atomic role transfer, and structured memory handoff',
       render: () => (
         <div className="space-y-3 text-xs">
           <div className="flex items-center justify-between p-3 rounded-xl bg-canvas border border-border">
@@ -176,7 +176,7 @@ export function ProductPreview() {
           <div className="p-3 rounded-xl bg-subtle border border-border flex items-center justify-between">
             <span className="font-semibold text-ink text-xs">Verified Sign-Off Status</span>
             <span className="text-[10px] bg-mint-50 text-mint-700 font-bold px-2 py-0.5 rounded-full border border-mint-200">
-              8 of 8 Sections Verified
+              7 of 7 Sections Verified
             </span>
           </div>
         </div>

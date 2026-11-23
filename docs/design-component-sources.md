@@ -99,9 +99,47 @@ This document provides a component-by-component inventory of all primitives and 
 
 ---
 
-## 4. Evaluation Notes: Hover.dev Pro & Testimonials
-- **Hover.dev Pro Restrictions**: Components requiring proprietary Pro licenses (such as Flip Calendar and Stagger Testimonials) were evaluated and explicitly not copied. Instead, genuine full-fidelity components were developed natively.
-- **Anti-Fabrication Policy**: In accordance with product design ethics, no fake customer quotes, fabricated testimonials, or simulated endorsements were introduced. Future student organization testimonials will be integrated from authenticated campus reviews.
+## 4. Component Provenance & Access Transparency
+
+This codebase enforces strict licensing, open-source attribution, and anti-fabrication standards:
+
+### A. Installed npm Dependencies
+- `lucide-react`: Official, consistent stroke-width (`2px`) icon system.
+- `clsx` & `tailwind-merge`: Utility libraries for conditional styling and Tailwind class merging.
+- `react`, `react-dom`, `react-router-dom`: Core application rendering and client-side routing.
+- `@tanstack/react-query`: Asynchronous data fetching, optimistic mutations, and cache invalidation.
+
+### B. Hover.dev Open/Free Pattern Adaptations
+- `client/src/components/marketing/DragCards.jsx`:
+  - **Pattern**: Draggable physics card stack.
+  - **Adaptation**: Fully refactored into the Campus Energy design token palette with coordinate boundary clamping (`Math.max(-280, Math.min(280, ...))`), dynamic Z-index elevation, and accessible keyboard tab controls (`role="tablist"`).
+- `client/src/pages/Login.jsx` (Dark Grid Auth):
+  - **Pattern**: Hover.dev dark grid aesthetic.
+  - **Adaptation**: Re-engineered for multi-tenant institutional authentication using Ink Navy (`#192B42`) and Electric Blue (`#315BDB`), provider health polling via `/api/v1/auth/providers`, and clean empty input defaults.
+
+### C. Original Bespoke Implementations
+- `client/src/components/brand/RelayMascot.jsx`:
+  - Completely custom vector mascot character designed from scratch to symbolize institutional continuity and knowledge relay.
+  - Features real-time trigonometric pupil tracking, linear interpolation (`lerp = 0.16`), dynamic blink scheduling (3.5s - 6s), and automatic `prefers-reduced-motion` suppression.
+- Operational Domain Workflows:
+  - `EventCockpit.jsx`: 7-stage lifecycle stepper and 7 operational sub-tabs (Overview, Tasks, Attendees, Budget, Resources, Approvals, Retrospectives).
+  - `HandoverCenter.jsx`: Outgoing/incoming officer pairing, 7-section structured dossier tracker, atomic role swap, and faculty approval gate.
+  - `MyWork.jsx`: Personal cross-club task flight deck with unified Kanban.
+  - `CampusOperations.jsx`: Multi-club compliance overview and academic term management.
+
+### D. Zero-Dependency React Bits Rewrites
+- `client/src/components/ui/SplitText.jsx`:
+  - Word-by-word headline entrance animation rewritten without Framer Motion or external dependencies, using pure React state, keyframe CSS, and configurable word stagger intervals.
+- `client/src/components/ui/Magnet.jsx`:
+  - Cursor attraction primitive rewritten using native pointer events, radius proximity math, and CSS transforms.
+- `client/src/components/ui/AnimatedContent.jsx`:
+  - Viewport scroll reveal primitive written with standard native `IntersectionObserver` and SSR/jsdom fallback support.
+
+### E. Evaluated Pro-Only & Uninstalled Components
+- **Hover.dev Pro Restrictions**: Components requiring proprietary paid Pro subscriptions (such as Flip Calendar and Stagger Testimonials) were evaluated during design discovery and **explicitly omitted and uninstalled**.
+- **Anti-Fabrication & Truth in Marketing**:
+  - No synthetic customer testimonials, fabricated quotes, or artificial student endorsements have been introduced into the application.
+  - All marketing claims reflect actual platform capabilities (role-based membership, faculty approval trails, institutional memory vaults, and 7-section succession packages).
 
 ---
 
@@ -144,7 +182,7 @@ This document provides a component-by-component inventory of all primitives and 
 
 ---
 
-## 3. Reference & Framework Sources
+## 6. Reference & Framework Sources
 
 1. **21st.dev Design Catalog**:
    - Studied open bento layout structures, interactive pill switchers, and subtle card borders.

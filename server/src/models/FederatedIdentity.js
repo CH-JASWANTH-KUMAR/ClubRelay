@@ -39,3 +39,4 @@ federatedIdentitySchema.index({ provider: 1, providerUserId: 1 }, { unique: true
 federatedIdentitySchema.index({ userId: 1, provider: 1 }, { unique: true });
 
 export const FederatedIdentity = mongoose.model('FederatedIdentity', federatedIdentitySchema);
+

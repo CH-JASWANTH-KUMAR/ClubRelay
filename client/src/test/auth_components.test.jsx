@@ -152,3 +152,4 @@ describe('Phase 2 UI Components & Auth Experience', () => {
     });
   });
 });
+
