@@ -32,7 +32,7 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
 
   useGSAP(() => {
     if (isReducedMotion || !rosterContentRef.current) return;
-    // Animate the member roles in place without moving position rows
+    // Animate member roles in place
     gsap.fromTo(
       rosterContentRef.current.querySelectorAll('.member-role-cell'),
       { opacity: 0, y: 6 },
@@ -43,23 +43,23 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
   return (
     <div className="w-full flex flex-col justify-between h-full space-y-3">
       {/* Top Bar with Term Switcher */}
-      <div className="flex items-center justify-between pb-2 border-b border-warmPaper/10">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <Users className="w-3.5 h-3.5 text-oxidisedMint" />
-          <span className="font-mono text-[11px] uppercase tracking-wider text-mutedSage">
+          <Users className="w-3.5 h-3.5 text-brand-600" />
+          <span className="font-mono text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
             Roster Continuity
           </span>
         </div>
 
         {/* Two-option term switch */}
-        <div className="flex items-center bg-midnight-workshop rounded-lg p-0.5 border border-warmPaper/10">
+        <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
           <button
             type="button"
             onClick={() => setTerm('fall2025')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-all ${
               term === 'fall2025'
-                ? 'bg-warmPaper/20 text-warmPaper font-bold shadow-xs'
-                : 'text-mutedSage hover:text-warmPaper'
+                ? 'bg-white text-ink font-bold shadow-xs border border-slate-200'
+                : 'text-slate-600 hover:text-ink'
             }`}
           >
             Fall 2025
@@ -69,8 +69,8 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
             onClick={() => setTerm('spring2026')}
             className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-all ${
               term === 'spring2026'
-                ? 'bg-signalLime text-midnight font-bold shadow-xs'
-                : 'text-mutedSage hover:text-warmPaper'
+                ? 'bg-brand-600 text-white font-bold shadow-xs'
+                : 'text-slate-600 hover:text-ink'
             }`}
           >
             Spring 2026
@@ -88,25 +88,25 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
           return (
             <div
               key={pos.title}
-              className="p-2.5 sm:p-3 rounded-xl bg-midnight-workshop/80 border border-warmPaper/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3"
+              className="p-2.5 sm:p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3"
             >
               {/* Position stays constant */}
               <div className="sm:w-[130px] flex-shrink-0">
-                <span className="font-mono text-[9px] uppercase tracking-wider text-mutedSage block">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 block">
                   Position
                 </span>
-                <span className="font-display text-xs font-semibold text-warmPaper block">
+                <span className="font-display text-xs font-semibold text-ink block">
                   {pos.title}
                 </span>
               </div>
 
               {/* Member role changes on term switch */}
-              <div className="member-role-cell flex-1 flex items-center justify-between gap-2 border-t border-warmPaper/5 sm:border-t-0 pt-1.5 sm:pt-0">
+              <div className="member-role-cell flex-1 flex items-center justify-between gap-2 border-t border-slate-200/60 sm:border-t-0 pt-1.5 sm:pt-0">
                 <div className="min-w-0">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-mutedSage block">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400 block">
                     Assigned Member
                   </span>
-                  <span className="font-display text-xs text-warmPaper/90 font-medium block truncate">
+                  <span className="font-display text-xs text-ink/90 font-medium block truncate">
                     {currentData.role}
                   </span>
                 </div>
@@ -114,15 +114,15 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
                 {/* Status Badge */}
                 <div className="flex-shrink-0">
                   {isAttention ? (
-                    <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase font-semibold bg-warmCopper/15 border border-warmCopper/30 text-warmCopper">
+                    <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase font-semibold bg-amber-50 border border-amber-200 text-amber-700">
                       {currentData.status}
                     </span>
                   ) : isActive ? (
-                    <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase font-semibold bg-signalLime/15 border border-signalLime/30 text-signalLime">
+                    <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase font-semibold bg-emerald-50 border border-emerald-200 text-emerald-700">
                       {currentData.status}
                     </span>
                   ) : (
-                    <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase font-medium bg-warmPaper/10 border border-warmPaper/15 text-warmPaper/70">
+                    <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase font-medium bg-slate-100 border border-slate-200 text-slate-600">
                       {currentData.status}
                     </span>
                   )}

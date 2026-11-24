@@ -6,26 +6,26 @@ const DOCUMENTS = [
     id: 'doc-1',
     title: 'Annual Hackathon Organizer Playbook',
     type: 'Playbook',
-    typeStyle: 'bg-oxidisedMint/15 text-oxidisedMint border-oxidisedMint/30',
+    typeStyle: 'bg-brand-50 text-brand-700 border-brand-200',
     historyStrip: 'v3.2 active (updated 12 days ago) · v3.1 archived · v2.0 baseline',
   },
   {
     id: 'doc-2',
     title: 'Campus Venue Reservation Guidelines',
     type: 'SOP',
-    typeStyle: 'bg-signalLime/15 text-signalLime border-signalLime/30',
+    typeStyle: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   {
     id: 'doc-3',
     title: 'Audio Equipment Rental Partner Directory',
     type: 'Vendor',
-    typeStyle: 'bg-warmPaper/15 text-warmPaper border-warmPaper/30',
+    typeStyle: 'bg-slate-100 text-slate-700 border-slate-200',
   },
   {
     id: 'doc-4',
     title: 'Executive Transition Protocol',
     type: 'Decision',
-    typeStyle: 'bg-warmCopper/15 text-warmCopper border-warmCopper/30',
+    typeStyle: 'bg-amber-50 text-amber-700 border-amber-200',
   },
 ];
 
@@ -34,13 +34,13 @@ export function InstitutionalMemoryPanel() {
     <div className="w-full flex flex-col justify-between h-full space-y-3">
       {/* Search Input Bar */}
       <div className="relative">
-        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-mutedSage" />
+        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           readOnly
           value=""
           placeholder="Search documentation, vendor contacts, playbooks..."
-          className="w-full pl-9 pr-3 py-2 rounded-xl bg-midnight-workshop/90 border border-warmPaper/10 text-xs text-warmPaper placeholder:text-mutedSage/60 font-sans focus:outline-none cursor-default"
+          className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-ink placeholder:text-slate-400 font-sans focus:outline-none cursor-default"
         />
       </div>
 
@@ -49,12 +49,12 @@ export function InstitutionalMemoryPanel() {
         {DOCUMENTS.map((doc) => (
           <div
             key={doc.id}
-            className="p-2.5 rounded-xl bg-midnight-workshop/80 border border-warmPaper/10 space-y-1.5 transition-colors hover:border-warmPaper/20"
+            className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-1.5 transition-colors hover:border-slate-300"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <FileText className="w-3.5 h-3.5 text-mutedSage flex-shrink-0" />
-                <span className="font-display text-xs font-semibold text-warmPaper truncate">
+                <FileText className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <span className="font-display text-xs font-semibold text-ink truncate">
                   {doc.title}
                 </span>
               </div>
@@ -67,9 +67,9 @@ export function InstitutionalMemoryPanel() {
 
             {/* Small version history strip on doc 1 */}
             {doc.historyStrip && (
-              <div className="flex items-center gap-1.5 pt-1 border-t border-warmPaper/5 pl-6">
-                <History className="w-2.5 h-2.5 text-oxidisedMint flex-shrink-0" />
-                <span className="font-mono text-[10px] text-mutedSage truncate">
+              <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200/60 pl-6">
+                <History className="w-2.5 h-2.5 text-brand-600 flex-shrink-0" />
+                <span className="font-mono text-[10px] text-slate-500 truncate">
                   {doc.historyStrip}
                 </span>
               </div>

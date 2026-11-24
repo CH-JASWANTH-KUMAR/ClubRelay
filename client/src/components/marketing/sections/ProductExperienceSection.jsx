@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { Sparkles } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { EventCockpitPanel } from './product/EventCockpitPanel';
@@ -188,21 +189,22 @@ export function ProductExperienceSection() {
   const activeModule = MODULES.find((m) => m.id === activeId) || MODULES[0];
   const ActiveComponent = activeModule.panelComponent;
 
-  // Single stage panel component
+  // Single stage panel component in Clean Blue & White theme
   const stagePanelElement = (
     <div
-      className={`w-full rounded-2xl bg-midnight-graphite border border-warmPaper/10 shadow-[inset_0_1px_1px_rgba(240,237,227,0.05)] overflow-hidden flex flex-col justify-between ${
+      className={`w-full rounded-2xl bg-white border border-slate-200/90 shadow-[0_20px_50px_-15px_rgba(25,43,66,0.08)] overflow-hidden flex flex-col justify-between ${
         isMobile ? 'p-4 sm:p-5 mt-3' : 'h-[460px] p-5 sm:p-6'
       }`}
     >
       {/* Slim Top Bar */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-warmPaper/10 flex-shrink-0">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <span className="font-display font-medium text-xs sm:text-sm text-warmPaper">
+          <span className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
+          <span className="font-display font-bold text-sm text-ink">
             {activeModule.title}
           </span>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-mutedSage">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-brand-700 bg-brand-50 border border-brand-200/80 px-2.5 py-0.5 rounded-full font-semibold">
           Illustrative preview
         </span>
       </div>
@@ -230,10 +232,13 @@ export function ProductExperienceSection() {
       onMouseLeave={() => setIsHovered(false)}
       onFocusCapture={() => setIsFocused(true)}
       onBlurCapture={() => setIsFocused(false)}
-      className="py-20 sm:py-28 bg-warmPaper text-midnight select-none relative overflow-hidden"
+      className="py-20 sm:py-28 bg-canvas text-ink select-none relative overflow-hidden"
     >
       {/* Navigation Anchor alias */}
       <div id="product-preview" className="sr-only" />
+
+      {/* Low-contrast technical grid background matching Hero and Pillars */}
+      <div className="absolute inset-0 marketing-tech-grid-light opacity-50 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Responsive Layout: Desktop 2-column or Mobile Accordion with single mounted stage */}
@@ -243,13 +248,14 @@ export function ProductExperienceSection() {
             {/* Left Column (5/12) */}
             <div className="lg:col-span-5 space-y-6">
               <div>
-                <span className="font-mono text-xs uppercase tracking-wider text-mutedSage block">
-                  THE WORKSPACE
-                </span>
-                <h2 className="font-display text-3xl sm:text-4xl lg:text-[40px] font-bold text-midnight leading-tight tracking-tight mt-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-mono font-semibold text-brand-600 mb-3">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>THE WORKSPACE</span>
+                </div>
+                <h2 className="font-display text-3xl sm:text-4xl lg:text-[40px] font-bold text-ink leading-tight tracking-tight">
                   Everything your club runs on, in one place.
                 </h2>
-                <p className="mt-3 text-sm sm:text-base text-midnight/70 font-sans leading-relaxed">
+                <p className="mt-3 text-sm sm:text-base text-ink/75 font-sans leading-relaxed">
                   From planning major events to passing the baton, keep your team in sync across every collegiate term.
                 </p>
               </div>
@@ -258,7 +264,7 @@ export function ProductExperienceSection() {
               <div
                 role="tablist"
                 aria-orientation="vertical"
-                className="space-y-2 focus:outline-none"
+                className="space-y-2.5 focus:outline-none"
               >
                 {MODULES.map((item, index) => {
                   const isActive = activeId === item.id;
@@ -273,16 +279,16 @@ export function ProductExperienceSection() {
                       tabIndex={isActive ? 0 : -1}
                       onClick={() => handleSelectTab(item.id)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signalLime ${
+                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${
                         isActive
-                          ? 'bg-midnight text-warmPaper shadow-md'
-                          : 'bg-warmPaper/60 hover:bg-warmPaper text-midnight/80 hover:text-midnight border border-midnight/5'
+                          ? 'bg-white text-ink border-2 border-brand-600 shadow-md ring-4 ring-brand-50'
+                          : 'bg-white/80 hover:bg-white text-ink/80 hover:text-ink border border-slate-200/80 shadow-2xs'
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         <span
-                          className={`font-mono text-xs font-semibold pt-0.5 ${
-                            isActive ? 'text-signalLime' : 'text-midnight/40 group-hover:text-midnight/60'
+                          className={`font-mono text-xs font-bold pt-0.5 ${
+                            isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-600'
                           }`}
                         >
                           {item.num}
@@ -290,26 +296,22 @@ export function ProductExperienceSection() {
                         <div className="min-w-0 flex-1">
                           <h3
                             className={`font-display text-sm font-bold ${
-                              isActive ? 'text-warmPaper' : 'text-midnight'
+                              isActive ? 'text-brand-600' : 'text-ink'
                             }`}
                           >
                             {item.title}
                           </h3>
-                          <p
-                            className={`font-sans text-xs mt-0.5 leading-snug line-clamp-1 ${
-                              isActive ? 'text-mutedSage' : 'text-midnight/60'
-                            }`}
-                          >
+                          <p className="font-sans text-xs mt-0.5 leading-snug line-clamp-1 text-ink/65">
                             {item.desc}
                           </p>
                         </div>
                       </div>
 
-                      {/* 2px progress bar on active item */}
+                      {/* 2px Royal Blue progress bar on active item */}
                       {isActive && (
-                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-warmPaper/10">
+                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-100">
                           <div
-                            className="h-full bg-signalLime transition-none"
+                            className="h-full bg-brand-600 transition-none"
                             style={{
                               width: isReducedMotion ? '100%' : `${progress}%`,
                             }}
@@ -331,13 +333,14 @@ export function ProductExperienceSection() {
           // Mobile Accordion View (< 1024px): Same item list and same panel element
           <div className="space-y-6">
             <div>
-              <span className="font-mono text-xs uppercase tracking-wider text-mutedSage block">
-                THE WORKSPACE
-              </span>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-midnight leading-tight tracking-tight mt-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-mono font-semibold text-brand-600 mb-3">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>THE WORKSPACE</span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink leading-tight tracking-tight">
                 Everything your club runs on, in one place.
               </h2>
-              <p className="mt-2 text-sm text-midnight/70 font-sans leading-relaxed">
+              <p className="mt-2 text-sm text-ink/75 font-sans leading-relaxed">
                 From planning major events to passing the baton, keep your team in sync across every collegiate term.
               </p>
             </div>
@@ -361,16 +364,16 @@ export function ProductExperienceSection() {
                       tabIndex={isActive ? 0 : -1}
                       onClick={() => handleSelectTab(item.id)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signalLime ${
+                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${
                         isActive
-                          ? 'bg-midnight text-warmPaper shadow-md'
-                          : 'bg-warmPaper/60 hover:bg-warmPaper text-midnight/80 hover:text-midnight border border-midnight/5'
+                          ? 'bg-white text-ink border-2 border-brand-600 shadow-md ring-4 ring-brand-50'
+                          : 'bg-white/80 hover:bg-white text-ink/80 hover:text-ink border border-slate-200/80 shadow-2xs'
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         <span
-                          className={`font-mono text-xs font-semibold pt-0.5 ${
-                            isActive ? 'text-signalLime' : 'text-midnight/40'
+                          className={`font-mono text-xs font-bold pt-0.5 ${
+                            isActive ? 'text-brand-600' : 'text-slate-400'
                           }`}
                         >
                           {item.num}
@@ -378,16 +381,12 @@ export function ProductExperienceSection() {
                         <div className="min-w-0 flex-1">
                           <h3
                             className={`font-display text-sm font-bold ${
-                              isActive ? 'text-warmPaper' : 'text-midnight'
+                              isActive ? 'text-brand-600' : 'text-ink'
                             }`}
                           >
                             {item.title}
                           </h3>
-                          <p
-                            className={`font-sans text-xs mt-0.5 leading-snug ${
-                              isActive ? 'text-mutedSage' : 'text-midnight/60'
-                            }`}
-                          >
+                          <p className="font-sans text-xs mt-0.5 leading-snug text-ink/65">
                             {item.desc}
                           </p>
                         </div>

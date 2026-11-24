@@ -17,27 +17,27 @@ export function EngineeringProjectsPanel() {
   return (
     <div className="w-full flex flex-col justify-between h-full space-y-3">
       {/* Project Card Header with Repository Link Row */}
-      <div className="p-3 rounded-xl bg-midnight-workshop/90 border border-warmPaper/10 flex items-center justify-between gap-3">
+      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-oxidisedMint/15 border border-oxidisedMint/30 flex items-center justify-center text-oxidisedMint flex-shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-600 flex-shrink-0">
             <GitBranch className="w-4 h-4" />
           </div>
           <div className="truncate">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-semibold text-warmPaper truncate">
+              <span className="font-mono text-xs font-bold text-ink truncate">
                 github.com/club/sample-portal
               </span>
-              <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-warmPaper/10 text-mutedSage">
+              <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-semibold">
                 main
               </span>
             </div>
-            <span className="font-sans text-[11px] text-mutedSage block">
+            <span className="font-sans text-[11px] text-slate-500 block">
               Maintainer: Technical Lead
             </span>
           </div>
         </div>
 
-        <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-signalLime/15 border border-signalLime/30 text-signalLime flex-shrink-0">
+        <span className="font-mono text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex-shrink-0 font-semibold">
           Production active
         </span>
       </div>
@@ -45,10 +45,10 @@ export function EngineeringProjectsPanel() {
       {/* Two columns for How It Runs and Remaining Work */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto pr-1">
         {/* How It Runs (3 steps) */}
-        <div className="p-3 rounded-xl bg-midnight-workshop/70 border border-warmPaper/10 space-y-2">
-          <div className="flex items-center gap-1.5 pb-1 border-b border-warmPaper/10">
-            <Terminal className="w-3 h-3 text-signalLime" />
-            <span className="font-mono text-[10px] uppercase tracking-wider text-mutedSage font-semibold">
+        <div className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+          <div className="flex items-center gap-1.5 pb-1 border-b border-slate-200/60">
+            <Terminal className="w-3 h-3 text-brand-600" />
+            <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500 font-bold">
               How it runs (3 steps)
             </span>
           </div>
@@ -56,10 +56,10 @@ export function EngineeringProjectsPanel() {
           <div className="space-y-1.5">
             {RUN_STEPS.map((step, idx) => (
               <div key={idx} className="flex items-start gap-2">
-                <span className="w-4 h-4 rounded-full bg-warmPaper/10 text-warmPaper font-mono text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="w-4 h-4 rounded-full bg-brand-50 border border-brand-200 text-brand-700 font-mono text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
                   {idx + 1}
                 </span>
-                <span className="font-sans text-[11px] text-warmPaper/80 leading-snug">
+                <span className="font-sans text-[11px] text-ink/80 leading-snug">
                   {step}
                 </span>
               </div>
@@ -68,10 +68,10 @@ export function EngineeringProjectsPanel() {
         </div>
 
         {/* Remaining Work (3 items) */}
-        <div className="p-3 rounded-xl bg-midnight-workshop/70 border border-warmPaper/10 space-y-2">
-          <div className="flex items-center gap-1.5 pb-1 border-b border-warmPaper/10">
-            <Clock className="w-3 h-3 text-oxidisedMint" />
-            <span className="font-mono text-[10px] uppercase tracking-wider text-mutedSage font-semibold">
+        <div className="p-3 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+          <div className="flex items-center gap-1.5 pb-1 border-b border-slate-200/60">
+            <Clock className="w-3 h-3 text-brand-600" />
+            <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500 font-bold">
               Remaining work (3 items)
             </span>
           </div>
@@ -84,18 +84,18 @@ export function EngineeringProjectsPanel() {
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-midnight-graphite/60 border border-warmPaper/5"
+                  className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs"
                 >
-                  <span className="font-sans text-[11px] text-warmPaper/80 truncate">
+                  <span className="font-sans text-[11px] text-ink/80 truncate">
                     {item.title}
                   </span>
                   <span
                     className={`font-mono text-[9px] px-1.5 py-0.5 rounded uppercase flex-shrink-0 font-medium ${
                       isAttention
-                        ? 'bg-warmCopper/15 text-warmCopper border border-warmCopper/30 font-bold'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200 font-bold'
                         : isProgress
-                        ? 'bg-oxidisedMint/15 text-oxidisedMint border border-oxidisedMint/30'
-                        : 'bg-warmPaper/10 text-mutedSage'
+                        ? 'bg-brand-50 text-brand-700 border border-brand-200 font-semibold'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`}
                   >
                     {item.status}

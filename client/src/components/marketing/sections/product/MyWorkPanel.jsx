@@ -64,14 +64,14 @@ export function MyWorkPanel({ isReducedMotion = false }) {
 
   return (
     <div className="w-full flex flex-col justify-between h-full space-y-3">
-      <div className="flex items-center justify-between pb-1 border-b border-warmPaper/10">
+      <div className="flex items-center justify-between pb-1 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <Layers className="w-3.5 h-3.5 text-signalLime" />
-          <span className="font-mono text-[11px] uppercase tracking-wider text-mutedSage">
+          <Layers className="w-3.5 h-3.5 text-brand-600" />
+          <span className="font-mono text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
             Personal Action Queue
           </span>
         </div>
-        <span className="font-mono text-[10px] text-signalLime bg-signalLime/10 border border-signalLime/20 px-2 py-0.5 rounded-full">
+        <span className="font-mono text-[10px] text-brand-700 bg-brand-50 border border-brand-200/80 px-2 py-0.5 rounded-full font-bold">
           {tickedCount} of 4 Completed
         </span>
       </div>
@@ -80,8 +80,8 @@ export function MyWorkPanel({ isReducedMotion = false }) {
         {WORK_GROUPS.map((group) => (
           <div key={group.club} className="space-y-1.5">
             <div className="flex items-center gap-2 px-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-oxidisedMint" />
-              <h4 className="font-display font-semibold text-xs text-warmPaper/90">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
+              <h4 className="font-display font-bold text-xs text-ink">
                 {group.club}
               </h4>
             </div>
@@ -96,8 +96,8 @@ export function MyWorkPanel({ isReducedMotion = false }) {
                     key={item.id}
                     className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-between gap-3 ${
                       isTicked
-                        ? 'bg-midnight-workshop/90 border-signalLime/30 shadow-[0_0_12px_rgba(212,238,121,0.04)]'
-                        : 'bg-midnight-workshop/50 border-warmPaper/10'
+                        ? 'bg-brand-50/40 border-brand-200/80 shadow-2xs'
+                        : 'bg-slate-50/70 border-slate-200/80'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -105,8 +105,8 @@ export function MyWorkPanel({ isReducedMotion = false }) {
                       <div
                         className={`w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
                           isTicked
-                            ? 'bg-signalLime text-midnight'
-                            : 'border border-warmPaper/30 bg-transparent'
+                            ? 'bg-brand-600 text-white'
+                            : 'border-2 border-slate-300 bg-white'
                         }`}
                       >
                         {isTicked && <Check className="w-3 h-3 stroke-[3]" />}
@@ -116,14 +116,14 @@ export function MyWorkPanel({ isReducedMotion = false }) {
                         <span
                           className={`font-display text-xs block leading-snug sm:truncate transition-colors ${
                             isTicked
-                              ? 'text-warmPaper font-medium'
-                              : 'text-warmPaper/70'
+                              ? 'text-ink font-semibold'
+                              : 'text-slate-600 font-medium'
                           }`}
                         >
                           {item.title}
                         </span>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-sans text-[10px] text-mutedSage flex items-center gap-1">
+                          <span className="font-sans text-[10px] text-slate-500 flex items-center gap-1">
                             <Clock className="w-2.5 h-2.5" />
                             {item.meta}
                           </span>
@@ -131,7 +131,7 @@ export function MyWorkPanel({ isReducedMotion = false }) {
                       </div>
                     </div>
 
-                    <span className="font-mono text-[9px] sm:text-[10px] px-2 py-0.5 rounded bg-warmPaper/10 border border-warmPaper/15 text-warmPaper flex-shrink-0">
+                    <span className="font-mono text-[9px] sm:text-[10px] px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 flex-shrink-0 shadow-2xs font-medium">
                       {item.role}
                     </span>
                   </div>
