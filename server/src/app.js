@@ -17,6 +17,7 @@ import decisionRoutes from './routes/decisionRoutes.js';
 import handoverRoutes from './routes/handoverRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import healthRoutes from './routes/healthRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -79,6 +80,9 @@ const authLimiter = rateLimit({
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'ClubRelay API', environment: env.NODE_ENV, timestamp: new Date().toISOString() });
 });
+
+// Database-backed Health Check
+app.use('/api/v1/health', healthRoutes);
 
 // Mount Rate-Limited Auth Endpoints
 app.use('/api/v1/auth/login', authLimiter);

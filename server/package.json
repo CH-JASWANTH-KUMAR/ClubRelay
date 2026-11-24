@@ -9,6 +9,7 @@
     "dev": "nodemon --watch src src/index.js",
     "seed": "node src/scripts/seed.js",
     "seed:dev": "node scripts/seed-dev.js",
+    "db:indexes": "node scripts/sync-indexes.js",
     "clean-demo": "node src/scripts/cleanDemoData.js",
     "test": "vitest run",
     "lint": "eslint src"

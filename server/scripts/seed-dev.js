@@ -19,7 +19,8 @@ export function validateSeedGuard(options = process.env) {
   }
 
   const isLocalhost = MONGODB_URI.includes('localhost') || MONGODB_URI.includes('127.0.0.1');
-  if (!isLocalhost && ALLOW_SEED !== '1') {
+  const isRemoteCluster = MONGODB_URI.includes('mongodb+srv');
+  if ((!isLocalhost || isRemoteCluster) && ALLOW_SEED !== '1') {
     throw new Error(
       '[SEED-DEV GUARD] Refusing to run: MONGODB_URI targets a remote host. Set ALLOW_SEED=1 if this is intended.'
     );
@@ -153,3 +154,4 @@ if (process.argv[1] && process.argv[1].endsWith('seed-dev.js')) {
       process.exit(1);
     });
 }
+

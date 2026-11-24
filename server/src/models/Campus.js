@@ -17,6 +17,7 @@ const campusSchema = new mongoose.Schema(
     domain: {
       type: String,
       required: true,
+      index: true,
       trim: true,
       lowercase: true,
     },
