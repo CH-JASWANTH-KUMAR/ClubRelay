@@ -1,294 +1,407 @@
-import React, { useState } from 'react';
-import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  Code2,
-  Database,
-  ArrowRightLeft,
-  CheckCircle2,
-  Sparkles,
-  GitBranch,
-} from 'lucide-react';
-import { Spotlight } from '../visuals/Spotlight';
+import React, { useState, useRef, useEffect } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { EventCockpitPanel } from './product/EventCockpitPanel';
+import { MyWorkPanel } from './product/MyWorkPanel';
+import { TeamMembersPanel } from './product/TeamMembersPanel';
+import { EngineeringProjectsPanel } from './product/EngineeringProjectsPanel';
+import { InstitutionalMemoryPanel } from './product/InstitutionalMemoryPanel';
+import { LeadershipHandoverPanel } from './product/LeadershipHandoverPanel';
 
-/**
- * ProductExperienceSection: Interactive platform cockpit with 7 tabs showing genuine ClubRelay UI.
- * Tabs:
- * 1. Club Workspace
- * 2. Event Cockpit
- * 3. My Work
- * 4. Team and Members
- * 5. Engineering Projects
- * 6. Institutional Memory
- * 7. Leadership Handover
- */
+const MODULES = [
+  {
+    id: 'events',
+    num: '01',
+    title: 'Event Cockpit',
+    desc: 'Coordinate multi-stage events, delegate roles, and track dependencies.',
+    panelComponent: EventCockpitPanel,
+  },
+  {
+    id: 'work',
+    num: '02',
+    title: 'My Work',
+    desc: 'Consolidated personal responsibilities and milestones across all your clubs.',
+    panelComponent: MyWorkPanel,
+  },
+  {
+    id: 'team',
+    num: '03',
+    title: 'Team and Members',
+    desc: 'Maintain roster continuity and officer transitions across terms.',
+    panelComponent: TeamMembersPanel,
+  },
+  {
+    id: 'engineering',
+    num: '04',
+    title: 'Engineering Projects',
+    desc: 'Track club software repositories, maintainers, and runbooks.',
+    panelComponent: EngineeringProjectsPanel,
+  },
+  {
+    id: 'memory',
+    num: '05',
+    title: 'Institutional Memory',
+    desc: 'Search playbooks, vendor contacts, and documented operating procedures.',
+    panelComponent: InstitutionalMemoryPanel,
+  },
+  {
+    id: 'handover',
+    num: '06',
+    title: 'Leadership Handover',
+    desc: 'Structured 8-section succession dossiers verified before transition.',
+    panelComponent: LeadershipHandoverPanel,
+  },
+];
+
 export function ProductExperienceSection() {
-  const [activeTab, setActiveTab] = useState('club');
+  const [activeId, setActiveId] = useState('events');
+  const [progress, setProgress] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isInView, setIsInView] = useState(true);
+  const [isDocVisible, setIsDocVisible] = useState(() =>
+    typeof document !== 'undefined' ? document.visibilityState === 'visible' : true
+  );
 
-  const tabs = [
-    { id: 'club', label: 'Club Workspace', icon: LayoutDashboard },
-    { id: 'events', label: 'Event Cockpit', icon: Calendar },
-    { id: 'work', label: 'My Work', icon: CheckCircle2 },
-    { id: 'team', label: 'Team & Members', icon: Users },
-    { id: 'engineering', label: 'Engineering Projects', icon: Code2 },
-    { id: 'memory', label: 'Institutional Memory', icon: Database },
-    { id: 'handover', label: 'Leadership Handover', icon: ArrowRightLeft },
-  ];
+  const isReducedMotion = useReducedMotion();
+  const isMobile = useMediaQuery('(max-width: 1023px)');
+
+  const sectionRef = useRef(null);
+  const panelRef = useRef(null);
+  const tabRefs = useRef([]);
+  const progressTweenRef = useRef(null);
+
+  // IntersectionObserver for visibility
+  useEffect(() => {
+    if (!sectionRef.current || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Document visibility listener
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const handleVisChange = () => {
+      setIsDocVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisChange);
+    return () => document.removeEventListener('visibilitychange', handleVisChange);
+  }, []);
+
+  // Auto-advance GSAP 6s progress bar on desktop
+  useEffect(() => {
+    setProgress(0);
+    if (isMobile || isReducedMotion || !isInView) return;
+
+    const tween = gsap.to(
+      {},
+      {
+        duration: 6,
+        ease: 'none',
+        onUpdate: function () {
+          setProgress(this.progress() * 100);
+        },
+        onComplete: () => {
+          const currentIndex = MODULES.findIndex((m) => m.id === activeId);
+          const nextIndex = (currentIndex + 1) % MODULES.length;
+          setActiveId(MODULES[nextIndex].id);
+        },
+      }
+    );
+    progressTweenRef.current = tween;
+
+    return () => {
+      tween.kill();
+    };
+  }, [activeId, isMobile, isReducedMotion, isInView]);
+
+  // Pause / Resume on hover, focus, or tab hidden
+  useEffect(() => {
+    const tween = progressTweenRef.current;
+    if (!tween) return;
+
+    if (isHovered || isFocused || !isDocVisible) {
+      tween.pause();
+    } else {
+      tween.resume();
+    }
+  }, [isHovered, isFocused, isDocVisible]);
+
+  // Panel transition: 250ms crossfade plus 12px translate
+  useGSAP(
+    () => {
+      if (isReducedMotion) {
+        if (panelRef.current) {
+          gsap.set(panelRef.current, { opacity: 1, y: 0 });
+        }
+        return;
+      }
+      if (panelRef.current) {
+        gsap.fromTo(
+          panelRef.current,
+          { opacity: 0, y: 12 },
+          { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' }
+        );
+      }
+    },
+    { dependencies: [activeId, isReducedMotion], scope: sectionRef }
+  );
+
+  const handleSelectTab = (id) => {
+    setActiveId(id);
+    setProgress(0);
+  };
+
+  // Keyboard navigation for tablist
+  const handleKeyDown = (e, index) => {
+    let nextIndex = index;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextIndex = (index + 1) % MODULES.length;
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      nextIndex = (index - 1 + MODULES.length) % MODULES.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIndex = MODULES.length - 1;
+    }
+
+    if (nextIndex !== index) {
+      const nextId = MODULES[nextIndex].id;
+      handleSelectTab(nextId);
+      const tabEl = tabRefs.current[nextIndex];
+      if (tabEl) tabEl.focus();
+    }
+  };
+
+  const activeModule = MODULES.find((m) => m.id === activeId) || MODULES[0];
+  const ActiveComponent = activeModule.panelComponent;
+
+  // Single stage panel component
+  const stagePanelElement = (
+    <div
+      className={`w-full rounded-2xl bg-midnight-graphite border border-warmPaper/10 shadow-[inset_0_1px_1px_rgba(240,237,227,0.05)] overflow-hidden flex flex-col justify-between ${
+        isMobile ? 'p-4 sm:p-5 mt-3' : 'h-[460px] p-5 sm:p-6'
+      }`}
+    >
+      {/* Slim Top Bar */}
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-warmPaper/10 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="font-display font-medium text-xs sm:text-sm text-warmPaper">
+            {activeModule.title}
+          </span>
+        </div>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-mutedSage">
+          Illustrative preview
+        </span>
+      </div>
+
+      {/* Active Tabpanel Container */}
+      <div
+        ref={panelRef}
+        role="tabpanel"
+        id={`workspace-panel-${activeModule.id}`}
+        aria-labelledby={`workspace-tab-${activeModule.id}`}
+        tabIndex={0}
+        className="flex-1 min-h-0 focus:outline-none"
+      >
+        <ActiveComponent isReducedMotion={isReducedMotion} />
+      </div>
+    </div>
+  );
 
   return (
-    <section id="platform" className="py-24 sm:py-32 bg-canvas text-ink select-none relative overflow-hidden">
-      {/* Anchor alias for backwards compatibility */}
+    <section
+      ref={sectionRef}
+      id="platform"
+      aria-label="The Workspace platform experience"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onFocusCapture={() => setIsFocused(true)}
+      onBlurCapture={() => setIsFocused(false)}
+      className="py-20 sm:py-28 bg-warmPaper text-midnight select-none relative overflow-hidden"
+    >
+      {/* Navigation Anchor alias */}
       <div id="product-preview" className="sr-only" />
 
-      {/* Background low-contrast technical grid */}
-      <div className="absolute inset-0 marketing-tech-grid-light opacity-50 pointer-events-none" />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-display font-semibold text-brand-600 mb-4">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Interactive Platform Experience</span>
-          </div>
+        {/* Responsive Layout: Desktop 2-column or Mobile Accordion with single mounted stage */}
+        {!isMobile ? (
+          // Desktop View (1024px and up): 5/12 and 7/12 vertically centered
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Left Column (5/12) */}
+            <div className="lg:col-span-5 space-y-6">
+              <div>
+                <span className="font-mono text-xs uppercase tracking-wider text-mutedSage block">
+                  THE WORKSPACE
+                </span>
+                <h2 className="font-display text-3xl sm:text-4xl lg:text-[40px] font-bold text-midnight leading-tight tracking-tight mt-2">
+                  Everything your club runs on, in one place.
+                </h2>
+                <p className="mt-3 text-sm sm:text-base text-midnight/70 font-sans leading-relaxed">
+                  From planning major events to passing the baton, keep your team in sync across every collegiate term.
+                </p>
+              </div>
 
-          <h2 className="text-display-section text-ink">
-            The command center for{' '}
-            <span className="text-brand-600 font-extrabold">ambitious communities.</span>
-          </h2>
-
-          <p className="mt-4 text-base text-ink/75 leading-relaxed font-sans max-w-2xl mx-auto">
-            Explore how ClubRelay streamlines day-to-day operations, project execution, and annual
-            leadership transitions in one unified workspace.
-          </p>
-        </div>
-
-        {/* Interactive Tab Switcher */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto pb-4 mb-8 max-w-4xl mx-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-display font-medium transition-all flex-shrink-0 ${
-                  isActive
-                    ? 'bg-brand-600 text-white font-bold shadow-[0_2px_14px_rgba(49,91,219,0.3)]'
-                    : 'bg-surface text-ink/75 hover:text-ink hover:bg-subtle border border-border shadow-2xs'
-                }`}
+              {/* Vertical list of 6 items */}
+              <div
+                role="tablist"
+                aria-orientation="vertical"
+                className="space-y-2 focus:outline-none"
               >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+                {MODULES.map((item, index) => {
+                  const isActive = activeId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      ref={(el) => (tabRefs.current[index] = el)}
+                      role="tab"
+                      id={`workspace-tab-${item.id}`}
+                      aria-controls={`workspace-panel-${item.id}`}
+                      aria-selected={isActive}
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => handleSelectTab(item.id)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signalLime ${
+                        isActive
+                          ? 'bg-midnight text-warmPaper shadow-md'
+                          : 'bg-warmPaper/60 hover:bg-warmPaper text-midnight/80 hover:text-midnight border border-midnight/5'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`font-mono text-xs font-semibold pt-0.5 ${
+                            isActive ? 'text-signalLime' : 'text-midnight/40 group-hover:text-midnight/60'
+                          }`}
+                        >
+                          {item.num}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3
+                            className={`font-display text-sm font-bold ${
+                              isActive ? 'text-warmPaper' : 'text-midnight'
+                            }`}
+                          >
+                            {item.title}
+                          </h3>
+                          <p
+                            className={`font-sans text-xs mt-0.5 leading-snug line-clamp-1 ${
+                              isActive ? 'text-mutedSage' : 'text-midnight/60'
+                            }`}
+                          >
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
 
-        {/* Large Platform Window with Spotlight Effect */}
-        <div className="w-full max-w-5xl mx-auto rounded-3xl bg-surface border border-border shadow-[0_20px_50px_-15px_rgba(25,43,66,0.1)] p-4 sm:p-7 relative overflow-hidden">
-          <Spotlight />
-
-          {/* Browser Chrome Bar */}
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-border relative z-10">
-            <div className="flex items-center gap-2.5">
-              <div className="flex gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-red-400" />
-                <span className="w-3 h-3 rounded-full bg-amber-400" />
-                <span className="w-3 h-3 rounded-full bg-emerald-400" />
-              </div>
-              <div className="hidden sm:flex items-center gap-2 ml-4 px-3 py-1 rounded-lg bg-subtle border border-border text-[11px] text-ink/65">
-                <span>app.clubrelay.edu/workspace/pacific-coast</span>
+                      {/* 2px progress bar on active item */}
+                      {isActive && (
+                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-warmPaper/10">
+                          <div
+                            className="h-full bg-signalLime transition-none"
+                            style={{
+                              width: isReducedMotion ? '100%' : `${progress}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-ink/60 uppercase tracking-wider">
-                Illustrative Preview
+
+            {/* Right Column (7/12): Stage Panel */}
+            <div className="lg:col-span-7">
+              {stagePanelElement}
+            </div>
+          </div>
+        ) : (
+          // Mobile Accordion View (< 1024px): Same item list and same panel element
+          <div className="space-y-6">
+            <div>
+              <span className="font-mono text-xs uppercase tracking-wider text-mutedSage block">
+                THE WORKSPACE
               </span>
-              <span className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-midnight leading-tight tracking-tight mt-2">
+                Everything your club runs on, in one place.
+              </h2>
+              <p className="mt-2 text-sm text-midnight/70 font-sans leading-relaxed">
+                From planning major events to passing the baton, keep your team in sync across every collegiate term.
+              </p>
+            </div>
+
+            {/* Accordion List */}
+            <div
+              role="tablist"
+              aria-orientation="vertical"
+              className="space-y-2.5 focus:outline-none"
+            >
+              {MODULES.map((item, index) => {
+                const isActive = activeId === item.id;
+                return (
+                  <div key={item.id} className="space-y-2">
+                    <button
+                      ref={(el) => (tabRefs.current[index] = el)}
+                      role="tab"
+                      id={`workspace-tab-${item.id}`}
+                      aria-controls={`workspace-panel-${item.id}`}
+                      aria-selected={isActive}
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => handleSelectTab(item.id)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signalLime ${
+                        isActive
+                          ? 'bg-midnight text-warmPaper shadow-md'
+                          : 'bg-warmPaper/60 hover:bg-warmPaper text-midnight/80 hover:text-midnight border border-midnight/5'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`font-mono text-xs font-semibold pt-0.5 ${
+                            isActive ? 'text-signalLime' : 'text-midnight/40'
+                          }`}
+                        >
+                          {item.num}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3
+                            className={`font-display text-sm font-bold ${
+                              isActive ? 'text-warmPaper' : 'text-midnight'
+                            }`}
+                          >
+                            {item.title}
+                          </h3>
+                          <p
+                            className={`font-sans text-xs mt-0.5 leading-snug ${
+                              isActive ? 'text-mutedSage' : 'text-midnight/60'
+                            }`}
+                          >
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Accordion panel placed directly below active item */}
+                    {isActive && stagePanelElement}
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          {/* Tab Content Panes */}
-          <div className="relative z-10 min-h-[340px]">
-            {/* 1. Club Workspace */}
-            {activeTab === 'club' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="p-4 rounded-2xl bg-subtle/80 border border-border flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <h3 className="font-display font-bold text-base text-ink">
-                      Pacific Coast University · Developer Guild
-                    </h3>
-                    <p className="text-xs text-ink/70 mt-0.5">
-                      Spring 2026 Term · 24 Active Officers & Technical Leads
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-mint-50 border border-mint-200 text-mint-700 text-xs font-semibold">
-                      Term Promoted
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl bg-surface border border-border shadow-2xs">
-                    <span className="text-[10px] text-ink/60 uppercase tracking-wider block mb-1 font-semibold">Upcoming Events</span>
-                    <div className="font-display font-bold text-lg text-ink">DevFest 2026</div>
-                    <span className="text-xs text-brand-600 font-medium">Oct 24 · CS Auditorium</span>
-                  </div>
-                  <div className="p-4 rounded-xl bg-surface border border-border shadow-2xs">
-                    <span className="text-[10px] text-ink/60 uppercase tracking-wider block mb-1 font-semibold">Faculty Approvals</span>
-                    <div className="font-display font-bold text-lg text-ink">$1,200 Approved</div>
-                    <span className="text-xs text-mint-700 font-medium">Budget variance 0%</span>
-                  </div>
-                  <div className="p-4 rounded-xl bg-surface border border-border shadow-2xs">
-                    <span className="text-[10px] text-ink/60 uppercase tracking-wider block mb-1 font-semibold">Succession Status</span>
-                    <div className="font-display font-bold text-lg text-ink">7/7 Sections Verified</div>
-                    <span className="text-xs text-brand-600 font-medium">Ready for handover</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 2. Event Execution Cockpit */}
-            {activeTab === 'events' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-display">
-                  <span className="text-ink font-bold text-sm">7-Tab Event Cockpit</span>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-mint-700 font-medium">✓ Draft</span>
-                    <span className="text-mint-700 font-medium">✓ Proposed</span>
-                    <span className="text-brand-600 font-bold">● Faculty Approved</span>
-                    <span className="text-ink/60">Planning</span>
-                    <span className="text-ink/60">Completed</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-subtle/80 border border-border">
-                    <span className="text-xs font-semibold text-brand-600 block mb-1">Task Kanban & Delegation</span>
-                    <p className="text-xs text-ink/75 leading-relaxed font-sans">
-                      18 of 20 logistics tasks completed. Stage management, faculty permits, and AV crew assigned.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-subtle/80 border border-border">
-                    <span className="text-xs font-semibold text-mint-700 block mb-1">Faculty Approvals Audit Trail</span>
-                    <p className="text-xs text-ink/75 leading-relaxed font-sans">
-                      Digitally signed off by faculty advisor Dr. Robert Vance on October 12, 2026.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 3. My Work Personal Cockpit */}
-            {activeTab === 'work' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between border-b border-border pb-3 text-xs font-display">
-                  <span className="text-ink font-bold text-sm">My Work Personal Cockpit</span>
-                  <span className="text-brand-600 font-semibold text-xs">4 Active Tasks Assigned</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-subtle/80 border border-border">
-                    <span className="text-xs font-semibold text-brand-600 block mb-1">Personal Kanban Stepper</span>
-                    <p className="text-xs text-ink/75 leading-relaxed font-sans">
-                      Assigned event duties, document reviews, and sponsor inquiries aggregated into a personal dashboard.
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-subtle/80 border border-border">
-                    <span className="text-xs font-semibold text-mint-700 block mb-1">Approval Deadlines</span>
-                    <p className="text-xs text-ink/75 leading-relaxed font-sans">
-                      Real-time status updates on submitted venue permits and financial reimbursements.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 4. Team & Members */}
-            {activeTab === 'team' && (
-              <div className="space-y-3 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <h4 className="font-display font-bold text-sm text-ink">Executive Board & Sub-team Leads</h4>
-                  <span className="text-xs text-ink/65 font-medium">Privacy-hardened collegiate roster</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[
-                    { name: 'Sarah Chen', role: 'President', team: 'Executive' },
-                    { name: 'Marcus Vance', role: 'VP Engineering', team: 'Technical' },
-                    { name: 'Priya Patel', role: 'Head of Operations', team: 'Events' },
-                    { name: 'Alex Thorne', role: 'Treasurer', team: 'Finance' },
-                    { name: 'Elena Rostova', role: 'Outreach Lead', team: 'Sponsors' },
-                    { name: 'David Kim', role: 'Hackathon Director', team: 'Programs' },
-                  ].map((m) => (
-                    <div key={m.name} className="p-3 rounded-xl bg-subtle/70 border border-border flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white text-brand-600 font-bold text-xs flex items-center justify-center border border-brand-200 shadow-2xs">
-                        {m.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-display font-bold text-xs text-ink">{m.name}</div>
-                        <div className="text-[10px] text-ink/65 font-medium">{m.role} · {m.team}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 5. Engineering Projects */}
-            {activeTab === 'engineering' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="p-4 rounded-xl bg-subtle/80 border border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-4 h-4 text-brand-600" />
-                      <span className="font-display font-bold text-sm text-ink">github.com/clubrelay/hackathon-portal</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-semibold border border-brand-200">
-                      Maintained
-                    </span>
-                  </div>
-                  <p className="text-xs text-ink/75 font-sans leading-relaxed">
-                    Continuous technical handover repository for annual campus hackathon registration, ticketing, and judging.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* 6. Institutional Memory */}
-            {activeTab === 'memory' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="p-4 rounded-xl bg-subtle/80 border border-border">
-                  <h4 className="font-display font-bold text-sm text-ink mb-1">
-                    Compliance SOPs & Vendor Playbooks
-                  </h4>
-                  <p className="text-xs text-ink/75 leading-relaxed font-sans">
-                    Permanent access to approved caterers, campus facility booking SOPs, audio/visual stage specs, and university safety codes.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* 7. Leadership Handover */}
-            {activeTab === 'handover' && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="p-4 rounded-2xl bg-subtle/80 border border-border flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <span className="text-xs font-display font-bold text-brand-600 block">
-                      Atomic Executive Handover Dossier
-                    </span>
-                    <span className="text-xs text-ink/75">
-                      7 sections verified: Governance, Active Work, Budgets, Playbooks, Sponsors, Documents, Retrospective
-                    </span>
-                  </div>
-                  <span className="px-3.5 py-1.5 rounded-full bg-brand-600 text-white font-display font-bold text-xs shadow-xs">
-                    Ready to Relay
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );

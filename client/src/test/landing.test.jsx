@@ -231,13 +231,16 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
         </MemoryRouter>
       );
 
-      const eventsTab = screen.getByRole('button', { name: /event cockpit/i });
+      const eventsTab = screen.getByRole('tab', { name: /event cockpit/i });
       fireEvent.click(eventsTab);
-      expect(screen.getByText(/7-tab event cockpit/i)).toBeInTheDocument();
+      expect(screen.getByText(/Phase: Planning/i)).toBeInTheDocument();
+      expect(screen.getByText(/Venue booking and permits/i)).toBeInTheDocument();
+      expect(screen.getByText(/Stage equipment setup/i)).toBeInTheDocument();
 
-      const workTab = screen.getByRole('button', { name: /my work/i });
+      const workTab = screen.getByRole('tab', { name: /my work/i });
       fireEvent.click(workTab);
-      expect(screen.getByText(/my work personal cockpit/i)).toBeInTheDocument();
+      expect(screen.getByText(/Sample Engineering Society/i)).toBeInTheDocument();
+      expect(screen.getByText(/Submit audio equipment requisition/i)).toBeInTheDocument();
     });
 
     it('shows authenticated workspace navigation button when logged in', () => {
