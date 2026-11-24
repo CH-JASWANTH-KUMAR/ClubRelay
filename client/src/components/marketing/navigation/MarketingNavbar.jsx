@@ -17,6 +17,7 @@ const NAV_ITEMS = [
 
 /**
  * MarketingNavbar: Clean floating pill navigation.
+ * Harmonized with Clean Canvas and Royal Blue brand palette.
  * Transitions from clean transparent on hero top to a compact frosted pill on scroll.
  */
 export function MarketingNavbar() {
@@ -49,7 +50,7 @@ export function MarketingNavbar() {
             : 'bg-transparent py-1'
         }`}
       >
-        {/* Brand identity */}
+        {/* Brand identity: standard color variant */}
         <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
           <BrandLockup size="md" variant="color" />
         </Link>
@@ -59,7 +60,7 @@ export function MarketingNavbar() {
           aria-label="Primary navigation"
           className={`hidden lg:flex items-center gap-1 p-1 rounded-full border transition-all ${
             scrolled
-              ? 'bg-subtle/70 border-border'
+              ? 'bg-subtle/70 border-border shadow-xs'
               : 'bg-white/80 backdrop-blur-md border-border shadow-xs'
           }`}
         >
@@ -92,7 +93,7 @@ export function MarketingNavbar() {
               variant="primary"
               size="sm"
               onClick={() => navigate(getWorkspaceLink())}
-              className="rounded-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white shadow-xs"
+              className="rounded-full px-4 py-2 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-xs"
             >
               <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />
               <span>Open Your Workspace</span>
@@ -107,7 +108,7 @@ export function MarketingNavbar() {
               </Link>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-xs transition-all shadow-[0_2px_12px_rgba(49,91,219,0.25)] hover:shadow-[0_4px_16px_rgba(49,91,219,0.35)]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-xs bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white transition-all shadow-[0_2px_12px_rgba(49,91,219,0.25)] hover:shadow-[0_4px_16px_rgba(49,91,219,0.35)]"
               >
                 <span>Build your club</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -119,7 +120,7 @@ export function MarketingNavbar() {
         {/* Mobile menu trigger */}
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="lg:hidden p-2 rounded-xl text-ink/80 hover:text-ink bg-white border border-border transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center shadow-xs"
+          className="lg:hidden p-2 rounded-xl transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center shadow-xs text-ink/80 hover:text-ink bg-white border border-border"
           aria-label="Toggle menu"
           aria-expanded={mobileMenuOpen}
         >

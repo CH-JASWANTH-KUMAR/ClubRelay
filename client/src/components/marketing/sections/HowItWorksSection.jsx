@@ -3,9 +3,9 @@ import { ArrowRight, CheckCircle2, Sparkles, Layers, ShieldCheck } from 'lucide-
 
 /**
  * HowItWorksSection: Connected 3-step sequence.
- * 01 — Organise: Build your club structure and bring your people together.
- * 02 — Build & Execute: Plan events, coordinate work and manage projects.
- * 03 — Pass it forward: Preserve knowledge and prepare the next leadership team.
+ * 01 - Organise: Build your club structure and bring your people together.
+ * 02 - Build & Execute: Plan events, coordinate work and manage projects.
+ * 03 - Pass it forward: Preserve knowledge and prepare the next leadership team.
  */
 export function HowItWorksSection() {
   const steps = [

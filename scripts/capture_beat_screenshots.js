@@ -150,3 +150,4 @@ run().catch((err) => {
   console.error('Error during beat screenshot capture:', err);
   process.exit(1);
 });
+
