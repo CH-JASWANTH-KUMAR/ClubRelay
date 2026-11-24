@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { ArrowRight, LayoutDashboard, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowRight, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { HeroSceneFallback } from './HeroSceneFallback';
-import { HeroProductPreview } from './HeroProductPreview';
+import { HandoverPanel } from './HandoverPanel';
 import { Button } from '../../ui/Button';
+import { KineticText } from '../../ui/KineticText';
 
 // Lazy load the 3D scene to preserve initial load performance
 const RelayEngine3D = lazy(() => import('./RelayEngine3D'));
@@ -91,29 +92,37 @@ export function MarketingHero() {
     <section
       ref={heroRef}
       id="overview"
-      className="relative pt-28 sm:pt-36 lg:pt-40 pb-20 sm:pb-28 lg:pb-32 bg-midnight-workshop overflow-hidden text-lightSand select-none"
+      className="relative pt-28 sm:pt-36 lg:pt-40 pb-20 sm:pb-28 lg:pb-32 bg-canvas overflow-hidden text-ink select-none"
     >
       {/* Background directional ambient light & technical grid */}
-      <div className="absolute inset-0 marketing-tech-grid opacity-40 pointer-events-none" />
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-signalLime/5 via-oxidisedMint/10 to-transparent blur-3xl pointer-events-none -z-0" />
+      <div className="absolute inset-0 marketing-tech-grid-light opacity-60 pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-brand-500/10 via-mint-500/10 to-transparent blur-3xl pointer-events-none -z-0" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Split Editorial Composition: Left ~45% editorial, Right ~55% 3D Relay visual */}
+        {/* Split Editorial Composition: Left ~48% editorial, Right ~52% 3D Relay visual + overlapping glass panel */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Editorial Value Proposition */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 sm:space-y-7">
+          <div className="lg:col-span-6 flex flex-col justify-center space-y-6 sm:space-y-7">
             {/* Eyebrow Label */}
             <div className="hero-eyebrow flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-signalLime animate-pulse" />
-              <span className="text-eyebrow text-signalLime">
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-600 animate-pulse" />
+              <span className="text-eyebrow text-brand-600 font-bold tracking-widest uppercase">
                 The operating system for student communities
               </span>
             </div>
 
-            {/* Main Headline */}
-            <h1 className="hero-headline text-display-hero text-lightSand">
-              Make every semester{' '}
-              <span className="text-signalLime font-extrabold">build on the last.</span>
+            {/* Main Headline with KineticText character weight hover interaction */}
+            <h1 className="hero-headline text-display-hero text-ink tracking-tight">
+              <KineticText
+                text="Make every semester"
+                as="span"
+                className="text-display-hero text-ink"
+              />{' '}
+              <KineticText
+                text="build on the last."
+                as="span"
+                className="text-display-hero text-brand-600"
+              />
             </h1>
 
             {/* Accessible sub-tagline for legacy test suite match */}
@@ -123,7 +132,7 @@ export function MarketingHero() {
             </div>
 
             {/* Supporting Editorial Copy */}
-            <p className="hero-copy text-base sm:text-lg text-mutedSage leading-relaxed max-w-xl">
+            <p className="hero-copy text-base sm:text-lg text-ink/75 leading-relaxed max-w-xl font-sans">
               Run your community, bring projects to life and preserve everything your next leadership
               team needs to know.
             </p>
@@ -132,10 +141,10 @@ export function MarketingHero() {
             <div className="hero-actions flex flex-wrap items-center gap-3 pt-2">
               {user ? (
                 <Button
-                  variant="signal"
+                  variant="primary"
                   size="lg"
                   onClick={() => navigate(getWorkspaceLink())}
-                  className="rounded-full px-6 py-3.5 text-sm"
+                  className="rounded-full px-6 py-3.5 text-sm bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white shadow-sm"
                 >
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   <span>Open Your Workspace</span>
@@ -144,45 +153,49 @@ export function MarketingHero() {
                 <>
                   <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-signalLime hover:bg-signalLime-hover active:bg-signalLime-active text-midnight-workshop font-semibold text-sm transition-all shadow-[0_4px_24px_rgba(212,238,121,0.28)] hover:shadow-[0_6px_28px_rgba(212,238,121,0.4)]"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-bold text-sm transition-all shadow-[0_4px_16px_rgba(49,91,219,0.3)] hover:shadow-[0_6px_24px_rgba(49,91,219,0.4)]"
                   >
                     <span>Build your club</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                   <a
                     href="#platform"
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-midnight-forest/80 backdrop-blur-md text-lightSand border border-midnight-borderLight hover:bg-midnight-forest hover:border-oxidisedMint/50 font-medium text-sm transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-surface text-ink border border-border hover:bg-subtle hover:border-brand-300 font-semibold text-sm transition-all shadow-2xs"
                   >
                     <span>Explore the platform</span>
                   </a>
+                  <Link to="/login" className="sr-only">
+                    Sign In
+                  </Link>
                 </>
               )}
             </div>
 
             {/* Supporting statement */}
-            <div className="hero-actions pt-4 border-t border-midnight-border flex items-center gap-4 text-xs text-mutedSage">
+            <div className="hero-actions pt-4 border-t border-border flex items-center gap-4 text-xs text-ink/65 font-medium">
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-oxidisedMint" />
+                <ShieldCheck className="w-4 h-4 text-brand-600" />
                 <span>Multi-tenant campus isolation</span>
               </div>
-              <span className="w-1 h-1 rounded-full bg-midnight-borderLight" />
+              <span className="w-1 h-1 rounded-full bg-border" />
               <span>Atomic leadership handovers</span>
             </div>
           </div>
 
-          {/* Right Column: 3D Relay Engine & Layered Product Cockpit */}
-          <div className="hero-visual lg:col-span-7 flex flex-col items-center justify-center relative">
-            <div className="w-full relative flex flex-col items-center">
-              {/* 3D Relay Engine Stage */}
-              <div className="w-full max-w-[560px] h-[360px] sm:h-[440px] lg:h-[480px] relative z-20">
+          {/* Right Column: 3D Relay Engine Stage + Overlapping Handover Relay Glass Panel */}
+          <div className="hero-visual lg:col-span-6 relative flex flex-col items-center">
+            {/* Unified 3D Stage Container with generous bounds so object never clips */}
+            <div className="w-full relative min-h-[420px] sm:min-h-[480px] lg:min-h-[520px] flex items-center justify-center">
+              {/* 3D Relay Engine Stage - scaled 60-70% to sit comfortably inside */}
+              <div className="w-full h-[360px] sm:h-[420px] lg:h-[460px] relative z-10 flex items-center justify-center">
                 <Suspense fallback={<HeroSceneFallback />}>
                   <RelayEngine3D />
                 </Suspense>
               </div>
 
-              {/* Layered Product Preview Window below/behind the 3D Engine */}
-              <div className="w-full max-w-lg mt-[-40px] sm:mt-[-50px] relative z-10">
-                <HeroProductPreview />
+              {/* Handover Relay Glass Panel: Slightly overlapping lower-left of the 3D stage */}
+              <div className="w-full max-w-sm sm:max-w-md lg:absolute lg:bottom-0 lg:-left-6 z-20 mt-4 lg:mt-0">
+                <HandoverPanel />
               </div>
             </div>
           </div>

@@ -12,76 +12,76 @@ export function CommunitiesSection() {
       name: 'Developer Communities',
       sub: 'Developer chapters, open-source cohorts, and technical workshops.',
       icon: Terminal,
-      accent: 'text-signalLime border-signalLime/30',
+      accent: 'text-brand-600 border-brand-200',
       tag: 'Code & Workshops',
     },
     {
       name: 'Coding Clubs',
       sub: 'Competitive programming cohorts, algorithm reading groups, and hackathon teams.',
       icon: Code2,
-      accent: 'text-oxidisedMint border-oxidisedMint/30',
+      accent: 'text-mint-700 border-mint-200',
       tag: 'Competitive & Hackathons',
     },
     {
       name: 'Robotics & Hardware Labs',
       sub: 'Microcontroller sprints, hardware builds, and equipment hold tracking.',
       icon: Cpu,
-      accent: 'text-warmCopper border-warmCopper/30',
+      accent: 'text-brand-700 border-brand-200',
       tag: 'Hardware & Lab Custody',
     },
     {
       name: 'AI & Data Science Guilds',
       sub: 'Machine learning cohorts, model training reading groups, and research teams.',
       icon: Brain,
-      accent: 'text-signalLime border-signalLime/30',
+      accent: 'text-brand-600 border-brand-200',
       tag: 'Research & Compute',
     },
     {
       name: 'Cloud & Cyber Security',
       sub: 'Capture-the-flag teams, security clinics, and sandbox infrastructure.',
       icon: Cloud,
-      accent: 'text-oxidisedMint border-oxidisedMint/30',
+      accent: 'text-mint-700 border-mint-200',
       tag: 'CTF & Security Labs',
     },
     {
       name: 'Entrepreneurship Communities',
       sub: 'Pitch decks, founder speaker sessions, demo days, and venture pipelines.',
       icon: Rocket,
-      accent: 'text-warmCopper border-warmCopper/30',
+      accent: 'text-sunshine-700 border-sunshine-200',
       tag: 'Venture & Pitch Days',
     },
     {
       name: 'Technical Societies',
       sub: 'Multi-disciplinary engineering societies, symposiums, and faculty seminars.',
       icon: Palette,
-      accent: 'text-lightSand border-midnight-borderLight',
+      accent: 'text-ink border-border',
       tag: 'Symposiums & Keynotes',
     },
     {
       name: 'Student Councils & Governance',
       sub: 'Student body councils, faculty oversight, and cross-club policy alignments.',
       icon: ShieldCheck,
-      accent: 'text-oxidisedMint border-oxidisedMint/30',
+      accent: 'text-mint-700 border-mint-200',
       tag: 'Governance & Charters',
     },
   ];
 
   return (
-    <section id="communities" className="py-24 sm:py-32 bg-midnight-forest text-lightSand select-none relative overflow-hidden">
+    <section id="communities" className="py-24 sm:py-32 bg-subtle/50 text-ink select-none relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-midnight-card border border-midnight-border text-xs font-display font-semibold text-oxidisedMint mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-display font-semibold text-brand-600 mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Campus Ecosystem</span>
           </div>
 
-          <h2 className="text-display-section text-lightSand">
+          <h2 className="text-display-section text-ink">
             One platform.{' '}
-            <span className="text-signalLime font-extrabold">Different kinds of communities.</span>
+            <span className="text-brand-600 font-extrabold">Different kinds of communities.</span>
           </h2>
 
-          <p className="mt-4 text-base text-mutedSage leading-relaxed font-sans max-w-2xl mx-auto">
+          <p className="mt-4 text-base text-ink/75 leading-relaxed font-sans max-w-2xl mx-auto">
             Built for collegiate tech culture. Engineered for student-led developer communities,
             robotics teams, hackathon guilds, and campus societies.
           </p>
@@ -94,29 +94,29 @@ export function CommunitiesSection() {
             return (
               <div
                 key={comm.name}
-                className="p-5 rounded-2xl bg-midnight-card border border-midnight-border hover:border-midnight-borderLight transition-all duration-200 flex flex-col justify-between group"
+                className="p-5 rounded-2xl bg-surface border border-border shadow-2xs hover:border-brand-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-xl bg-midnight-surface border ${comm.accent} flex items-center justify-center transition-transform group-hover:scale-105`}>
+                    <div className={`w-10 h-10 rounded-xl bg-subtle border ${comm.accent} flex items-center justify-center transition-transform group-hover:scale-105`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-mono text-mutedSage uppercase tracking-wider">
+                    <span className="text-[10px] font-mono text-ink/60 uppercase tracking-wider font-semibold">
                       {comm.tag}
                     </span>
                   </div>
 
-                  <h3 className="font-display font-bold text-sm text-lightSand mb-2">
+                  <h3 className="font-display font-bold text-sm text-ink mb-2">
                     {comm.name}
                   </h3>
-                  <p className="text-xs text-mutedSage leading-relaxed">
+                  <p className="text-xs text-ink/70 leading-relaxed font-sans">
                     {comm.sub}
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-midnight-border/60 flex items-center justify-between text-[11px] text-mutedSage">
+                <div className="mt-5 pt-3 border-t border-border flex items-center justify-between text-[11px] text-ink/65 font-medium">
                   <span>Role Handover Ready</span>
-                  <span className="text-oxidisedMint">✓ Supported</span>
+                  <span className="text-mint-700 font-semibold">✓ Supported</span>
                 </div>
               </div>
             );

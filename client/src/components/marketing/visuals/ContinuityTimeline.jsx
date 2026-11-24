@@ -4,19 +4,19 @@ import { ArrowRight, CheckCircle2, FileText, Users, DollarSign, Database, Shield
 /**
  * ContinuityTimeline: Signature visual transfer showing outgoing leaders passing organized knowledge
  * to incoming leaders through the continuous Relay Engine nexus.
- * Inspired by Magic UI Animated Beam with bespoke SVG path animation.
+ * Rendered with clean canvas surfaces, ink typography, and Electric Blue / Fresh Mint accents.
  */
 export function ContinuityTimeline() {
   const artifacts = [
-    { label: 'Role Responsibilities', icon: Users, color: 'text-signalLime' },
-    { label: 'Event Playbooks & SOPs', icon: FileText, color: 'text-oxidisedMint' },
-    { label: 'Faculty Approved Budgets', icon: DollarSign, color: 'text-amberGold-500' },
-    { label: 'Knowledge Vault SOPs', icon: Database, color: 'text-lightSand' },
-    { label: 'Admin Key Handoff', icon: Key, color: 'text-warmCopper' },
+    { label: 'Role Responsibilities', icon: Users, color: 'text-brand-600' },
+    { label: 'Event Playbooks & SOPs', icon: FileText, color: 'text-mint-700' },
+    { label: 'Faculty Approved Budgets', icon: DollarSign, color: 'text-sunshine-600' },
+    { label: 'Knowledge Vault SOPs', icon: Database, color: 'text-ink-700' },
+    { label: 'Admin Key Handoff', icon: Key, color: 'text-brand-600' },
   ];
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 sm:p-10 rounded-3xl bg-midnight-card border border-midnight-borderLight shadow-2xl relative overflow-hidden select-none">
+    <div className="w-full max-w-4xl mx-auto p-6 sm:p-10 rounded-3xl bg-surface border border-border shadow-sm relative overflow-hidden select-none">
       {/* Background Animated Beams */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none opacity-40"
@@ -26,23 +26,23 @@ export function ContinuityTimeline() {
       >
         <path
           d="M 120 180 C 260 80 540 80 680 180"
-          stroke="#2F4339"
+          stroke="#E5E9E8"
           strokeWidth="2"
         />
         <path
           d="M 120 180 C 260 80 540 80 680 180"
-          stroke="#D4EE79"
+          stroke="#315BDB"
           strokeWidth="2.5"
           className="animate-beam-path"
         />
         <path
           d="M 120 180 C 260 280 540 280 680 180"
-          stroke="#2F4339"
+          stroke="#E5E9E8"
           strokeWidth="2"
         />
         <path
           d="M 120 180 C 260 280 540 280 680 180"
-          stroke="#82C9AE"
+          stroke="#2CBF9B"
           strokeWidth="2.5"
           className="animate-beam-path"
         />
@@ -51,21 +51,21 @@ export function ContinuityTimeline() {
       {/* Main 3-Stage Continuity Flow */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative z-10">
         {/* Stage 1: Outgoing Leadership Cohort (Left) */}
-        <div className="md:col-span-4 p-5 rounded-2xl bg-midnight-surface border border-midnight-border flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-midnight-forest border border-oxidisedMint/40 flex items-center justify-center mb-3 text-oxidisedMint shadow-md">
+        <div className="md:col-span-4 p-5 rounded-2xl bg-subtle/70 border border-border flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white border border-brand-200/80 flex items-center justify-center mb-3 text-brand-600 shadow-2xs">
             <Users className="w-7 h-7" />
           </div>
-          <span className="text-[10px] font-display uppercase tracking-widest text-oxidisedMint font-bold mb-1">
+          <span className="text-[10px] font-display uppercase tracking-widest text-brand-600 font-bold mb-1">
             Outgoing Team
           </span>
-          <h4 className="font-display font-bold text-base text-lightSand mb-1">
+          <h4 className="font-display font-bold text-base text-ink mb-1">
             Executive Term 2025–26
           </h4>
-          <p className="text-xs text-mutedSage">
+          <p className="text-xs text-ink/70 font-sans">
             Compiles 7-section verified handover dossier before term transition.
           </p>
-          <div className="mt-4 px-3 py-1 rounded-full bg-midnight-card border border-oxidisedMint/30 text-[10px] text-oxidisedMint font-medium flex items-center gap-1.5">
-            <CheckCircle2 className="w-3 h-3" />
+          <div className="mt-4 px-3 py-1 rounded-full bg-white border border-brand-200 text-[10px] text-brand-700 font-semibold flex items-center gap-1.5 shadow-2xs">
+            <CheckCircle2 className="w-3 h-3 text-brand-600" />
             <span>Full term archive verified</span>
           </div>
         </div>
@@ -74,17 +74,17 @@ export function ContinuityTimeline() {
         <div className="md:col-span-4 flex flex-col items-center text-center">
           <div className="relative mb-3">
             {/* Pulsing Relay Hub */}
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-signalLime/20 via-oxidisedMint/30 to-midnight-forest border-2 border-signalLime flex items-center justify-center shadow-[0_0_35px_rgba(212,238,121,0.3)]">
-              <ShieldCheck className="w-9 h-9 text-signalLime" />
+            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-brand-100 via-mint-100 to-white border-2 border-brand-600 flex items-center justify-center shadow-[0_0_25px_rgba(49,91,219,0.2)]">
+              <ShieldCheck className="w-9 h-9 text-brand-600" />
             </div>
-            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-signalLime text-midnight-workshop font-bold text-[10px] flex items-center justify-center shadow">
+            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-brand-600 text-white font-bold text-[10px] flex items-center justify-center shadow">
               7
             </span>
           </div>
-          <span className="text-[11px] font-display uppercase tracking-widest text-signalLime font-bold mb-1">
+          <span className="text-[11px] font-display uppercase tracking-widest text-brand-600 font-bold mb-1">
             The Relay Baton
           </span>
-          <h5 className="font-display font-bold text-sm text-lightSand mb-2">
+          <h5 className="font-display font-bold text-sm text-ink mb-2">
             Organized Knowledge
           </h5>
 
@@ -95,7 +95,7 @@ export function ContinuityTimeline() {
               return (
                 <div
                   key={item.label}
-                  className="px-2.5 py-1 rounded-lg bg-midnight-surface/80 border border-midnight-border text-[10px] text-lightSand/90 flex items-center gap-2"
+                  className="px-2.5 py-1 rounded-lg bg-white border border-border text-[10px] text-ink/80 flex items-center gap-2 shadow-2xs"
                 >
                   <Icon className={`w-3.5 h-3.5 ${item.color} flex-shrink-0`} />
                   <span className="truncate">{item.label}</span>
@@ -106,21 +106,21 @@ export function ContinuityTimeline() {
         </div>
 
         {/* Stage 3: Incoming Leadership Cohort (Right) */}
-        <div className="md:col-span-4 p-5 rounded-2xl bg-midnight-surface border border-midnight-border flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-midnight-forest border border-signalLime/40 flex items-center justify-center mb-3 text-signalLime shadow-md">
+        <div className="md:col-span-4 p-5 rounded-2xl bg-subtle/70 border border-border flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white border border-mint-200/80 flex items-center justify-center mb-3 text-mint-700 shadow-2xs">
             <Users className="w-7 h-7" />
           </div>
-          <span className="text-[10px] font-display uppercase tracking-widest text-signalLime font-bold mb-1">
+          <span className="text-[10px] font-display uppercase tracking-widest text-mint-700 font-bold mb-1">
             Incoming Team
           </span>
-          <h4 className="font-display font-bold text-base text-lightSand mb-1">
+          <h4 className="font-display font-bold text-base text-ink mb-1">
             Executive Term 2026–27
           </h4>
-          <p className="text-xs text-mutedSage">
+          <p className="text-xs text-ink/70 font-sans">
             Inherits established playbooks, vendor pipelines, and repositories on day one.
           </p>
-          <div className="mt-4 px-3 py-1 rounded-full bg-signalLime/10 border border-signalLime/30 text-[10px] text-signalLime font-semibold flex items-center gap-1.5">
-            <ArrowRight className="w-3 h-3" />
+          <div className="mt-4 px-3 py-1 rounded-full bg-white border border-mint-200 text-[10px] text-mint-700 font-semibold flex items-center gap-1.5 shadow-2xs">
+            <ArrowRight className="w-3 h-3 text-mint-600" />
             <span>Zero-loss semester kickoff</span>
           </div>
         </div>

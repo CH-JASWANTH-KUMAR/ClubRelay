@@ -16,8 +16,8 @@ const NAV_ITEMS = [
 ];
 
 /**
- * MarketingNavbar: Midnight Workshop floating pill navigation.
- * Transitions from transparent on hero top to a compact frosted dark pill on scroll.
+ * MarketingNavbar: Clean floating pill navigation.
+ * Transitions from clean transparent on hero top to a compact frosted pill on scroll.
  */
 export function MarketingNavbar() {
   const { user } = useAuth();
@@ -45,22 +45,22 @@ export function MarketingNavbar() {
       <div
         className={`max-w-7xl mx-auto flex items-center justify-between transition-all duration-300 ${
           scrolled
-            ? 'marketing-pill-nav px-4 sm:px-5 py-2 sm:py-2.5 rounded-full'
+            ? 'bg-white/90 backdrop-blur-md border border-border shadow-sm px-4 sm:px-5 py-2 sm:py-2.5 rounded-full'
             : 'bg-transparent py-1'
         }`}
       >
         {/* Brand identity */}
         <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
-          <BrandLockup size="md" variant="dark-surface" />
+          <BrandLockup size="md" variant="color" />
         </Link>
 
-        {/* Desktop Pill Navigation (React Bits Pill Nav inspired) */}
+        {/* Desktop Pill Navigation */}
         <nav
           aria-label="Primary navigation"
           className={`hidden lg:flex items-center gap-1 p-1 rounded-full border transition-all ${
             scrolled
-              ? 'bg-midnight-forest/40 border-midnight-border/40'
-              : 'bg-midnight-forest/60 backdrop-blur-md border-midnight-borderLight/60 shadow-lg'
+              ? 'bg-subtle/70 border-border'
+              : 'bg-white/80 backdrop-blur-md border-border shadow-xs'
           }`}
         >
           {NAV_ITEMS.map((item) => {
@@ -72,12 +72,12 @@ export function MarketingNavbar() {
                 href={item.href}
                 className={`relative px-3.5 py-1.5 text-xs font-medium rounded-full transition-all duration-200 ${
                   isActive
-                    ? 'text-signalLime font-semibold'
-                    : 'text-lightSand/75 hover:text-lightSand hover:bg-midnight-borderLight/40'
+                    ? 'text-brand-600 font-bold'
+                    : 'text-ink/75 hover:text-ink hover:bg-subtle'
                 }`}
               >
                 {isActive && (
-                  <span className="absolute inset-0 bg-midnight-borderLight/70 rounded-full -z-10 border border-oxidisedMint/30" />
+                  <span className="absolute inset-0 bg-brand-50 rounded-full -z-10 border border-brand-200/80" />
                 )}
                 {item.label}
               </a>
@@ -89,10 +89,10 @@ export function MarketingNavbar() {
         <div className="hidden lg:flex items-center gap-3">
           {user ? (
             <Button
-              variant="signal"
+              variant="primary"
               size="sm"
               onClick={() => navigate(getWorkspaceLink())}
-              className="rounded-full px-4 py-2"
+              className="rounded-full px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white shadow-xs"
             >
               <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" />
               <span>Open Your Workspace</span>
@@ -101,13 +101,13 @@ export function MarketingNavbar() {
             <>
               <Link
                 to="/login"
-                className="px-3 py-1.5 text-xs font-semibold text-lightSand/80 hover:text-lightSand transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold text-ink/80 hover:text-brand-600 transition-colors"
               >
                 Sign In
               </Link>
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-signalLime hover:bg-signalLime-hover active:bg-signalLime-active text-midnight-workshop font-semibold text-xs transition-all shadow-[0_2px_12px_rgba(212,238,121,0.25)] hover:shadow-[0_4px_16px_rgba(212,238,121,0.35)]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-xs transition-all shadow-[0_2px_12px_rgba(49,91,219,0.25)] hover:shadow-[0_4px_16px_rgba(49,91,219,0.35)]"
               >
                 <span>Build your club</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -119,7 +119,7 @@ export function MarketingNavbar() {
         {/* Mobile menu trigger */}
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="lg:hidden p-2 rounded-xl text-lightSand/80 hover:text-lightSand bg-midnight-forest/80 border border-midnight-border transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+          className="lg:hidden p-2 rounded-xl text-ink/80 hover:text-ink bg-white border border-border transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center shadow-xs"
           aria-label="Toggle menu"
           aria-expanded={mobileMenuOpen}
         >

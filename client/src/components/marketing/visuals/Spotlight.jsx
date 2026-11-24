@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
  * Spotlight: Aceternity-inspired ambient spotlight effect for focal regions.
  * Tracks pointer movement gently to create a realistic directional torch effect.
  */
-export function Spotlight({ className = '', fill = '#D4EE79' }) {
+export function Spotlight({ className = '', fill = '#315BDB' }) {
   const containerRef = useRef(null);
   const [position, setPosition] = useState({ x: 50, y: 30 });
   const [opacity, setOpacity] = useState(0);
@@ -43,3 +43,4 @@ export function Spotlight({ className = '', fill = '#D4EE79' }) {
 }
 
 export default Spotlight;
+

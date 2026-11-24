@@ -1,196 +1,145 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
+import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { HeroSceneFallback } from './HeroSceneFallback';
 
 /**
- * RelayCore: Illuminated central relay node emitting soft oxidised mint and signal lime glow.
+ * RelayCore: Illuminated central relay nexus where ribbons cross.
+ * Small icosahedron with outer lattice and glowing Fresh Mint & Electric Blue core.
  */
-function RelayCore({ pulseSpeed = 1.8 }) {
+function RelayCore() {
   const coreRef = useRef();
   const innerRef = useRef();
 
   useFrame(({ clock }) => {
-    const t = clock.getElapsedTime() * pulseSpeed;
+    const t = clock.getElapsedTime();
     if (coreRef.current) {
-      coreRef.current.rotation.y = t * 0.4;
-      coreRef.current.rotation.x = Math.sin(t * 0.3) * 0.2;
+      coreRef.current.rotation.y = t * 0.25;
+      coreRef.current.rotation.x = Math.sin(t * 0.2) * 0.15;
     }
     if (innerRef.current) {
-      const scale = 1 + Math.sin(t * 2) * 0.08;
+      const scale = 1 + Math.sin(t * 2) * 0.06;
       innerRef.current.scale.set(scale, scale, scale);
     }
   });
 
   return (
-    <group ref={coreRef}>
-      {/* Outer crystalline lattice sphere */}
+    <group ref={coreRef} position={[0, 0, 0]}>
+      {/* Outer crystalline lattice sphere (small wireframe) */}
       <mesh>
-        <icosahedronGeometry args={[0.55, 1]} />
+        <icosahedronGeometry args={[0.38, 1]} />
         <meshStandardMaterial
-          color="#16221C"
-          emissive="#82C9AE"
-          emissiveIntensity={0.6}
+          color="#192B42"
+          emissive="#315BDB"
+          emissiveIntensity={0.65}
           roughness={0.2}
-          metalness={0.8}
+          metalness={0.9}
           wireframe
         />
       </mesh>
 
-      {/* Solid inner core emitting signal lime glow */}
+      {/* Solid inner core emitting Fresh Mint glow */}
       <mesh ref={innerRef}>
-        <sphereGeometry args={[0.38, 32, 32]} />
+        <sphereGeometry args={[0.24, 24, 24]} />
         <meshStandardMaterial
-          color="#D4EE79"
-          emissive="#D4EE79"
-          emissiveIntensity={0.85}
+          color="#2CBF9B"
+          emissive="#2CBF9B"
+          emissiveIntensity={1.1}
           roughness={0.15}
-          metalness={0.2}
+          metalness={0.3}
         />
       </mesh>
 
-      {/* Point light positioned exactly at the relay nexus */}
-      <pointLight color="#D4EE79" intensity={1.6} distance={6} decay={2} />
+      {/* Point light positioned exactly at the core nexus */}
+      <pointLight color="#315BDB" intensity={2.2} distance={6} decay={2} />
     </group>
   );
 }
 
 /**
- * RelayRibbons: Two interlocking sculptural ribbons symbolizing incoming/outgoing cohorts,
- * knowledge continuity, and operational momentum.
+ * BatonPulse: A luminous energy beacon that travels along Ribbon 1 from one end
+ * to the other every few seconds, symbolizing the continuous relay of leadership and knowledge.
  */
-function RelayRibbons({ mousePosition, reducedMotion }) {
-  const groupRef = useRef();
-  const ribbon1Ref = useRef();
-  const ribbon2Ref = useRef();
-
-  // Create custom interlocking 3D curve paths using CatmullRomCurve3
-  const { geometry1, geometry2 } = useMemo(() => {
-    // Ribbon 1: Satin charcoal metallic loop with sweeping vertical twist
-    const points1 = [];
-    const count1 = 60;
-    for (let i = 0; i <= count1; i++) {
-      const theta = (i / count1) * Math.PI * 2;
-      const x = Math.sin(theta) * 2.2 + Math.cos(theta * 2) * 0.3;
-      const y = Math.cos(theta) * 1.6 + Math.sin(theta * 3) * 0.4;
-      const z = Math.sin(theta * 2) * 1.1;
-      points1.push(new THREE.Vector3(x, y, z));
-    }
-    const curve1 = new THREE.CatmullRomCurve3(points1, true, 'centripetal');
-    const geo1 = new THREE.TubeGeometry(curve1, 100, 0.16, 16, true);
-
-    // Ribbon 2: Interlocking counter-loop with oxidised mint metallic sheen
-    const points2 = [];
-    const count2 = 60;
-    for (let i = 0; i <= count2; i++) {
-      const theta = (i / count2) * Math.PI * 2;
-      const x = Math.cos(theta) * 1.9 + Math.sin(theta * 2) * 0.4;
-      const y = Math.sin(theta) * 2.1 - Math.cos(theta * 3) * 0.3;
-      const z = Math.cos(theta * 2) * 1.2;
-      points2.push(new THREE.Vector3(x, y, z));
-    }
-    const curve2 = new THREE.CatmullRomCurve3(points2, true, 'centripetal');
-    const geo2 = new THREE.TubeGeometry(curve2, 100, 0.14, 16, true);
-
-    return { geometry1: geo1, geometry2: geo2 };
-  }, []);
+function BatonPulse({ curve, duration = 4.0 }) {
+  const pulseRef = useRef();
+  const lightRef = useRef();
 
   useFrame(({ clock }) => {
-    if (reducedMotion) return;
-    const t = clock.getElapsedTime();
-
-    if (groupRef.current) {
-      // Gentle floating rotation
-      groupRef.current.rotation.y = t * 0.18 + mousePosition.current.x * 0.35;
-      groupRef.current.rotation.x = Math.sin(t * 0.15) * 0.12 - mousePosition.current.y * 0.25;
-    }
-
-    if (ribbon1Ref.current) {
-      ribbon1Ref.current.rotation.z = Math.sin(t * 0.25) * 0.08;
-    }
-    if (ribbon2Ref.current) {
-      ribbon2Ref.current.rotation.z = -Math.cos(t * 0.22) * 0.08;
+    if (!pulseRef.current || !curve) return;
+    const t = (clock.getElapsedTime() / duration) % 1;
+    const pos = curve.getPointAt(t);
+    pulseRef.current.position.copy(pos);
+    if (lightRef.current) {
+      lightRef.current.position.copy(pos);
     }
   });
 
   return (
-    <group ref={groupRef}>
-      {/* Primary Sculptural Ribbon: Satin Metallic Charcoal with Mint edge highlight */}
-      <mesh ref={ribbon1Ref} geometry={geometry1}>
+    <>
+      <mesh ref={pulseRef}>
+        <sphereGeometry args={[0.13, 20, 20]} />
         <meshStandardMaterial
-          color="#1E2A23"
-          roughness={0.32}
-          metalness={0.78}
-          envMapIntensity={0.8}
+          color="#315BDB"
+          emissive="#315BDB"
+          emissiveIntensity={2.5}
+          roughness={0.1}
+          metalness={0.1}
         />
       </mesh>
-
-      {/* Secondary Sculptural Ribbon: Oxidised Mint & Graphite */}
-      <mesh ref={ribbon2Ref} geometry={geometry2}>
-        <meshStandardMaterial
-          color="#2B463B"
-          emissive="#82C9AE"
-          emissiveIntensity={0.22}
-          roughness={0.38}
-          metalness={0.65}
-        />
-      </mesh>
-
-      {/* Accent Torus Halo Ring */}
-      <mesh rotation={[Math.PI / 3, Math.PI / 6, 0]}>
-        <torusGeometry args={[2.5, 0.02, 16, 100]} />
-        <meshStandardMaterial
-          color="#D4EE79"
-          emissive="#D4EE79"
-          emissiveIntensity={0.4}
-          roughness={0.2}
-          metalness={0.9}
-        />
-      </mesh>
-    </group>
+      <pointLight ref={lightRef} color="#315BDB" intensity={2.0} distance={4} decay={2} />
+    </>
   );
 }
 
 /**
- * OrbitalNodes: Small satellite particles revolving around the relay engine.
+ * OrbitingNodes: 5 tiny satellite spheres representing campus pillars:
+ * People, Events, Projects, Documents, and an accent node in Coral (#FF886B).
  */
-function OrbitalNodes({ count = 5 }) {
-  const nodesRef = useRef();
+function OrbitingNodes() {
+  const groupRef = useRef();
 
-  const nodes = useMemo(() => {
-    return [
-      { radius: 2.7, speed: 0.45, yOffset: 0.3, color: '#D4EE79', size: 0.075 },
-      { radius: 3.1, speed: -0.32, yOffset: -0.5, color: '#82C9AE', size: 0.085 },
-      { radius: 2.4, speed: 0.55, yOffset: 0.8, color: '#D77D5E', size: 0.065 },
-      { radius: 3.4, speed: -0.25, yOffset: 0.1, color: '#F0EDE3', size: 0.06 },
-      { radius: 2.9, speed: 0.38, yOffset: -0.7, color: '#82C9AE', size: 0.07 },
-    ];
-  }, [count]);
+  const nodes = useMemo(
+    () => [
+      { radius: 1.7, speed: 0.45, yOffset: 0.25, color: '#315BDB', size: 0.07, label: 'People' },
+      { radius: 1.9, speed: -0.35, yOffset: -0.3, color: '#2CBF9B', size: 0.08, label: 'Events' },
+      { radius: 1.6, speed: 0.5, yOffset: 0.4, color: '#192B42', size: 0.065, label: 'Projects' },
+      { radius: 1.85, speed: -0.4, yOffset: -0.15, color: '#2CBF9B', size: 0.07, label: 'Docs' },
+      // Coral accent node (#FF886B)
+      { radius: 2.1, speed: 0.3, yOffset: 0.1, color: '#FF886B', size: 0.09, label: 'Handover' },
+    ],
+    []
+  );
+
+  const meshesRef = useRef([]);
 
   useFrame(({ clock }) => {
-    if (!nodesRef.current) return;
     const t = clock.getElapsedTime();
-    nodesRef.current.children.forEach((child, i) => {
-      const config = nodes[i];
-      if (!config) return;
-      const angle = t * config.speed + (i * Math.PI * 2) / nodes.length;
-      child.position.x = Math.cos(angle) * config.radius;
-      child.position.z = Math.sin(angle) * config.radius;
-      child.position.y = config.yOffset + Math.sin(t * 0.8 + i) * 0.2;
+    nodes.forEach((node, i) => {
+      const mesh = meshesRef.current[i];
+      if (mesh) {
+        const angle = t * node.speed + (i * Math.PI * 2) / nodes.length;
+        mesh.position.x = Math.cos(angle) * node.radius;
+        mesh.position.z = Math.sin(angle) * node.radius;
+        mesh.position.y = node.yOffset + Math.sin(t * 0.8 + i) * 0.15;
+      }
     });
   });
 
   return (
-    <group ref={nodesRef}>
+    <group ref={groupRef}>
       {nodes.map((node, i) => (
-        <mesh key={i}>
+        <mesh
+          key={node.label}
+          ref={(el) => (meshesRef.current[i] = el)}
+        >
           <sphereGeometry args={[node.size, 16, 16]} />
           <meshStandardMaterial
             color={node.color}
             emissive={node.color}
-            emissiveIntensity={0.7}
-            roughness={0.2}
-            metalness={0.5}
+            emissiveIntensity={node.color === '#FF886B' ? 1.0 : 0.7}
+            roughness={0.25}
+            metalness={0.7}
           />
         </mesh>
       ))}
@@ -199,35 +148,141 @@ function OrbitalNodes({ count = 5 }) {
 }
 
 /**
- * RelayEngineScene: Complete 3D composition with lighting and camera controls.
+ * RelayRibbons: Two interlocking sculptural ribbons echoing the ClubRelay logo.
+ * Sized 60-70% of previous dimensions to prevent clipping.
+ * Ribbon 1: Electric Blue (#315BDB)
+ * Ribbon 2: Fresh Mint (#2CBF9B)
  */
-function RelayEngineScene({ mousePosition, reducedMotion }) {
+function RelayRibbons({ mousePosition, reducedMotion }) {
+  const groupRef = useRef();
+
+  // Procedural curves sized comfortably to fit inside canvas without clipping
+  const { geometry1, geometry2, curve1 } = useMemo(() => {
+    // Ribbon 1: Flowing loop with Electric Blue metallic finish
+    const points1 = [];
+    const count1 = 60;
+    // Sized to ~65% of original (radius ~1.4 instead of 2.2)
+    for (let i = 0; i <= count1; i++) {
+      const theta = (i / count1) * Math.PI * 2;
+      const x = Math.sin(theta) * 1.4 + Math.cos(theta * 2) * 0.22;
+      const y = Math.cos(theta) * 1.1 + Math.sin(theta * 3) * 0.25;
+      const z = Math.sin(theta * 2) * 0.75;
+      points1.push(new THREE.Vector3(x, y, z));
+    }
+    const c1 = new THREE.CatmullRomCurve3(points1, true, 'centripetal');
+    const geo1 = new THREE.TubeGeometry(c1, 90, 0.11, 16, true);
+
+    // Ribbon 2: Interlocking counter-loop with Fresh Mint finish
+    const points2 = [];
+    const count2 = 60;
+    for (let i = 0; i <= count2; i++) {
+      const theta = (i / count2) * Math.PI * 2;
+      const x = Math.cos(theta) * 1.3 + Math.sin(theta * 2) * 0.28;
+      const y = Math.sin(theta) * 1.35 - Math.cos(theta * 3) * 0.2;
+      const z = Math.cos(theta * 2) * 0.8;
+      points2.push(new THREE.Vector3(x, y, z));
+    }
+    const c2 = new THREE.CatmullRomCurve3(points2, true, 'centripetal');
+    const geo2 = new THREE.TubeGeometry(c2, 90, 0.10, 16, true);
+
+    return { geometry1: geo1, geometry2: geo2, curve1: c1 };
+  }, []);
+
+  useFrame(() => {
+    if (reducedMotion || !groupRef.current) return;
+
+    // Mouse parallax: subtle 5 degree tilt (~0.087 rad)
+    if (mousePosition) {
+      const maxTilt = 0.087; // ~5 degrees
+      const targetRotY = mousePosition.x * maxTilt;
+      const targetRotX = -mousePosition.y * maxTilt;
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(
+        groupRef.current.rotation.y,
+        targetRotY,
+        0.05
+      );
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(
+        groupRef.current.rotation.x,
+        targetRotX,
+        0.05
+      );
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Float from drei for gentle natural levitation */}
+      <Float
+        speed={1.6}
+        rotationIntensity={0.25}
+        floatIntensity={0.4}
+        floatingRange={[-0.08, 0.08]}
+      >
+        {/* Ribbon 1: Electric Blue */}
+        <mesh geometry={geometry1}>
+          <meshStandardMaterial
+            color="#315BDB"
+            emissive="#1F3EA8"
+            emissiveIntensity={0.25}
+            metalness={0.8}
+            roughness={0.2}
+          />
+        </mesh>
+
+        {/* Ribbon 2: Fresh Mint */}
+        <mesh geometry={geometry2}>
+          <meshStandardMaterial
+            color="#2CBF9B"
+            emissive="#1A705B"
+            emissiveIntensity={0.2}
+            metalness={0.75}
+            roughness={0.25}
+          />
+        </mesh>
+
+        {/* Luminous Core where ribbons cross */}
+        <RelayCore />
+
+        {/* Baton Pulse traveling along Ribbon 1 */}
+        <BatonPulse curve={curve1} duration={4.2} />
+
+        {/* 5 Tiny Orbiting Nodes */}
+        <OrbitingNodes />
+      </Float>
+    </group>
+  );
+}
+
+/**
+ * SceneContent: Lighting setup for Clean Campus palette
+ */
+function SceneContent({ mousePosition, reducedMotion }) {
   return (
     <>
-      {/* Lighting Architecture */}
-      <ambientLight intensity={0.55} color="#D8E8DF" />
-      <directionalLight position={[6, 8, 5]} intensity={1.5} color="#F0EDE3" />
-      <directionalLight position={[-6, -4, -4]} intensity={0.8} color="#82C9AE" />
-      <pointLight position={[0, 4, 3]} intensity={1.2} color="#D4EE79" distance={10} decay={2} />
+      <ambientLight intensity={1.2} />
+      {/* Key Directional Light */}
+      <directionalLight position={[5, 6, 6]} intensity={2.0} color="#FFFFFF" />
+      {/* Fill Light with Fresh Mint tint */}
+      <directionalLight position={[-6, -4, -4]} intensity={1.5} color="#2CBF9B" />
+      {/* Subtle Accent Light with Electric Blue tint */}
+      <directionalLight position={[0, -5, 4]} intensity={1.0} color="#315BDB" />
 
-      {/* Core and Sculptural Ribbon Elements */}
+      {/* Main Relay Kinetic Composition */}
       <RelayRibbons mousePosition={mousePosition} reducedMotion={reducedMotion} />
-      <RelayCore />
-      <OrbitalNodes />
     </>
   );
 }
 
 /**
- * RelayEngine3D: High-performance 3D visual component for the Midnight Workshop hero.
- * Automatically halts animation when scrolled off-screen via IntersectionObserver.
+ * RelayEngine3D: High-performance 3D Relay Engine with Float, mouse parallax,
+ * and automatic off-screen pause. Sized 60-70% to never clip.
  */
 export function RelayEngine3D() {
-  const containerRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(true);
   const [hasWebGL, setHasWebGL] = useState(true);
-  const [isReducedMotion, setIsReducedMotion] = useState(false);
-  const mousePosition = useRef({ x: 0, y: 0 });
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isVisible, setIsVisible] = useState(true);
+  const containerRef = useRef(null);
 
   // Check WebGL availability safely
   useEffect(() => {
@@ -238,47 +293,41 @@ export function RelayEngine3D() {
     } catch {
       setHasWebGL(false);
     }
-
-    if (typeof window !== 'undefined') {
-      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      setIsReducedMotion(mediaQuery.matches);
-      const listener = (e) => setIsReducedMotion(e.matches);
-      mediaQuery.addEventListener('change', listener);
-      return () => mediaQuery.removeEventListener('change', listener);
-    }
   }, []);
 
-  // IntersectionObserver to pause rendering when scrolled out of view
+  // Listen for reduced motion
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const handler = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  // Pause rendering when scrolled off-screen
   useEffect(() => {
     if (!containerRef.current || typeof IntersectionObserver === 'undefined') return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
       { threshold: 0.1 }
     );
-
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, []);
 
-  // Smooth pointer interaction
+  // Track mouse coordinates normalized between -1 and 1
   const handlePointerMove = (e) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || reducedMotion) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-    mousePosition.current.x = THREE.MathUtils.clamp(x, -1, 1);
-    mousePosition.current.y = THREE.MathUtils.clamp(y, -1, 1);
+    setMousePosition({ x, y });
   };
 
-  const handlePointerLeave = () => {
-    mousePosition.current.x = 0;
-    mousePosition.current.y = 0;
-  };
-
-  if (!hasWebGL) {
+  if (!hasWebGL || reducedMotion) {
     return <HeroSceneFallback />;
   }
 
@@ -286,17 +335,26 @@ export function RelayEngine3D() {
     <div
       ref={containerRef}
       onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
-      className="w-full h-full min-h-[380px] sm:min-h-[460px] lg:min-h-[520px] relative select-none cursor-grab active:cursor-grabbing"
+      className="w-full h-full relative select-none"
+      style={{ touchAction: 'none' }}
     >
       <Canvas
-        camera={{ position: [0, 0, 6.8], fov: 42 }}
+        camera={{ position: [0, 0, 4.6], fov: 42 }}
         dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         frameloop={isVisible ? 'always' : 'never'}
-        className="w-full h-full"
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault();
+            setHasWebGL(false);
+          });
+        }}
       >
-        <RelayEngineScene mousePosition={mousePosition} reducedMotion={isReducedMotion} />
+        <SceneContent mousePosition={mousePosition} reducedMotion={reducedMotion} />
       </Canvas>
     </div>
   );

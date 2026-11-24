@@ -38,30 +38,30 @@ export function HandoverStorySection() {
   return (
     <section
       id="handover"
-      className="py-24 sm:py-32 bg-midnight-workshop text-lightSand select-none relative overflow-hidden"
+      className="py-24 sm:py-32 bg-canvas text-ink select-none relative overflow-hidden"
     >
       {/* Anchor alias for backwards compatibility */}
       <div id="continuity" className="sr-only" />
 
       {/* Subtle background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-radial from-oxidisedMint/10 via-signalLime/5 to-transparent blur-3xl pointer-events-none -z-0" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-brand-500/10 via-mint-500/10 to-transparent blur-3xl pointer-events-none -z-0" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Editorial Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-midnight-forest border border-midnight-borderLight text-xs font-display font-semibold text-oxidisedMint mb-4">
-            <span className="w-2 h-2 rounded-full bg-oxidisedMint animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-display font-semibold text-brand-600 mb-4">
+            <span className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
             <span>Campus Succession & Continuity</span>
           </div>
 
-          <h2 className="text-display-section text-lightSand">
+          <h2 className="text-display-section text-ink">
             The next team shouldn’t have to{' '}
-            <span className="text-signalLime font-extrabold">start from zero.</span>
+            <span className="text-brand-600 font-extrabold">start from zero.</span>
           </h2>
 
-          <p className="mt-4 text-base sm:text-lg text-mutedSage leading-relaxed font-sans max-w-2xl mx-auto">
+          <p className="mt-4 text-base sm:text-lg text-ink/75 leading-relaxed font-sans max-w-2xl mx-auto">
             Good clubs don’t start from zero.{' '}
-            <span className="text-lightSand font-medium">They pick up where the last team left off.</span>
+            <span className="text-ink font-semibold">They pick up where the last team left off.</span>
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export function HandoverStorySection() {
         </div>
 
         {/* 4 Pillars of Continuity & Relay Mascot Stage */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-8 border-t border-midnight-border">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-8 border-t border-border">
           {/* Left: 4 Continuity Features (8 cols) */}
           <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {pillars.map((pillar) => {
@@ -79,15 +79,15 @@ export function HandoverStorySection() {
               return (
                 <div
                   key={pillar.title}
-                  className="p-5 rounded-2xl bg-midnight-forest/80 border border-midnight-border hover:border-oxidisedMint/40 transition-colors"
+                  className="p-5 rounded-2xl bg-surface border border-border shadow-2xs hover:border-brand-200 hover:shadow-xs transition-all"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-midnight-card text-signalLime flex items-center justify-center mb-3 border border-midnight-borderLight">
+                  <div className="w-9 h-9 rounded-xl bg-subtle text-brand-600 flex items-center justify-center mb-3 border border-border">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <h3 className="font-display font-bold text-sm text-lightSand mb-1.5">
+                  <h3 className="font-display font-bold text-sm text-ink mb-1.5">
                     {pillar.title}
                   </h3>
-                  <p className="text-xs text-mutedSage leading-relaxed">
+                  <p className="text-xs text-ink/70 leading-relaxed font-sans">
                     {pillar.desc}
                   </p>
                 </div>
@@ -99,14 +99,14 @@ export function HandoverStorySection() {
           <div className="lg:col-span-4 flex flex-col items-center justify-center">
             <div
               ref={stageRef}
-              className="w-full max-w-sm p-6 rounded-3xl bg-midnight-forest border border-midnight-borderLight shadow-2xl flex flex-col items-center relative overflow-hidden"
+              className="w-full max-w-sm p-6 rounded-3xl bg-surface border border-border shadow-sm flex flex-col items-center relative overflow-hidden"
             >
-              <div className="w-full flex items-center justify-between pb-3 border-b border-midnight-border mb-6">
+              <div className="w-full flex items-center justify-between pb-3 border-b border-border mb-6">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-signalLime" />
-                  <span className="text-xs font-display font-bold text-lightSand">Relay Companion</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-600" />
+                  <span className="text-xs font-display font-bold text-ink">Relay Companion</span>
                 </div>
-                <span className="text-[10px] font-semibold text-signalLime bg-signalLime/15 px-2.5 py-0.5 rounded-full border border-signalLime/30">
+                <span className="text-[10px] font-bold text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
                   Continuity Companion
                 </span>
               </div>
@@ -116,7 +116,7 @@ export function HandoverStorySection() {
                 <RelayMascot size="lg" interactive={true} containerRef={stageRef} />
               </div>
 
-              <p className="text-[11px] text-mutedSage text-center mt-4">
+              <p className="text-[11px] text-ink/70 text-center mt-4 font-sans">
                 "Preserve every playbook, sponsor email, and technical diagram for whoever takes the baton next."
               </p>
             </div>

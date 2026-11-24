@@ -18,7 +18,7 @@ import { MarketingFooter } from '../components/marketing/footer/MarketingFooter'
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * LandingPage: Phase 3.5 Midnight Workshop Landing Page Composition.
+ * LandingPage: Phase 3.5 Clean Campus Technology Marketing Composition.
  * Driven by the single official GSAP ticker + Lenis loop with autoRaf={false}.
  */
 export function LandingPage() {
@@ -50,10 +50,10 @@ export function LandingPage() {
     };
   }, []);
 
-  // Ensure root body background matches Midnight Workshop while on marketing landing page
+  // Ensure root body background matches Clean Canvas while on marketing landing page
   useEffect(() => {
     const prevBg = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = '#101815';
+    document.body.style.backgroundColor = '#F7F8F4';
     return () => {
       document.body.style.backgroundColor = prevBg;
     };
@@ -61,15 +61,15 @@ export function LandingPage() {
 
   return (
     <ReactLenis root ref={lenisRef} autoRaf={false}>
-      <div className="min-h-screen bg-midnight-workshop text-lightSand selection:bg-signalLime selection:text-midnight-workshop flex flex-col font-sans">
+      <div className="min-h-screen bg-canvas text-ink selection:bg-brand-100 selection:text-brand-900 flex flex-col font-sans">
         {/* Section 01: Floating Pill Navbar */}
         <MarketingNavbar />
 
         <main className="flex-1">
-          {/* Section 02: Hero with 3D Relay Engine */}
+          {/* Section 02: Hero with 3D Relay Engine & KineticText */}
           <MarketingHero />
 
-          {/* Section 03: The Cost of Starting Over (Warm Paper) */}
+          {/* Section 03: The Cost of Starting Over */}
           <ProblemStorySection />
 
           {/* Section 04: See the Platform (Interactive Cockpit) */}
@@ -87,7 +87,7 @@ export function LandingPage() {
           {/* Section 08: How It Works */}
           <HowItWorksSection />
 
-          {/* Section 09: Final Call To Action */}
+          {/* Section 09: Final Call To Action with WarpBackground */}
           <FinalCtaSection />
         </main>
 

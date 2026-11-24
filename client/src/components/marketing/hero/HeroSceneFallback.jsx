@@ -3,34 +3,35 @@ import React from 'react';
 /**
  * HeroSceneFallback: High-fidelity SVG poster artwork rendered before WebGL loads
  * or in non-WebGL / reduced-motion environments.
+ * Electric Blue & Fresh Mint clean canvas styling.
  */
 export function HeroSceneFallback() {
   return (
     <div
-      className="w-full h-full min-h-[380px] sm:min-h-[460px] lg:min-h-[520px] flex items-center justify-center relative select-none"
+      className="w-full h-full min-h-[360px] sm:min-h-[420px] lg:min-h-[460px] flex items-center justify-center relative select-none"
       aria-label="3D Relay Engine representation"
     >
       <svg
         viewBox="0 0 500 500"
-        className="w-full max-w-[440px] lg:max-w-[500px] h-auto drop-shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
+        className="w-full max-w-[400px] lg:max-w-[440px] h-auto drop-shadow-[0_20px_50px_rgba(49,91,219,0.15)]"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient id="fallbackRibbon1" x1="50" y1="50" x2="450" y2="450" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#82C9AE" />
-            <stop offset="50%" stopColor="#2F4339" />
-            <stop offset="100%" stopColor="#16221C" />
+          <linearGradient id="fallbackRibbonBlue" x1="50" y1="50" x2="450" y2="450" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#315BDB" />
+            <stop offset="50%" stopColor="#284DC4" />
+            <stop offset="100%" stopColor="#192B42" />
           </linearGradient>
-          <linearGradient id="fallbackRibbon2" x1="450" y1="100" x2="80" y2="420" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#D4EE79" stopOpacity="0.9" />
-            <stop offset="40%" stopColor="#3B5447" />
-            <stop offset="100%" stopColor="#131B17" />
+          <linearGradient id="fallbackRibbonMint" x1="450" y1="100" x2="80" y2="420" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#2CBF9B" stopOpacity="0.95" />
+            <stop offset="50%" stopColor="#1F8A70" />
+            <stop offset="100%" stopColor="#155C4A" />
           </linearGradient>
-          <radialGradient id="coreGlow" cx="250" cy="250" r="100" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#D4EE79" stopOpacity="0.6" />
-            <stop offset="40%" stopColor="#82C9AE" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#101815" stopOpacity="0" />
+          <radialGradient id="coreGlowBlue" cx="250" cy="250" r="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#315BDB" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="#2CBF9B" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
           </radialGradient>
           <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="8" result="blur" />
@@ -39,41 +40,36 @@ export function HeroSceneFallback() {
         </defs>
 
         {/* Ambient Core Aura */}
-        <circle cx="250" cy="250" r="140" fill="url(#coreGlow)" />
+        <circle cx="250" cy="250" r="120" fill="url(#coreGlowBlue)" />
 
-        {/* Sculptural Interlocking Ribbon 1: Charcoal & Mint */}
+        {/* Sculptural Interlocking Ribbon 1: Electric Blue */}
         <path
-          d="M 120 250 C 120 160 200 120 280 140 C 370 165 400 260 350 330 C 300 400 180 390 145 320 C 130 290 140 230 190 210 C 260 180 340 230 330 300"
-          stroke="url(#fallbackRibbon1)"
-          strokeWidth="32"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.9"
-        />
-
-        {/* Sculptural Interlocking Ribbon 2: Luminous Mint & Lime Contour */}
-        <path
-          d="M 380 250 C 380 340 300 380 220 360 C 130 335 100 240 150 170 C 200 100 320 110 355 180 C 370 210 360 270 310 290 C 240 320 160 270 170 200"
-          stroke="url(#fallbackRibbon2)"
+          d="M 140 250 C 140 180 200 145 270 160 C 350 180 375 260 335 320 C 290 380 190 370 160 310 C 145 285 155 235 195 220 C 255 195 320 235 315 290"
+          stroke="url(#fallbackRibbonBlue)"
           strokeWidth="24"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
 
-        {/* Core Nexus Sphere */}
-        <circle cx="250" cy="250" r="32" fill="#151A18" stroke="#82C9AE" strokeWidth="3" />
-        <circle cx="250" cy="250" r="18" fill="#D4EE79" filter="url(#softGlow)" />
-        <circle cx="250" cy="250" r="8" fill="#FFFFFF" />
+        {/* Sculptural Interlocking Ribbon 2: Fresh Mint */}
+        <path
+          d="M 360 250 C 360 320 300 355 230 340 C 150 320 125 240 165 180 C 210 120 310 130 340 190 C 355 215 345 265 305 280 C 245 305 180 265 185 210"
+          stroke="url(#fallbackRibbonMint)"
+          strokeWidth="22"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
-        {/* Orbital Nodes with Connection Sparkles */}
-        <circle cx="150" cy="120" r="8" fill="#D77D5E" />
-        <circle cx="390" cy="160" r="10" fill="#82C9AE" filter="url(#softGlow)" />
-        <circle cx="340" cy="390" r="7" fill="#D4EE79" />
-        <circle cx="100" cy="320" r="6" fill="#F0EDE3" opacity="0.8" />
+        {/* Orbiting Satellite Nodes */}
+        <circle cx="170" cy="160" r="7" fill="#315BDB" />
+        <circle cx="350" cy="340" r="6" fill="#2CBF9B" />
+        <circle cx="160" cy="350" r="8" fill="#FF886B" /> {/* Coral accent */}
+        <circle cx="340" cy="150" r="6.5" fill="#315BDB" />
 
-        {/* Orbit Path Guides */}
-        <ellipse cx="250" cy="250" rx="190" ry="90" stroke="rgba(130, 201, 174, 0.15)" strokeWidth="1.5" strokeDasharray="4 6" transform="rotate(-25 250 250)" />
-        <ellipse cx="250" cy="250" rx="210" ry="110" stroke="rgba(212, 238, 121, 0.12)" strokeWidth="1.5" strokeDasharray="3 8" transform="rotate(35 250 250)" />
+        {/* Glowing Nexus Relay Core */}
+        <circle cx="250" cy="250" r="22" fill="#315BDB" filter="url(#softGlow)" />
+        <circle cx="250" cy="250" r="12" fill="#2CBF9B" />
+        <circle cx="250" cy="250" r="5" fill="#FFFFFF" />
       </svg>
     </div>
   );

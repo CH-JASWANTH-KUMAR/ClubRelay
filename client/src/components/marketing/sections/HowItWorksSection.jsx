@@ -33,20 +33,20 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 bg-midnight-workshop text-lightSand select-none relative overflow-hidden">
+    <section id="how-it-works" className="py-24 sm:py-32 bg-canvas text-ink select-none relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-midnight-forest border border-midnight-border text-xs font-display font-semibold text-signalLime mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-display font-semibold text-brand-600 mb-4">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Three step continuity journey</span>
           </div>
 
-          <h2 className="text-display-section text-lightSand">
+          <h2 className="text-display-section text-ink">
             How ClubRelay keeps the momentum
           </h2>
 
-          <p className="mt-4 text-base text-mutedSage leading-relaxed font-sans max-w-2xl mx-auto">
+          <p className="mt-4 text-base text-ink/75 leading-relaxed font-sans max-w-2xl mx-auto">
             From your first semester kickoff to the final leadership handover ceremony, your achievements stay preserved.
           </p>
         </div>
@@ -56,32 +56,32 @@ export function HowItWorksSection() {
           {steps.map((step, idx) => (
             <div
               key={step.num}
-              className="p-7 rounded-3xl bg-midnight-forest border border-midnight-borderLight shadow-xl flex flex-col justify-between hover:border-signalLime/40 transition-all group"
+              className="p-7 rounded-3xl bg-surface border border-border shadow-sm flex flex-col justify-between hover:border-brand-300 hover:shadow-md transition-all group"
             >
               <div>
                 <div className="flex items-center justify-between mb-5">
-                  <span className="font-display text-3xl font-extrabold text-signalLime">
+                  <span className="font-display text-3xl font-extrabold text-brand-600">
                     {step.num}
                   </span>
-                  <span className="text-[10px] font-bold text-oxidisedMint bg-oxidisedMint/15 px-2.5 py-0.5 rounded-full border border-oxidisedMint/30">
+                  <span className="text-[10px] font-bold text-mint-700 bg-mint-50 px-2.5 py-0.5 rounded-full border border-mint-200">
                     {step.highlight}
                   </span>
                 </div>
 
-                <h3 className="font-display font-extrabold text-2xl text-lightSand mb-1.5">
+                <h3 className="font-display font-extrabold text-2xl text-ink mb-1.5">
                   {step.title}
                 </h3>
-                <p className="text-xs font-semibold text-oxidisedMint mb-3">
+                <p className="text-xs font-semibold text-brand-600 mb-3 font-display">
                   {step.tagline}
                 </p>
-                <p className="text-xs text-mutedSage leading-relaxed font-sans">
+                <p className="text-xs text-ink/75 leading-relaxed font-sans">
                   {step.desc}
                 </p>
               </div>
 
-              <div className="pt-5 mt-6 border-t border-midnight-border flex items-center justify-between text-xs text-mutedSage">
-                <span className="font-medium text-lightSand">Phase {idx + 1} of 3</span>
-                <span className="text-signalLime font-semibold flex items-center gap-1">
+              <div className="pt-5 mt-6 border-t border-border flex items-center justify-between text-xs text-ink/65">
+                <span className="font-medium text-ink">Phase {idx + 1} of 3</span>
+                <span className="text-brand-600 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Verified Flow
                 </span>
               </div>
