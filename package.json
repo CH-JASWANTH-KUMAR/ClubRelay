@@ -14,6 +14,7 @@
     "build": "npm run build --workspace=client",
     "test": "npm run test --workspace=server && npm run test --workspace=client",
     "seed": "npm run seed --workspace=server",
+    "seed:dev": "npm run seed:dev --workspace=server",
     "lint": "eslint client/src server/src"
   },
   "devDependencies": {

@@ -30,7 +30,25 @@ export async function login(req, res, next) {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
-    const user = await User.findOne({ email: email.toLowerCase() }).populate('campusId');
+    const emailLower = email.toLowerCase();
+    const emailDomain = emailLower.split('@')[1];
+    if (!emailDomain) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    // Multi-tenant resolution: resolve institutional campus via email domain
+    const campus = await Campus.findOne({ domain: emailDomain });
+    if (!campus) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    const user = await User.findOne({ campusId: campus._id, email: emailLower }).populate('campusId');
     if (!user) {
       return res.status(401).json({
         success: false,

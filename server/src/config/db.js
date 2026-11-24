@@ -37,6 +37,9 @@ export async function connectDB() {
       });
     }
     uri = mongod.getUri();
+    console.warn('\n********************************************************************');
+    console.warn('[WARNING] Using in-memory database: all data is lost on restart. Set MONGODB_URI for persistence.');
+    console.warn('********************************************************************\n');
     console.log(`[Database] Using isolated in-memory replica set MongoDB at: ${uri}`);
   } else {
     console.log(`[Database] Connecting to MongoDB Atlas cluster...`);
