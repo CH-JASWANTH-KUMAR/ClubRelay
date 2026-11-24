@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Sparkles } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { EventCockpitPanel } from './product/EventCockpitPanel';
@@ -192,12 +191,12 @@ export function ProductExperienceSection() {
   // Single stage panel component in Clean Blue & White theme
   const stagePanelElement = (
     <div
-      className={`w-full rounded-2xl bg-white border border-slate-200/90 shadow-[0_20px_50px_-15px_rgba(25,43,66,0.08)] overflow-hidden flex flex-col justify-between ${
-        isMobile ? 'p-4 sm:p-5 mt-3' : 'h-[460px] p-5 sm:p-6'
+      className={`w-full rounded-2xl bg-white border border-slate-200/90 shadow-[0_20px_50px_-15px_rgba(25,43,66,0.08)] overflow-hidden flex flex-col ${
+        isMobile ? 'p-4 sm:p-5 mt-3' : 'h-full p-5 sm:p-6'
       }`}
     >
       {/* Slim Top Bar */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 flex-shrink-0">
+      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-brand-600 animate-pulse" />
           <span className="font-display font-bold text-sm text-ink">
@@ -243,14 +242,14 @@ export function ProductExperienceSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Responsive Layout: Desktop 2-column or Mobile Accordion with single mounted stage */}
         {!isMobile ? (
-          // Desktop View (1024px and up): 5/12 and 7/12 vertically centered
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          // Desktop View (1024px and up): 5/12 and 7/12 top-aligned, matching heights
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
             {/* Left Column (5/12) */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 flex flex-col justify-between">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-mono font-semibold text-brand-600 mb-3">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>THE WORKSPACE</span>
+                {/* Plain mono uppercase eyebrow with no icon and no pill */}
+                <div className="font-mono text-xs uppercase tracking-wider text-brand-600 font-bold mb-3">
+                  THE WORKSPACE
                 </div>
                 <h2 className="font-display text-3xl sm:text-4xl lg:text-[40px] font-bold text-ink leading-tight tracking-tight">
                   Everything your club runs on, in one place.
@@ -264,7 +263,7 @@ export function ProductExperienceSection() {
               <div
                 role="tablist"
                 aria-orientation="vertical"
-                className="space-y-2.5 focus:outline-none"
+                className="space-y-2.5 focus:outline-none mt-6"
               >
                 {MODULES.map((item, index) => {
                   const isActive = activeId === item.id;
@@ -324,8 +323,8 @@ export function ProductExperienceSection() {
               </div>
             </div>
 
-            {/* Right Column (7/12): Stage Panel */}
-            <div className="lg:col-span-7">
+            {/* Right Column (7/12): Stage Panel aligned at the top and matching height */}
+            <div className="lg:col-span-7 flex flex-col">
               {stagePanelElement}
             </div>
           </div>
@@ -333,9 +332,9 @@ export function ProductExperienceSection() {
           // Mobile Accordion View (< 1024px): Same item list and same panel element
           <div className="space-y-6">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200/80 text-xs font-mono font-semibold text-brand-600 mb-3">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>THE WORKSPACE</span>
+              {/* Plain mono uppercase eyebrow with no icon and no pill */}
+              <div className="font-mono text-xs uppercase tracking-wider text-brand-600 font-bold mb-2">
+                THE WORKSPACE
               </div>
               <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink leading-tight tracking-tight">
                 Everything your club runs on, in one place.

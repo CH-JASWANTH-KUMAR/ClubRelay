@@ -15,7 +15,7 @@ const REMAINING_WORK = [
 
 export function EngineeringProjectsPanel() {
   return (
-    <div className="w-full flex flex-col justify-between h-full space-y-3">
+    <div className="w-full flex flex-col space-y-4">
       {/* Project Card Header with Repository Link Row */}
       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">

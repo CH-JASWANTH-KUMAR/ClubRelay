@@ -31,7 +31,7 @@ const DOCUMENTS = [
 
 export function InstitutionalMemoryPanel() {
   return (
-    <div className="w-full flex flex-col justify-between h-full space-y-3">
+    <div className="w-full flex flex-col space-y-4">
       {/* Search Input Bar */}
       <div className="relative">
         <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

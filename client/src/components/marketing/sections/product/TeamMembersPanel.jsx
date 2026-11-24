@@ -41,9 +41,9 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
   }, [term, isReducedMotion]);
 
   return (
-    <div className="w-full flex flex-col justify-between h-full space-y-3">
+    <div className="w-full flex flex-col space-y-4">
       {/* Top Bar with Term Switcher */}
-      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <Users className="w-3.5 h-3.5 text-brand-600" />
           <span className="font-mono text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
