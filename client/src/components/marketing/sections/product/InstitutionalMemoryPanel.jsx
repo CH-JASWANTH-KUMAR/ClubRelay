@@ -40,16 +40,16 @@ export function InstitutionalMemoryPanel() {
           readOnly
           value=""
           placeholder="Search documentation, vendor contacts, playbooks..."
-          className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-ink placeholder:text-slate-400 font-sans focus:outline-none cursor-default"
+          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-ink placeholder:text-slate-400 font-sans focus:outline-none cursor-default"
         />
       </div>
 
       {/* 4 Document Rows */}
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+      <div className="space-y-2.5 flex-1 overflow-y-auto pr-1">
         {DOCUMENTS.map((doc) => (
           <div
             key={doc.id}
-            className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-1.5 transition-colors hover:border-slate-300"
+            className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2 transition-colors hover:border-slate-300"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">

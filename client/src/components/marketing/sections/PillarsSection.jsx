@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Calendar, Code2, ArrowRightLeft, Sparkles, CheckCircle2, GitBranch, ShieldCheck } from 'lucide-react';
+import { Sparkles, Code2 } from 'lucide-react';
 
 /**
  * PillarsSection: The Four Pillars of Student Club Momentum.

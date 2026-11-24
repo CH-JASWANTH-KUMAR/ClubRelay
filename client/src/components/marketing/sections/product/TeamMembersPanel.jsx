@@ -79,7 +79,7 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
       </div>
 
       {/* Roster Table: Position Rows remain steady */}
-      <div ref={rosterContentRef} className="space-y-2 flex-1 overflow-y-auto pr-1">
+      <div ref={rosterContentRef} className="space-y-2.5 flex-1 overflow-y-auto pr-1">
         {POSITIONS.map((pos) => {
           const currentData = term === 'fall2025' ? pos.fall2025 : pos.spring2026;
           const isAttention = currentData.statusType === 'attention';
@@ -88,7 +88,7 @@ export function TeamMembersPanel({ isReducedMotion = false }) {
           return (
             <div
               key={pos.title}
-              className="p-2.5 sm:p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3"
+              className="p-3 sm:p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
             >
               {/* Position stays constant */}
               <div className="sm:w-[130px] flex-shrink-0">

@@ -58,8 +58,8 @@ const MODULES = [
 export function ProductExperienceSection() {
   const [activeId, setActiveId] = useState('events');
   const [progress, setProgress] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
+  const [isStageHovered, setIsStageHovered] = useState(false);
+  const [isKeyboardFocused, setIsKeyboardFocused] = useState(false);
   const [isInView, setIsInView] = useState(true);
   const [isDocVisible, setIsDocVisible] = useState(() =>
     typeof document !== 'undefined' ? document.visibilityState === 'visible' : true
@@ -73,14 +73,14 @@ export function ProductExperienceSection() {
   const tabRefs = useRef([]);
   const progressTweenRef = useRef(null);
 
-  // IntersectionObserver for visibility
+  // IntersectionObserver for visibility (threshold: 0.1)
   useEffect(() => {
     if (!sectionRef.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsInView(entry.isIntersecting);
       },
-      { threshold: 0.15 }
+      { threshold: 0.1 }
     );
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
@@ -97,43 +97,58 @@ export function ProductExperienceSection() {
   }, []);
 
   // Auto-advance GSAP 6s progress bar on desktop
-  useEffect(() => {
-    setProgress(0);
-    if (isMobile || isReducedMotion || !isInView) return;
-
-    const tween = gsap.to(
-      {},
-      {
-        duration: 6,
-        ease: 'none',
-        onUpdate: function () {
-          setProgress(this.progress() * 100);
-        },
-        onComplete: () => {
-          const currentIndex = MODULES.findIndex((m) => m.id === activeId);
-          const nextIndex = (currentIndex + 1) % MODULES.length;
-          setActiveId(MODULES[nextIndex].id);
-        },
+  useGSAP(
+    () => {
+      if (isMobile || isReducedMotion || !isInView) {
+        setProgress(0);
+        return;
       }
-    );
-    progressTweenRef.current = tween;
 
-    return () => {
-      tween.kill();
-    };
-  }, [activeId, isMobile, isReducedMotion, isInView]);
+      setProgress(0);
+      const tween = gsap.to(
+        {},
+        {
+          duration: 6,
+          ease: 'none',
+          onUpdate: function () {
+            setProgress(this.progress() * 100);
+          },
+          onComplete: () => {
+            setActiveId((curr) => {
+              const currentIndex = MODULES.findIndex((m) => m.id === curr);
+              const nextIndex = (currentIndex + 1) % MODULES.length;
+              return MODULES[nextIndex].id;
+            });
+          },
+        }
+      );
+      progressTweenRef.current = tween;
 
-  // Pause / Resume on hover, focus, or tab hidden
+      const shouldPause = isStageHovered || isKeyboardFocused || !isDocVisible || !isInView;
+      if (shouldPause) {
+        tween.pause();
+      }
+
+      return () => {
+        tween.kill();
+        progressTweenRef.current = null;
+      };
+    },
+    { dependencies: [activeId, isMobile, isReducedMotion, isInView], scope: sectionRef }
+  );
+
+  // Pause / Resume listener: preserves exact progress without resetting
   useEffect(() => {
     const tween = progressTweenRef.current;
     if (!tween) return;
 
-    if (isHovered || isFocused || !isDocVisible) {
+    const shouldPause = isStageHovered || isKeyboardFocused || !isDocVisible || !isInView;
+    if (shouldPause) {
       tween.pause();
     } else {
       tween.resume();
     }
-  }, [isHovered, isFocused, isDocVisible]);
+  }, [isStageHovered, isKeyboardFocused, isDocVisible, isInView]);
 
   // Panel transition: 250ms crossfade plus 12px translate
   useGSAP(
@@ -156,6 +171,10 @@ export function ProductExperienceSection() {
   );
 
   const handleSelectTab = (id) => {
+    if (progressTweenRef.current) {
+      progressTweenRef.current.kill();
+      progressTweenRef.current = null;
+    }
     setActiveId(id);
     setProgress(0);
   };
@@ -191,8 +210,10 @@ export function ProductExperienceSection() {
   // Single stage panel component in Clean Blue & White theme
   const stagePanelElement = (
     <div
+      onMouseEnter={() => setIsStageHovered(true)}
+      onMouseLeave={() => setIsStageHovered(false)}
       className={`w-full rounded-2xl bg-white border border-slate-200/90 shadow-[0_20px_50px_-15px_rgba(25,43,66,0.08)] overflow-hidden flex flex-col ${
-        isMobile ? 'p-4 sm:p-5 mt-3' : 'h-full p-5 sm:p-6'
+        isMobile ? 'p-4 sm:p-5 mt-3' : 'p-5 sm:p-6 lg:h-[465px]'
       }`}
     >
       {/* Slim Top Bar */}
@@ -227,10 +248,6 @@ export function ProductExperienceSection() {
       ref={sectionRef}
       id="platform"
       aria-label="The Workspace platform experience"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onFocusCapture={() => setIsFocused(true)}
-      onBlurCapture={() => setIsFocused(false)}
       className="py-20 sm:py-28 bg-canvas text-ink select-none relative overflow-hidden"
     >
       {/* Navigation Anchor alias */}
@@ -240,30 +257,38 @@ export function ProductExperienceSection() {
       <div className="absolute inset-0 marketing-tech-grid-light opacity-50 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Centered Section Header matching Pillars */}
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+          <div className="font-mono text-xs uppercase tracking-wider text-brand-600 font-bold mb-3">
+            THE WORKSPACE
+          </div>
+          <h2 className="text-display-section text-ink">
+            One workspace for{' '}
+            <span className="text-brand-600 font-extrabold">every part of the club.</span>
+          </h2>
+          <p className="mt-4 text-sm sm:text-base text-ink/75 leading-relaxed font-sans max-w-2xl mx-auto">
+            From planning major events to passing the baton, keep your team in sync across every collegiate term.
+          </p>
+        </div>
+
         {/* Responsive Layout: Desktop 2-column or Mobile Accordion with single mounted stage */}
         {!isMobile ? (
           // Desktop View (1024px and up): 5/12 and 7/12 top-aligned, matching heights
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-            {/* Left Column (5/12) */}
-            <div className="lg:col-span-5 flex flex-col justify-between">
-              <div>
-                {/* Plain mono uppercase eyebrow with no icon and no pill */}
-                <div className="font-mono text-xs uppercase tracking-wider text-brand-600 font-bold mb-3">
-                  THE WORKSPACE
-                </div>
-                <h2 className="font-display text-3xl sm:text-4xl lg:text-[40px] font-bold text-ink leading-tight tracking-tight">
-                  Everything your club runs on, in one place.
-                </h2>
-                <p className="mt-3 text-sm sm:text-base text-ink/75 font-sans leading-relaxed">
-                  From planning major events to passing the baton, keep your team in sync across every collegiate term.
-                </p>
-              </div>
-
-              {/* Vertical list of 6 items */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            {/* Left Column (5/12): Compact List */}
+            <div className="lg:col-span-5">
               <div
                 role="tablist"
                 aria-orientation="vertical"
-                className="space-y-2.5 focus:outline-none mt-6"
+                onFocus={(e) => {
+                  if (e.target.matches && e.target.matches(':focus-visible')) {
+                    setIsKeyboardFocused(true);
+                  }
+                }}
+                onBlur={() => {
+                  setIsKeyboardFocused(false);
+                }}
+                className="space-y-2 focus:outline-none"
               >
                 {MODULES.map((item, index) => {
                   const isActive = activeId === item.id;
@@ -278,7 +303,7 @@ export function ProductExperienceSection() {
                       tabIndex={isActive ? 0 : -1}
                       onClick={() => handleSelectTab(item.id)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${
+                      className={`w-full text-left p-3 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${
                         isActive
                           ? 'bg-white text-ink border-2 border-brand-600 shadow-md ring-4 ring-brand-50'
                           : 'bg-white/80 hover:bg-white text-ink/80 hover:text-ink border border-slate-200/80 shadow-2xs'
@@ -310,6 +335,7 @@ export function ProductExperienceSection() {
                       {isActive && (
                         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-100">
                           <div
+                            data-testid="tab-progress-bar"
                             className="h-full bg-brand-600 transition-none"
                             style={{
                               width: isReducedMotion ? '100%' : `${progress}%`,
@@ -324,80 +350,72 @@ export function ProductExperienceSection() {
             </div>
 
             {/* Right Column (7/12): Stage Panel aligned at the top and matching height */}
-            <div className="lg:col-span-7 flex flex-col">
+            <div className="lg:col-span-7">
               {stagePanelElement}
             </div>
           </div>
         ) : (
           // Mobile Accordion View (< 1024px): Same item list and same panel element
-          <div className="space-y-6">
-            <div>
-              {/* Plain mono uppercase eyebrow with no icon and no pill */}
-              <div className="font-mono text-xs uppercase tracking-wider text-brand-600 font-bold mb-2">
-                THE WORKSPACE
-              </div>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink leading-tight tracking-tight">
-                Everything your club runs on, in one place.
-              </h2>
-              <p className="mt-2 text-sm text-ink/75 font-sans leading-relaxed">
-                From planning major events to passing the baton, keep your team in sync across every collegiate term.
-              </p>
-            </div>
-
-            {/* Accordion List */}
-            <div
-              role="tablist"
-              aria-orientation="vertical"
-              className="space-y-2.5 focus:outline-none"
-            >
-              {MODULES.map((item, index) => {
-                const isActive = activeId === item.id;
-                return (
-                  <div key={item.id} className="space-y-2">
-                    <button
-                      ref={(el) => (tabRefs.current[index] = el)}
-                      role="tab"
-                      id={`workspace-tab-${item.id}`}
-                      aria-controls={`workspace-panel-${item.id}`}
-                      aria-selected={isActive}
-                      tabIndex={isActive ? 0 : -1}
-                      onClick={() => handleSelectTab(item.id)}
-                      onKeyDown={(e) => handleKeyDown(e, index)}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${
-                        isActive
-                          ? 'bg-white text-ink border-2 border-brand-600 shadow-md ring-4 ring-brand-50'
-                          : 'bg-white/80 hover:bg-white text-ink/80 hover:text-ink border border-slate-200/80 shadow-2xs'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`font-mono text-xs font-bold pt-0.5 ${
-                            isActive ? 'text-brand-600' : 'text-slate-400'
+          <div
+            role="tablist"
+            aria-orientation="vertical"
+            onFocus={(e) => {
+              if (e.target.matches && e.target.matches(':focus-visible')) {
+                setIsKeyboardFocused(true);
+              }
+            }}
+            onBlur={() => {
+              setIsKeyboardFocused(false);
+            }}
+            className="space-y-2.5 focus:outline-none"
+          >
+            {MODULES.map((item, index) => {
+              const isActive = activeId === item.id;
+              return (
+                <div key={item.id} className="space-y-2">
+                  <button
+                    ref={(el) => (tabRefs.current[index] = el)}
+                    role="tab"
+                    id={`workspace-tab-${item.id}`}
+                    aria-controls={`workspace-panel-${item.id}`}
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    onClick={() => handleSelectTab(item.id)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    className={`w-full text-left p-3.5 rounded-xl transition-all relative overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 ${
+                      isActive
+                        ? 'bg-white text-ink border-2 border-brand-600 shadow-md ring-4 ring-brand-50'
+                        : 'bg-white/80 hover:bg-white text-ink/80 hover:text-ink border border-slate-200/80 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`font-mono text-xs font-bold pt-0.5 ${
+                          isActive ? 'text-brand-600' : 'text-slate-400'
+                        }`}
+                      >
+                        {item.num}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3
+                          className={`font-display text-sm font-bold ${
+                            isActive ? 'text-brand-600' : 'text-ink'
                           }`}
                         >
-                          {item.num}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <h3
-                            className={`font-display text-sm font-bold ${
-                              isActive ? 'text-brand-600' : 'text-ink'
-                            }`}
-                          >
-                            {item.title}
-                          </h3>
-                          <p className="font-sans text-xs mt-0.5 leading-snug text-ink/65">
-                            {item.desc}
-                          </p>
-                        </div>
+                          {item.title}
+                        </h3>
+                        <p className="font-sans text-xs mt-0.5 leading-snug text-ink/65">
+                          {item.desc}
+                        </p>
                       </div>
-                    </button>
+                    </div>
+                  </button>
 
-                    {/* Accordion panel placed directly below active item */}
-                    {isActive && stagePanelElement}
-                  </div>
-                );
-              })}
-            </div>
+                  {/* Accordion panel placed directly below active item */}
+                  {isActive && stagePanelElement}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
