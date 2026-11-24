@@ -1,9 +1,13 @@
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { User, Campus, Membership, FederatedIdentity } from '../models/index.js';
 import { generateToken } from '../middleware/auth.js';
+
+// Pre-computed bcrypt hash for constant-time comparison on failed lookups (mitigates timing attacks)
+const DUMMY_HASH = '$2a$12$e8I5Gy2cW3NlD.Hj.Nvh8eK2E74W2d5UaO5fGeqiK9Lw4lq3aZt/S';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -33,23 +37,57 @@ export async function login(req, res, next) {
     const emailLower = email.toLowerCase();
     const emailDomain = emailLower.split('@')[1];
     if (!emailDomain) {
+      await bcrypt.compare(password, DUMMY_HASH);
       return res.status(401).json({
         success: false,
         error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
       });
     }
 
-    // Multi-tenant resolution: resolve institutional campus via email domain
-    const campus = await Campus.findOne({ domain: emailDomain });
-    if (!campus) {
+    // Multi-tenant resolution: resolve all institutional campuses matching the email domain
+    const campuses = await Campus.find({ domain: emailDomain });
+    if (!campuses || campuses.length === 0) {
+      await bcrypt.compare(password, DUMMY_HASH);
       return res.status(401).json({
         success: false,
         error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
       });
     }
 
-    const user = await User.findOne({ campusId: campus._id, email: emailLower }).populate('campusId');
-    if (!user) {
+    const campusIds = campuses.map((c) => c._id);
+
+    // Look up user accounts matching email across all campuses sharing this domain
+    const matchingUsers = await User.find({
+      campusId: { $in: campusIds },
+      email: emailLower,
+    }).populate('campusId');
+
+    // No matching user found
+    if (matchingUsers.length === 0) {
+      await bcrypt.compare(password, DUMMY_HASH);
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    // Multiple accounts found across campuses sharing the same domain (ambiguous tenant)
+    if (matchingUsers.length > 1) {
+      console.warn(
+        `[Login Multi-Tenant Ambiguity] Multiple user accounts (${matchingUsers.length}) found for domain: ${emailDomain}`
+      );
+      await bcrypt.compare(password, DUMMY_HASH);
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    const user = matchingUsers[0];
+
+    // Reject inactive accounts with the same generic error
+    if (!user.isActive) {
+      await bcrypt.compare(password, DUMMY_HASH);
       return res.status(401).json({
         success: false,
         error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
