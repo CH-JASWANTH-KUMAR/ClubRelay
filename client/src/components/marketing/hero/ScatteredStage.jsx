@@ -1,430 +1,534 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { useGSAP } from '@gsap/react';
-import { UserCheck, CheckCircle2, Sparkles } from 'lucide-react';
+import { UserCheck, CheckCircle2, Check, Sparkles } from 'lucide-react';
 import { GlowingCoreCanvas } from './GlowingCoreCanvas';
+import {
+  STAGE_WIDTH,
+  STAGE_HEIGHT,
+  OUTGOING_NODE,
+  CORE_CENTER,
+  INCOMING_NODE,
+  RIBBON_PATHS,
+  CHIP_SLOTS,
+  BEATS,
+  validateChipLayout,
+} from './heroGeometry';
 
 // Register MotionPathPlugin safely
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(MotionPathPlugin);
 }
 
-const CHIPS_DATA = [
-  { id: 'chat', label: 'Group chat', left: '10%', top: '14%', rot: -7, isAccent: false, ribbonIndex: 1 },
-  { id: 'drive', label: 'Personal Drive', left: '26%', top: '22%', rot: 9, isAccent: false, ribbonIndex: 1 },
-  { id: 'sheet', label: 'Spreadsheet', left: '8%', top: '42%', rot: -11, isAccent: false, ribbonIndex: 2 },
-  { id: 'email', label: 'Old email', left: '28%', top: '50%', rot: 6, isAccent: true, ribbonIndex: 2 }, // Warm Copper accent
-  { id: 'notes', label: 'Notes app', left: '12%', top: '68%', rot: 8, isAccent: false, ribbonIndex: 2 },
-  { id: 'repo', label: 'Repo', left: '25%', top: '78%', rot: -8, isAccent: false, ribbonIndex: 1 },
-];
-
-const BEATS = [
-  {
-    index: 1,
-    title: 'Scattered across six places',
-    sub: 'Loose context across group chats, personal drives, and scattered inboxes.',
-  },
-  {
-    index: 2,
-    title: 'Gathered in one workspace',
-    sub: 'Active tasks, files, and project decisions unified in the ClubRelay core.',
-  },
-  {
-    index: 3,
-    title: 'Handed to the next team',
-    sub: 'Complete 8-section successor dossier transferred with verified role custody.',
-  },
-];
-
-export function ScatteredStage({ paused = false }) {
+export function ScatteredStage({ isPaused = false }) {
   const containerRef = useRef(null);
   const stageRef = useRef(null);
   const chipsRefs = useRef([]);
+  const coreContainerRef = useRef(null);
+  const incomingCircleRef = useRef(null);
   const packetRef = useRef(null);
   const segmentsRef = useRef([]);
+  const masterTimelineRef = useRef(null);
+
   const [activeBeat, setActiveBeat] = useState(0);
   const [coreIntensity, setCoreIntensity] = useState(1.0);
+  const [incomingChecked, setIncomingChecked] = useState(false);
+
+  // Dev-only validation of chip layout clearances
+  useEffect(() => {
+    validateChipLayout();
+  }, []);
 
   useGSAP(
     () => {
-      // Stage dimensions are based on 640x512
-      const chips = chipsRefs.current;
-      const packet = packetRef.current;
-      const segments = segmentsRef.current;
+      const mm = gsap.matchMedia();
 
-      const master = gsap.timeline({
-        repeat: -1,
-        paused,
-      });
+      mm.add(
+        {
+          isDesktop: '(min-width: 768px) and (prefers-reduced-motion: no-preference)',
+          isFallback: '(max-width: 767px), (prefers-reduced-motion: reduce)',
+        },
+        (context) => {
+          const { isDesktop } = context.conditions;
+          if (!isDesktop) return;
 
-      // BEAT 1: SCATTERED (0.0s to 2.5s)
-      master.addLabel('scattered', 0);
-      master.call(() => {
-        setActiveBeat(0);
-        setCoreIntensity(0.9);
-      }, null, 0);
+          const chips = chipsRefs.current;
+          const packet = packetRef.current;
+          const segments = segmentsRef.current;
+          const coreBox = coreContainerRef.current;
+          const incomingCircle = incomingCircleRef.current;
+          const stageEl = stageRef.current;
 
-      // Reset initial positions and subtle drifting
-      chips.forEach((chip, i) => {
-        if (!chip) return;
-        const data = CHIPS_DATA[i];
-        gsap.set(chip, {
-          clearProps: 'transform,opacity,scale',
-          opacity: 0.85,
-          scale: 1,
-          rotation: data.rot,
-        });
+          const stageW = stageEl?.offsetWidth || 600;
+          const stageH = stageEl?.offsetHeight || 375;
 
-        // Gentle idle drift in Beat 1
-        master.to(
-          chip,
-          {
-            x: `+=${Math.sin(i * 1.5) * 8}`,
-            y: `+=${Math.cos(i * 1.2) * 8}`,
-            opacity: 1,
-            duration: 2.4,
-            ease: 'sine.inOut',
-          },
-          0.05
-        );
-      });
-
-      // Ensure packet is hidden initially
-      if (packet) {
-        gsap.set(packet, { opacity: 0, scale: 0, x: 0, y: 0 });
-      }
-
-      // BEAT 2: GATHERED (2.5s to 5.0s)
-      master.addLabel('gathered', 2.5);
-      master.call(() => {
-        setActiveBeat(1);
-        setCoreIntensity(1.6);
-      }, null, 2.5);
-
-      // Chips travel along ribbon paths into the core, straightens, brightens, shrinks
-      chips.forEach((chip, i) => {
-        if (!chip) return;
-        const delay = 2.5 + i * 0.22;
-        const pathId = CHIPS_DATA[i].ribbonIndex === 1 ? '#ribbon-path-1' : '#ribbon-path-2';
-
-        master.to(
-          chip,
-          {
-            opacity: 1,
-            rotation: 0,
-            scale: 0.85,
-            duration: 0.4,
-            ease: 'power1.out',
-          },
-          delay
-        );
-
-        // MotionPath toward center (320, 256)
-        master.to(
-          chip,
-          {
-            motionPath: {
-              path: pathId,
-              align: pathId,
-              alignOrigin: [0.5, 0.5],
-              start: 0.15 + i * 0.08,
-              end: 0.5, // Center intersection
-              autoRotate: false,
+          const tl = gsap.timeline({
+            repeat: -1,
+            paused: isPaused,
+            onUpdate: function () {
+              const time = this.time() % 8.0;
+              const newBeat = time >= 5.2 ? 2 : time >= 2.4 ? 1 : 0;
+              setActiveBeat(newBeat);
+              setIncomingChecked(time >= 6.75 && time < 7.95);
             },
-            duration: 1.3,
-            ease: 'power2.in',
-          },
-          delay
-        );
-
-        // Shrink and disappear into core
-        master.to(
-          chip,
-          {
-            scale: 0,
-            opacity: 0,
-            duration: 0.35,
-            ease: 'power3.in',
-            onStart: () => setCoreIntensity(1.8),
-            onComplete: () => setCoreIntensity(1.3),
-          },
-          delay + 1.1
-        );
-      });
-
-      // BEAT 3: HANDED OVER (5.0s to 8.0s)
-      master.addLabel('handedOver', 5.0);
-      master.call(() => {
-        setActiveBeat(2);
-        setCoreIntensity(1.1);
-      }, null, 5.0);
-
-      if (packet) {
-        // Handover packet emerges from core at (320, 256)
-        master.set(packet, { opacity: 0, scale: 0.2, x: 320, y: 256 }, 5.0);
-        master.to(
-          packet,
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 0.5,
-            ease: 'back.out(1.7)',
-          },
-          5.05
-        );
-
-        // Travels in a straight line to Incoming Lead node (~580, 256)
-        master.to(
-          packet,
-          {
-            x: 580,
-            y: 256,
-            duration: 1.6,
-            ease: 'power2.inOut',
-          },
-          5.4
-        );
-
-        // Segments illuminate one by one on arrival in Royal Blue
-        segments.forEach((seg, idx) => {
-          if (!seg) return;
-          master.to(
-            seg,
-            {
-              stroke: '#2563EB',
-              strokeWidth: 4,
-              duration: 0.12,
-              ease: 'power1.out',
-            },
-            6.7 + idx * 0.08
-          );
-        });
-
-        // Fade packet out before loop reset
-        master.to(
-          packet,
-          {
-            opacity: 0,
-            scale: 0.8,
-            duration: 0.4,
-            ease: 'power2.in',
-          },
-          7.6
-        );
-
-        // Reset segments color
-        master.call(() => {
-          segments.forEach((seg) => {
-            if (seg) gsap.set(seg, { stroke: 'rgba(37,99,235,0.3)', strokeWidth: 3 });
           });
-        }, null, 7.95);
-      }
+          masterTimelineRef.current = tl;
+          if (typeof window !== 'undefined') {
+            window.__heroTimeline = tl;
+          }
 
-      return () => {
-        master.kill();
-      };
+          // BEAT 1: SCATTERED (0.0s to 2.4s)
+          tl.addLabel('scattered', 0);
+
+          // Reset initial chip positions at their predefined slots
+          chips.forEach((chip, i) => {
+            if (!chip) return;
+            const slot = CHIP_SLOTS[i];
+            tl.set(
+              chip,
+              {
+                x: 0,
+                y: 0,
+                xPercent: -50,
+                yPercent: -50,
+                scale: 1,
+                opacity: 0.95,
+                rotation: slot.rot,
+              },
+              0
+            );
+
+            // Gentle idle drift in Beat 1 (within +/- 3px)
+            tl.to(
+              chip,
+              {
+                x: Math.sin(i * 1.5) * 4,
+                y: Math.cos(i * 1.2) * 3,
+                duration: 2.3,
+                ease: 'sine.inOut',
+              },
+              0.05
+            );
+          });
+
+          // Reset packet
+          if (packet) {
+            tl.set(packet, { opacity: 0, scale: 0, x: CORE_CENTER.x, y: CORE_CENTER.y }, 0);
+          }
+
+          // BEAT 2: GATHERED (2.4s to 5.2s, exactly 2.8s duration)
+          // Choreographed queue: chips travel one at a time along Ribbon A or B with 0.4s stagger.
+          // At most 2 chips in flight at once.
+          tl.addLabel('gathered', 2.4);
+
+          const TRANSIT_DURATION = 0.75;
+          const STAGGER = 0.4;
+
+          chips.forEach((chip, i) => {
+            if (!chip) return;
+            const slot = CHIP_SLOTS[i];
+            const startTime = 2.4 + i * STAGGER;
+            const arrivalTime = startTime + TRANSIT_DURATION;
+
+            // Target delta to core center (50%, 50%)
+            const dx = (0.50 - slot.xPct / 100) * stageW;
+            const dy = (0.50 - slot.yPct / 100) * stageH;
+
+            // Intermediate arch coordinate along Ribbon A or B
+            const archYPct = slot.ribbon === 'A' ? 22.5 : 77.5;
+            const archY = ((archYPct - slot.yPct) / 100) * stageH;
+            const archX = dx * 0.5;
+
+            // Chip moves along smooth relative path to core center
+            tl.to(
+              chip,
+              {
+                motionPath: {
+                  path: [
+                    { x: 0, y: 0 },
+                    { x: archX, y: archY },
+                    { x: dx, y: dy },
+                  ],
+                  curviness: 1.2,
+                  autoRotate: false,
+                },
+                rotation: 0,
+                duration: TRANSIT_DURATION,
+                ease: 'power2.in',
+              },
+              startTime
+            );
+
+            // As it reaches core center, scale down to 0.25 and fade out
+            tl.to(
+              chip,
+              {
+                scale: 0.25,
+                opacity: 0,
+                duration: 0.2,
+                ease: 'power3.in',
+              },
+              arrivalTime - 0.2
+            );
+
+            // Core pulse trigger on each chip arrival (scale 1.06, glow up, then back)
+            if (coreBox) {
+              tl.to(
+                coreBox,
+                {
+                  scale: 1.06,
+                  duration: 0.1,
+                  ease: 'power1.out',
+                  onStart: () => setCoreIntensity(1.6),
+                },
+                arrivalTime - 0.05
+              );
+              tl.to(
+                coreBox,
+                {
+                  scale: 1.0,
+                  duration: 0.15,
+                  ease: 'power1.inOut',
+                  onComplete: () => setCoreIntensity(1.2),
+                },
+                arrivalTime + 0.05
+              );
+            }
+          });
+
+          // BEAT 3: HANDED OVER (5.2s to 8.0s)
+          tl.addLabel('handedOver', 5.2);
+
+          if (packet) {
+            // Handover packet (40px) emerges from the core (320, 200) inside SVG
+            tl.set(packet, { opacity: 0, scale: 0.2, x: CORE_CENTER.x, y: CORE_CENTER.y }, 5.2);
+            tl.to(
+              packet,
+              {
+                opacity: 1,
+                scale: 1,
+                duration: 0.35,
+                ease: 'back.out(1.5)',
+              },
+              5.25
+            );
+
+            // Travels along main axis y=200 to Incoming node center (568, 200)
+            tl.to(
+              packet,
+              {
+                x: INCOMING_NODE.x,
+                y: INCOMING_NODE.y,
+                duration: 1.2,
+                ease: 'power2.inOut',
+              },
+              5.55
+            );
+
+            // Arrives exactly at Incoming node center (568, 200) at 6.75s
+            // Incoming node ring pulses once
+            if (incomingCircle) {
+              tl.to(
+                incomingCircle,
+                {
+                  scale: 1.12,
+                  boxShadow: '0 0 25px rgba(37, 99, 235, 0.35)',
+                  duration: 0.15,
+                  ease: 'power1.out',
+                },
+                6.75
+              );
+              tl.to(
+                incomingCircle,
+                {
+                  scale: 1.0,
+                  boxShadow: '0 0 15px rgba(37, 99, 235, 0.15)',
+                  duration: 0.2,
+                  ease: 'power1.inOut',
+                },
+                6.9
+              );
+            }
+
+            // 8 segments illuminate in sequence
+            segments.forEach((seg, idx) => {
+              if (!seg) return;
+              tl.to(
+                seg,
+                {
+                  stroke: '#2563EB',
+                  strokeWidth: 3.5,
+                  duration: 0.08,
+                  ease: 'power1.out',
+                },
+                6.75 + idx * 0.05
+              );
+            });
+
+            // Fade packet out before loop reset
+            tl.to(
+              packet,
+              {
+                opacity: 0,
+                scale: 0.75,
+                duration: 0.35,
+                ease: 'power2.in',
+              },
+              7.55
+            );
+
+            // Reset segments before restart
+            tl.call(() => {
+              segments.forEach((seg) => {
+                if (seg) gsap.set(seg, { stroke: 'rgba(37,99,235,0.25)', strokeWidth: 2.5 });
+              });
+            }, null, 7.95);
+          }
+        }
+      );
+
+      return () => mm.revert();
     },
-    { scope: containerRef, dependencies: [paused] }
+    { scope: containerRef, dependencies: [] }
   );
+
+  // Sync timeline paused state
+  useEffect(() => {
+    if (!masterTimelineRef.current) return;
+    if (isPaused) {
+      masterTimelineRef.current.pause();
+    } else {
+      masterTimelineRef.current.play();
+    }
+  }, [isPaused]);
 
   const currentBeatInfo = BEATS[activeBeat] || BEATS[0];
 
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center select-none">
-      {/* Fixed-aspect Stage: 5/4 aspect ratio, max-width 640px, 24px internal padding */}
+      {/* Fixed-aspect Stage: viewBox 640 x 400 (aspect 16/10), max-width 600px */}
       <div
         ref={stageRef}
-        className="relative w-full max-w-[640px] aspect-[5/4] p-6 overflow-visible flex items-center justify-center"
+        className="relative w-full max-w-[600px] aspect-[640/400] overflow-visible flex items-center justify-center"
+        aria-label="Interactive Handover Engine Stage"
       >
-        {/* Background Soft Radial Glow behind the Stage */}
+        {/* Soft radial ambient glow */}
         <div className="absolute inset-0 bg-radial from-brand-500/10 via-mint-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
-        {/* SVG Layer: 640x512 ViewBox containing the two thin ribbon paths */}
+        {/* SVG Coordinate Layer: viewBox 0 0 640 400 */}
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 640 512"
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+          viewBox={`0 0 ${STAGE_WIDTH} ${STAGE_HEIGHT}`}
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Soft Glow Blur Filter */}
+            {/* Soft Blur Glow Filter */}
             <filter id="ribbonGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feGaussianBlur stdDeviation="3.0" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
 
-            {/* Ribbon 1 Gradient: Brand Blue to Mint to Light Blue */}
-            <linearGradient id="ribbonGrad1" x1="60" y1="140" x2="580" y2="372" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.85" />
-              <stop offset="50%" stopColor="#00D2B4" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#60A5FA" stopOpacity="0.85" />
+            {/* Ribbon A Gradient: Mint to Royal Blue to Warm Paper */}
+            <linearGradient id="ribbonGradA" x1="100" y1="90" x2="540" y2="310" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#00D2B4" stopOpacity="0.85" />
+              <stop offset="50%" stopColor="#2563EB" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#94A3B8" stopOpacity="0.75" />
             </linearGradient>
 
-            {/* Ribbon 2 Gradient: Mint to Brand Blue */}
-            <linearGradient id="ribbonGrad2" x1="60" y1="372" x2="580" y2="140" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#00D2B4" stopOpacity="0.85" />
-              <stop offset="50%" stopColor="#3B82F6" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#1D4ED8" stopOpacity="0.85" />
+            {/* Ribbon B Gradient: Warm Paper to Royal Blue to Mint */}
+            <linearGradient id="ribbonGradB" x1="100" y1="310" x2="540" y2="90" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#94A3B8" stopOpacity="0.75" />
+              <stop offset="50%" stopColor="#2563EB" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#00D2B4" stopOpacity="0.85" />
             </linearGradient>
           </defs>
 
-          {/* Ribbon Path 1: Smooth S-curve crossing at center (320, 256) */}
+          {/* Ribbon Path A: Starts at Outgoing edge (100, 200), ends at Incoming edge (540, 200) */}
           <path
-            id="ribbon-path-1"
-            d="M 60 140 C 160 140, 230 256, 320 256 C 410 256, 480 372, 580 372"
-            stroke="url(#ribbonGrad1)"
-            strokeWidth="2.5"
+            id="ribbon-path-a"
+            d={RIBBON_PATHS.A}
+            stroke="url(#ribbonGradA)"
+            strokeWidth="2"
             strokeLinecap="round"
             filter="url(#ribbonGlow)"
           />
 
-          {/* Ribbon Path 2: Interlocking smooth S-curve crossing at center (320, 256) */}
+          {/* Ribbon Path B: Starts at Outgoing edge (100, 200), ends at Incoming edge (540, 200) */}
           <path
-            id="ribbon-path-2"
-            d="M 60 372 C 160 372, 230 256, 320 256 C 410 256, 480 140, 580 140"
-            stroke="url(#ribbonGrad2)"
-            strokeWidth="2.5"
+            id="ribbon-path-b"
+            d={RIBBON_PATHS.B}
+            stroke="url(#ribbonGradB)"
+            strokeWidth="2"
             strokeLinecap="round"
             filter="url(#ribbonGlow)"
           />
 
-          {/* Straight Handover Transfer Track (Beat 3) */}
+          {/* Straight Handover Transfer Axis (Beat 3) */}
           <line
-            x1="320"
-            y1="256"
-            x2="580"
-            y2="256"
+            x1={CORE_CENTER.x}
+            y1={CORE_CENTER.y}
+            x2={INCOMING_NODE.x}
+            y2={INCOMING_NODE.y}
             stroke="rgba(37,99,235,0.25)"
             strokeWidth="1.5"
             strokeDasharray="4 4"
           />
-        </svg>
 
-        {/* Left Node: Outgoing Lead at about (60, 256) */}
-        <div
-          className="absolute z-20 flex flex-col items-center"
-          style={{ left: '9.3%', top: '50%', transform: 'translate(-50%, -50%)' }}
-        >
-          <div className="w-11 h-11 rounded-full bg-white/95 border border-slate-200/90 flex items-center justify-center text-slate-700 shadow-md">
-            <UserCheck className="w-5 h-5 text-slate-600" />
-          </div>
-          <span className="font-mono text-[11px] uppercase tracking-wider text-slate-700 mt-2 font-semibold">
-            Outgoing Lead
-          </span>
-          <span className="font-mono text-[9px] text-slate-400">Term 2025-26</span>
-        </div>
+          {/* Handover Packet (Beat 3): 40px diameter ring inside SVG coordinate system */}
+          <g id="handover-packet" ref={packetRef} opacity="0">
+            {/* Center disc 40px diameter -> radius 20 */}
+            <circle cx="0" cy="0" r="10" fill="#FFFFFF" stroke="#2563EB" strokeWidth="1.5" />
+            <circle cx="0" cy="0" r="3.5" fill="#2563EB" />
 
-        {/* Right Node: Incoming Lead at about (580, 256) */}
-        <div
-          className="absolute z-20 flex flex-col items-center"
-          style={{ left: '90.6%', top: '50%', transform: 'translate(-50%, -50%)' }}
-        >
-          <div className="w-11 h-11 rounded-full bg-white/95 border border-brand-300 flex items-center justify-center text-brand-600 shadow-[0_0_20px_rgba(37,99,235,0.18)]">
-            <CheckCircle2 className="w-5 h-5 text-brand-600" />
-          </div>
-          <span className="font-mono text-[11px] uppercase tracking-wider text-brand-600 mt-2 font-semibold">
-            Incoming Lead
-          </span>
-          <span className="font-mono text-[9px] text-brand-500/70">Term 2026-27</span>
-        </div>
-
-        {/* Centered at (320, 256): ONE small R3F Canvas for the Glowing Icosahedron Core only */}
-        <div
-          className="absolute z-20 pointer-events-none"
-          style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-        >
-          <GlowingCoreCanvas pulseIntensity={coreIntensity} />
-        </div>
-
-        {/* 6 DOM Knowledge Chips (Crisp, zero-clipping) */}
-        {CHIPS_DATA.map((chip, idx) => (
-          <div
-            key={chip.id}
-            ref={(el) => (chipsRefs.current[idx] = el)}
-            className={`absolute z-30 inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-sans font-medium select-none transition-shadow ${
-              chip.isAccent
-                ? 'bg-amber-50/95 border border-amber-300 text-amber-900 shadow-[0_4px_12px_rgba(217,119,6,0.12)]'
-                : 'bg-white/95 backdrop-blur-md border border-slate-200/90 text-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
-            }`}
-            style={{
-              left: chip.left,
-              top: chip.top,
-              transform: `rotate(${chip.rot}deg)`,
-            }}
-          >
-            <span
-              className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                chip.isAccent
-                  ? 'bg-amber-500'
-                  : chip.id === 'chat'
-                  ? 'bg-blue-600'
-                  : chip.id === 'sheet'
-                  ? 'bg-emerald-500'
-                  : chip.id === 'repo'
-                  ? 'bg-cyan-500'
-                  : chip.id === 'notes'
-                  ? 'bg-indigo-500'
-                  : 'bg-slate-500'
-              }`}
-            />
-            <span className="whitespace-nowrap">{chip.label}</span>
-          </div>
-        ))}
-
-        {/* Handover Packet (Beat 3): 8-segment ring emerging from core and traveling to Incoming Lead */}
-        <div
-          ref={packetRef}
-          className="absolute z-30 pointer-events-none opacity-0"
-          style={{
-            left: 0,
-            top: 0,
-            width: '56px',
-            height: '56px',
-            marginLeft: '-28px',
-            marginTop: '-28px',
-          }}
-        >
-          <svg className="w-full h-full" viewBox="0 0 56 56">
-            {/* Center disc */}
-            <circle cx="28" cy="28" r="14" fill="#FFFFFF" stroke="#2563EB" strokeWidth="2" />
-            <circle cx="28" cy="28" r="5" fill="#2563EB" />
-
-            {/* 8-segment ring using SVG circle with stroke-dasharray */}
+            {/* 8-segment ring -> radius 16 */}
             {Array.from({ length: 8 }).map((_, i) => {
-              const circumference = 2 * Math.PI * 22; // ~138.2
-              const segLength = (circumference - 8 * 4) / 8; // length of each segment
-              const dashoffset = -i * (segLength + 4);
+              const circumference = 2 * Math.PI * 16;
+              const segLength = (circumference - 8 * 3) / 8;
+              const dashoffset = -i * (segLength + 3);
               return (
                 <circle
                   key={i}
                   ref={(el) => (segmentsRef.current[i] = el)}
-                  cx="28"
-                  cy="28"
-                  r="22"
+                  cx="0"
+                  cy="0"
+                  r="16"
                   fill="none"
-                  stroke="rgba(37,99,235,0.3)"
-                  strokeWidth="3"
+                  stroke="rgba(37,99,235,0.25)"
+                  strokeWidth="2.5"
                   strokeDasharray={`${segLength} ${circumference - segLength}`}
                   strokeDashoffset={dashoffset}
                   strokeLinecap="round"
                 />
               );
             })}
-          </svg>
+          </g>
+        </svg>
+
+        {/* Outgoing Node: Center at (72, 200) on 640x400 stage */}
+        <div
+          className="absolute z-20 pointer-events-none select-none"
+          style={{
+            left: `${(OUTGOING_NODE.x / STAGE_WIDTH) * 100}%`,
+            top: `${(OUTGOING_NODE.y / STAGE_HEIGHT) * 100}%`,
+          }}
+        >
+          {/* 56px circle centered exactly on (72, 200) */}
+          <div
+            className="w-14 h-14 rounded-full bg-white/95 border border-slate-200/90 flex items-center justify-center text-slate-700 shadow-md"
+            style={{ transform: 'translate(-50%, -50%)' }}
+          >
+            <UserCheck className="w-5 h-5 text-slate-600" />
+          </div>
+
+          {/* Grouped label block fixed width 120px below node (never wraps) */}
+          <div
+            className="w-[120px] text-center flex flex-col items-center"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '34px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-700 font-semibold whitespace-nowrap">
+              {OUTGOING_NODE.label}
+            </span>
+            <span className="font-mono text-[9px] text-slate-400 whitespace-nowrap">
+              {OUTGOING_NODE.sub}
+            </span>
+          </div>
         </div>
+
+        {/* Incoming Node: Center at (568, 200) on 640x400 stage */}
+        <div
+          className="absolute z-20 pointer-events-none select-none"
+          style={{
+            left: `${(INCOMING_NODE.x / STAGE_WIDTH) * 100}%`,
+            top: `${(INCOMING_NODE.y / STAGE_HEIGHT) * 100}%`,
+          }}
+        >
+          {/* 56px circle centered exactly on (568, 200) */}
+          <div
+            ref={incomingCircleRef}
+            className="w-14 h-14 rounded-full bg-white/95 border border-brand-300 flex items-center justify-center text-brand-600 shadow-[0_0_15px_rgba(37,99,235,0.15)] transition-colors"
+            style={{ transform: 'translate(-50%, -50%)' }}
+          >
+            {incomingChecked ? (
+              <Check className="w-5 h-5 text-brand-600" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-brand-600" />
+            )}
+          </div>
+
+          {/* Grouped label block fixed width 120px below node (never wraps) */}
+          <div
+            className="w-[120px] text-center flex flex-col items-center"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '34px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <span className="font-mono text-[11px] uppercase tracking-wider text-brand-600 font-semibold whitespace-nowrap">
+              {INCOMING_NODE.label}
+            </span>
+            <span className="font-mono text-[9px] text-brand-500/70 whitespace-nowrap">
+              {INCOMING_NODE.sub}
+            </span>
+          </div>
+        </div>
+
+        {/* Glowing Core: Centered at (320, 200) on 640x400 stage */}
+        <div
+          ref={coreContainerRef}
+          className="absolute z-20 pointer-events-none"
+          style={{
+            left: `${(CORE_CENTER.x / STAGE_WIDTH) * 100}%`,
+            top: `${(CORE_CENTER.y / STAGE_HEIGHT) * 100}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <GlowingCoreCanvas pulseIntensity={coreIntensity} isPaused={isPaused} />
+        </div>
+
+        {/* 6 DOM Knowledge Chips positioned at predefined slots */}
+        {CHIP_SLOTS.map((slot, idx) => (
+          <div
+            key={slot.id}
+            ref={(el) => (chipsRefs.current[idx] = el)}
+            className={`absolute z-30 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[14px] font-sans font-medium select-none will-change-transform ${
+              slot.isAccent
+                ? 'bg-amber-50/95 border border-amber-300 text-amber-900 shadow-[0_4px_12px_rgba(217,119,6,0.12)]'
+                : 'bg-white/95 backdrop-blur-md border border-slate-200/90 text-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+            }`}
+            style={{
+              left: `${slot.xPct}%`,
+              top: `${slot.yPct}%`,
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: slot.dotColor }}
+            />
+            <span className="whitespace-nowrap">{slot.label}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Caption Block below the stage (24px gap / mt-6, not overlapping) */}
-      <div className="w-full max-w-[540px] mt-6 z-20">
+      {/* Caption Card below the stage: exactly max-w-[600px], 20px gap (mt-5) */}
+      <div className="w-full max-w-[600px] mt-5 z-20">
         <div className="p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-md text-slate-900 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-200/80 flex items-center justify-center flex-shrink-0 text-brand-600">
               <Sparkles className="w-4 h-4" />
             </div>
-            <div>
+            {/* Fixed min-height so nothing shifts between beats */}
+            <div className="min-h-[44px] flex flex-col justify-center">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200 font-bold">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200 font-bold">
                   BEAT {currentBeatInfo.index} / 3
                 </span>
                 <span className="font-display font-bold text-xs text-slate-900">

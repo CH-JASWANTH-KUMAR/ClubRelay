@@ -1,12 +1,18 @@
 import React from 'react';
 import { UserCheck, CheckCircle2 } from 'lucide-react';
+import {
+  STAGE_WIDTH,
+  STAGE_HEIGHT,
+  OUTGOING_NODE,
+  CORE_CENTER,
+  INCOMING_NODE,
+  RIBBON_PATHS,
+} from './heroGeometry';
 
 /**
- * HeroStageFallback: Static final-state stage rendered when prefers-reduced-motion is on,
+ * HeroStageFallback: Static storyboard rendered when prefers-reduced-motion is on,
  * mobile screen is under 768px, or WebGL is unavailable.
- * Shows chips gathered, packet at Incoming Lead, and a clean 3-step caption list.
- * Styled cleanly for the Clean Canvas and Royal Blue brand palette.
- * No R3F in this component.
+ * Single coordinate system matching heroGeometry.js (viewBox 640 x 400).
  */
 export function HeroStageFallback() {
   return (
@@ -14,37 +20,37 @@ export function HeroStageFallback() {
       className="w-full flex flex-col items-center select-none"
       aria-label="Handover system: Scattered to Handed Over visual storyboard"
     >
-      {/* Fixed-aspect Stage: 5/4, max-width 640px, 24px padding */}
-      <div className="relative w-full max-w-[640px] aspect-[5/4] p-6 overflow-visible flex items-center justify-center">
+      {/* Fixed-aspect Stage: 640/400, max-width 600px */}
+      <div className="relative w-full max-w-[600px] aspect-[640/400] overflow-visible flex items-center justify-center">
         {/* Subtle radial glow */}
         <div className="absolute inset-0 bg-radial from-brand-500/10 via-mint-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
-        {/* SVG Ribbon Paths */}
+        {/* SVG Ribbon Paths matching heroGeometry */}
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 640 512"
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+          viewBox={`0 0 ${STAGE_WIDTH} ${STAGE_HEIGHT}`}
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M 60 140 C 160 140, 230 256, 320 256 C 410 256, 480 372, 580 372"
-            stroke="#2563EB"
-            strokeWidth="2.5"
-            strokeOpacity="0.75"
+            d={RIBBON_PATHS.A}
+            stroke="#00D2B4"
+            strokeWidth="2"
+            strokeOpacity="0.8"
             strokeLinecap="round"
           />
           <path
-            d="M 60 372 C 160 372, 230 256, 320 256 C 410 256, 480 140, 580 140"
-            stroke="#00D2B4"
-            strokeWidth="2.5"
-            strokeOpacity="0.75"
+            d={RIBBON_PATHS.B}
+            stroke="#2563EB"
+            strokeWidth="2"
+            strokeOpacity="0.8"
             strokeLinecap="round"
           />
           <line
-            x1="320"
-            y1="256"
-            x2="580"
-            y2="256"
+            x1={CORE_CENTER.x}
+            y1={CORE_CENTER.y}
+            x2={INCOMING_NODE.x}
+            y2={INCOMING_NODE.y}
             stroke="#2563EB"
             strokeWidth="1.5"
             strokeDasharray="4 4"
@@ -54,55 +60,99 @@ export function HeroStageFallback() {
 
         {/* Outgoing Lead Node */}
         <div
-          className="absolute z-20 flex flex-col items-center"
-          style={{ left: '9.3%', top: '50%', transform: 'translate(-50%, -50%)' }}
+          className="absolute z-20 pointer-events-none"
+          style={{
+            left: `${(OUTGOING_NODE.x / STAGE_WIDTH) * 100}%`,
+            top: `${(OUTGOING_NODE.y / STAGE_HEIGHT) * 100}%`,
+          }}
         >
-          <div className="w-11 h-11 rounded-full bg-white/95 border border-slate-200/90 flex items-center justify-center text-slate-700 shadow-md">
+          <div
+            className="w-14 h-14 rounded-full bg-white/95 border border-slate-200/90 flex items-center justify-center text-slate-700 shadow-md"
+            style={{ transform: 'translate(-50%, -50%)' }}
+          >
             <UserCheck className="w-5 h-5 text-slate-600" />
           </div>
-          <span className="font-mono text-[11px] uppercase tracking-wider text-slate-700 mt-2 font-semibold">
-            Outgoing Lead
-          </span>
-          <span className="font-mono text-[9px] text-slate-400">Term 2025-26</span>
+          <div
+            className="w-[120px] text-center flex flex-col items-center"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '34px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-700 font-semibold whitespace-nowrap">
+              {OUTGOING_NODE.label}
+            </span>
+            <span className="font-mono text-[9px] text-slate-400 whitespace-nowrap">
+              {OUTGOING_NODE.sub}
+            </span>
+          </div>
         </div>
 
         {/* Incoming Lead Node */}
         <div
-          className="absolute z-20 flex flex-col items-center"
-          style={{ left: '90.6%', top: '50%', transform: 'translate(-50%, -50%)' }}
+          className="absolute z-20 pointer-events-none"
+          style={{
+            left: `${(INCOMING_NODE.x / STAGE_WIDTH) * 100}%`,
+            top: `${(INCOMING_NODE.y / STAGE_HEIGHT) * 100}%`,
+          }}
         >
-          <div className="w-11 h-11 rounded-full bg-white/95 border border-brand-300 flex items-center justify-center text-brand-600 shadow-[0_0_20px_rgba(37,99,235,0.18)]">
+          <div
+            className="w-14 h-14 rounded-full bg-white/95 border border-brand-300 flex items-center justify-center text-brand-600 shadow-[0_0_15px_rgba(37,99,235,0.18)]"
+            style={{ transform: 'translate(-50%, -50%)' }}
+          >
             <CheckCircle2 className="w-5 h-5 text-brand-600" />
           </div>
-          <span className="font-mono text-[11px] uppercase tracking-wider text-brand-600 mt-2 font-semibold">
-            Incoming Lead
-          </span>
-          <span className="font-mono text-[9px] text-brand-500/70">Term 2026-27</span>
+          <div
+            className="w-[120px] text-center flex flex-col items-center"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '34px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <span className="font-mono text-[11px] uppercase tracking-wider text-brand-600 font-semibold whitespace-nowrap">
+              {INCOMING_NODE.label}
+            </span>
+            <span className="font-mono text-[9px] text-brand-500/70 whitespace-nowrap">
+              {INCOMING_NODE.sub}
+            </span>
+          </div>
         </div>
 
         {/* Static Central Core Disc */}
         <div
           className="absolute z-20 flex items-center justify-center pointer-events-none"
-          style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+          style={{
+            left: `${(CORE_CENTER.x / STAGE_WIDTH) * 100}%`,
+            top: `${(CORE_CENTER.y / STAGE_HEIGHT) * 100}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
         >
-          <div className="w-16 h-16 rounded-full bg-white/90 border-2 border-brand-500 flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.25)]">
-            <div className="w-8 h-8 rounded-full bg-brand-500/20 border border-brand-500" />
+          <div className="w-14 h-14 rounded-full bg-white/95 border-2 border-brand-500 flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.25)]">
+            <div className="w-6 h-6 rounded-full bg-brand-500/20 border border-brand-500" />
           </div>
         </div>
 
-        {/* Handover Packet at Arrival */}
+        {/* Handover Packet at Incoming Node center */}
         <div
           className="absolute z-30 pointer-events-none"
-          style={{ left: '88%', top: '50%', transform: 'translate(-50%, -50%)' }}
+          style={{
+            left: `${(INCOMING_NODE.x / STAGE_WIDTH) * 100}%`,
+            top: `${(INCOMING_NODE.y / STAGE_HEIGHT) * 100}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
         >
-          <div className="w-12 h-12 rounded-full border-2 border-brand-600 bg-white flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.3)]">
-            <span className="font-mono text-[10px] text-brand-600 font-bold">8/8</span>
+          <div className="w-10 h-10 rounded-full border-2 border-brand-600 bg-white flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.3)]">
+            <span className="font-mono text-[9px] text-brand-600 font-bold">8/8</span>
           </div>
         </div>
       </div>
 
       {/* Static 3-step storyboard list below stage */}
-      <div className="w-full max-w-[540px] mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="w-full max-w-[600px] mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-xs">
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2 h-2 rounded-full bg-slate-400" />

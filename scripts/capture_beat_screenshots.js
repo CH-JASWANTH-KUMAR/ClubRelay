@@ -101,53 +101,57 @@ async function run() {
       console.log(`Saved screenshot: ${filename} (${buffer.length} bytes)`);
     };
 
+    const pauseAtTime = async (timeSec) => {
+      await pageCdp.send('Runtime.evaluate', {
+        expression: `
+          if (window.__heroTimeline) {
+            window.__heroTimeline.seek(${timeSec}, false);
+            window.__heroTimeline.pause();
+          }
+        `,
+      });
+      await new Promise((r) => setTimeout(r, 400));
+    };
+
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     console.log('Navigating to http://localhost:5173...');
     await pageCdp.send('Page.navigate', { url: 'http://localhost:5173' });
     await sleep(2500); // Initial mount
 
-    // 1. Desktop Beat 1: Scattered (1440x900)
-    console.log('Capturing Beat 1 (Scattered)...');
+    // Viewport 1440x900 (Desktop)
     await setViewport(1440, 900);
-    await sleep(1000);
-    await capture('01-hero-beat1-scattered.png');
+    await sleep(500);
 
-    // 2. Desktop Beat 2: Gathered (wait ~2.5s for timeline to transition to Gathered)
-    console.log('Waiting for Beat 2 (Gathered)...');
-    await sleep(2500);
-    await capture('02-hero-beat2-gathered.png');
+    const timestamps = [0.5, 3.5, 4.5, 7.0];
 
-    // 3. Desktop Beat 3: Handed Over (wait ~2.6s for timeline to transition to Handed Over)
-    console.log('Waiting for Beat 3 (Handed Over)...');
-    await sleep(2600);
-    await capture('03-hero-beat3-handed-over.png');
+    // Capture Desktop at 0.5s, 3.5s, 4.5s, 7.0s
+    for (const t of timestamps) {
+      console.log(`Capturing Desktop at ${t}s...`);
+      await pauseAtTime(t);
+      await capture(`hero-1440-${t}s.png`);
+    }
 
-    // 4. Mobile Hero (390x844)
-    console.log('Capturing Mobile Hero...');
+    // Viewport 390x844 (Mobile)
     await setViewport(390, 844, true);
-    await sleep(800);
-    await capture('04-hero-mobile-390.png');
+    await sleep(600);
 
-    // 5. Reduced-Motion Fallback (emulate prefers-reduced-motion)
-    console.log('Emulating prefers-reduced-motion: reduce...');
-    await pageCdp.send('Emulation.setEmulatedMedia', {
-      features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
-    });
-    await setViewport(1440, 900);
-    await sleep(1000);
-    await capture('05-hero-reduced-motion-fallback.png');
+    // Capture Mobile at 0.5s, 3.5s, 4.5s, 7.0s
+    for (const t of timestamps) {
+      console.log(`Capturing Mobile at ${t}s...`);
+      await pauseAtTime(t);
+      await capture(`hero-390-${t}s.png`);
+    }
 
     pageCdp.close();
     cdp.close();
-    console.log('All hero beat screenshots captured successfully!');
+    console.log('All hero screenshots captured successfully!');
   } finally {
     chrome.kill();
   }
 }
 
 run().catch((err) => {
-  console.error('Error during beat screenshot capture:', err);
+  console.error('Error during screenshot capture:', err);
   process.exit(1);
 });
-

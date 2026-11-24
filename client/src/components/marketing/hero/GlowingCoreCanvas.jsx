@@ -2,29 +2,30 @@ import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 
 /**
- * CoreMesh: Small glowing icosahedron core.
+ * CoreMesh: Low-poly glowing icosahedron core (detail 1).
  * Royal Blue and Cyan emissive solid with a slightly larger wireframe shell,
  * slow rotation, and a soft point light.
  */
-function CoreMesh({ pulseIntensity = 1.0 }) {
+function CoreMesh({ pulseIntensity = 1.0, isPaused = false }) {
   const groupRef = useRef();
   const innerRef = useRef();
 
   useFrame(({ clock }) => {
+    if (isPaused) return;
     const t = clock.getElapsedTime();
     if (groupRef.current) {
       groupRef.current.rotation.y = t * 0.35;
       groupRef.current.rotation.x = Math.sin(t * 0.25) * 0.15;
     }
     if (innerRef.current) {
-      const scale = 1 + Math.sin(t * 2.5) * 0.05 * pulseIntensity;
+      const scale = 1 + Math.sin(t * 2.5) * 0.04 * pulseIntensity;
       innerRef.current.scale.set(scale, scale, scale);
     }
   });
 
   return (
     <group ref={groupRef}>
-      {/* Outer crystalline wireframe shell */}
+      {/* Outer crystalline wireframe shell (low-poly detail 1) */}
       <mesh>
         <icosahedronGeometry args={[0.78, 1]} />
         <meshStandardMaterial
@@ -37,9 +38,9 @@ function CoreMesh({ pulseIntensity = 1.0 }) {
         />
       </mesh>
 
-      {/* Solid inner core in Royal Blue and Mint Glow */}
+      {/* Solid inner core in Royal Blue and Mint Glow (detail 1) */}
       <mesh ref={innerRef}>
-        <icosahedronGeometry args={[0.55, 0]} />
+        <icosahedronGeometry args={[0.55, 1]} />
         <meshStandardMaterial
           color="#2563EB"
           emissive="#00D2B4"
@@ -56,20 +57,21 @@ function CoreMesh({ pulseIntensity = 1.0 }) {
 }
 
 /**
- * GlowingCoreCanvas: ONE small R3F canvas (about 200px square, transparent background)
- * centered at the nexus of the SVG ribbons.
+ * GlowingCoreCanvas: Low-poly R3F canvas (detail 1, dpr [1, 1.5]).
+ * Automatically pauses render loop when isPaused is true.
  */
-export function GlowingCoreCanvas({ className = '', pulseIntensity = 1.0 }) {
+export function GlowingCoreCanvas({ className = '', pulseIntensity = 1.0, isPaused = false }) {
   return (
-    <div className={`w-[200px] h-[200px] pointer-events-none select-none ${className}`}>
+    <div className={`w-[160px] h-[160px] pointer-events-none select-none ${className}`}>
       <Canvas
         camera={{ position: [0, 0, 3.2], fov: 42 }}
         dpr={[1, 1.5]}
+        frameloop={isPaused ? 'never' : 'always'}
         gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
       >
         <ambientLight intensity={0.7} />
         <directionalLight position={[3, 4, 4]} intensity={1.2} color="#FFFFFF" />
-        <CoreMesh pulseIntensity={pulseIntensity} />
+        <CoreMesh pulseIntensity={pulseIntensity} isPaused={isPaused} />
       </Canvas>
     </div>
   );
