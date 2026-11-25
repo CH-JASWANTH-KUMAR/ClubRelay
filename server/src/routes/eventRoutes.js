@@ -9,7 +9,7 @@ import {
   listEventTemplates,
 } from '../controllers/eventController.js';
 import { requireAuth } from '../middleware/auth.js';
-import { requireClubRole } from '../middleware/tenant.js';
+import { requireClubPermission } from '../middleware/tenant.js';
 
 const router = express.Router();
 
@@ -20,12 +20,12 @@ router.get('/event-templates', listEventTemplates);
 // Tenant-isolated club event endpoints
 router.get(
   '/clubs/:clubId/events',
-  requireClubRole('GENERAL_MEMBER', { allowCampusAdmin: true, allowAssignedFaculty: true }),
+  requireClubPermission(['events.view'], { allowCampusAdmin: true, allowAssignedFaculty: true }),
   listClubEvents
 );
 router.post(
   '/clubs/:clubId/events',
-  requireClubRole('CORE_TEAM', { allowCampusAdmin: true }),
+  requireClubPermission(['events.create'], { allowCampusAdmin: true, errorCode: 'INSUFFICIENT_CLUB_ROLE' }),
   createEvent
 );
 

@@ -1,6 +1,19 @@
 import mongoose from 'mongoose';
 import { z } from 'zod';
-import { Club, Membership, User, Event, Handover, AcademicTerm } from '../models/index.js';
+import {
+  Club,
+  Membership,
+  ClubMembership,
+  ClubDepartment,
+  ClubPosition,
+  ClubPositionAssignment,
+  ClubJoinRequest,
+  User,
+  Event,
+  Handover,
+  AcademicTerm,
+} from '../models/index.js';
+import { resolveClubAccess } from '../services/rbacService.js';
 
 const createClubSchema = z.object({
   name: z.string().min(2),
@@ -20,7 +33,10 @@ const addMemberSchema = z.object({
 
 export async function listClubs(req, res, next) {
   try {
-    const filter = { campusId: req.campusId };
+    const filter = {
+      campusId: req.campusId || null,
+      status: { $ne: 'DRAFT' },
+    };
     if (req.query.category) {
       filter.category = req.query.category;
     }
@@ -63,76 +79,114 @@ export async function createClub(req, res, next) {
 
 export async function getClub(req, res, next) {
   try {
-    const club = await Club.findOne({
-      _id: req.params.clubId,
-      campusId: req.campusId,
-    }).populate('facultyCoordinatorId', 'fullName department avatarUrl email');
+    const club = await Club.findById(req.params.clubId)
+      .populate('facultyCoordinatorId', 'fullName department avatarUrl email')
+      .populate('workspaceOwnerId', 'fullName avatarUrl department')
+      .populate('activeTermId', 'name startDate endDate isCurrent');
 
     if (!club) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'CLUB_NOT_FOUND', message: 'Organization not found in this workspace.' },
+      });
+    }
+
+    // Tenant isolation check
+    const clubCampusStr = club.campusId ? club.campusId.toString() : null;
+    const reqCampusStr = req.campusId ? req.campusId.toString() : null;
+    if (clubCampusStr && reqCampusStr && clubCampusStr !== reqCampusStr) {
       return res.status(404).json({
         success: false,
         error: { code: 'CLUB_NOT_FOUND', message: 'Organization not found in this campus workspace.' },
       });
     }
 
-    // Role check: Campus Admin, explicitly assigned Faculty Coordinator, or active Club Member
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
-    const isAssignedFaculty =
-      req.user.campusRole === 'FACULTY_COORDINATOR' &&
-      club.facultyCoordinatorId &&
-      (club.facultyCoordinatorId._id || club.facultyCoordinatorId).toString() === req.user._id.toString();
-
-    let isMember = false;
-    if (!isCampusAdmin && !isAssignedFaculty) {
-      const membership = await Membership.findOne({
-        campusId: req.campusId,
-        clubId: club._id,
-        userId: req.user._id,
-        status: 'ACTIVE',
-      });
-      isMember = !!membership;
-    }
-
-    const isAuthorized = isCampusAdmin || isAssignedFaculty || isMember;
-
-    // Fetch leadership team
-    const leadershipQuery = Membership.find({
-      clubId: club._id,
-      campusId: req.campusId,
-      status: 'ACTIVE',
-      clubRole: { $in: ['PRESIDENT', 'SECRETARY', 'CORE_TEAM'] },
+    const access = await resolveClubAccess(req.user, club, {
+      allowCampusAdmin: true,
+      allowAssignedFaculty: true,
     });
 
-    if (isAuthorized) {
-      leadershipQuery.populate('userId', 'fullName email avatarUrl department');
-    } else {
-      // Do not expose member emails, phone numbers, or private contact details to unrelated campus users
-      leadershipQuery.populate('userId', 'fullName avatarUrl department');
+    if (access.tenantMismatch || (!clubCampusStr && !access.allowed)) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'CLUB_NOT_FOUND', message: 'Organization not found in this workspace.' },
+      });
     }
 
-    const [leadership, memberCount, eventCount, latestHandover] = await Promise.all([
-      leadershipQuery,
-      Membership.countDocuments({ clubId: club._id, status: 'ACTIVE' }),
-      Event.countDocuments({ clubId: club._id }),
-      isAuthorized
-        ? Handover.findOne({ clubId: club._id })
-            .populate('outgoingLeaderId', 'fullName email')
-            .populate('incomingLeaderId', 'fullName email')
-            .sort({ createdAt: -1 })
-        : null,
-    ]);
+    const isAuthorized = access.allowed;
+    const userFields = isAuthorized
+      ? 'fullName email avatarUrl department'
+      : 'fullName avatarUrl department';
 
-    // Sanitize club object if not authorized: strip sensitive contact details
+    // Load custom structure & assignments first; fall back to legacy Membership when unmigrated
+    const [departments, positions, activeAssignments, legacyLeadership, legacyCount, customCount, eventCount, latestHandover, pendingJoinRequestsCount] =
+      await Promise.all([
+        ClubDepartment.find({ clubId: club._id, isActive: true }).sort({ sortOrder: 1 }).lean(),
+        ClubPosition.find({ clubId: club._id, isActive: true }).sort({ sortOrder: 1 }).lean(),
+        ClubPositionAssignment.find({ clubId: club._id, status: 'ACTIVE' })
+          .populate('positionId', 'name isLeadership departmentId parentPositionId sortOrder')
+          .populate('userId', userFields)
+          .populate('academicTermId', 'name isCurrent')
+          .sort({ createdAt: 1 })
+          .lean(),
+        Membership.find({
+          clubId: club._id,
+          status: 'ACTIVE',
+          clubRole: { $in: ['PRESIDENT', 'SECRETARY', 'CORE_TEAM'] },
+        }).populate('userId', userFields),
+        Membership.countDocuments({ clubId: club._id, status: 'ACTIVE' }),
+        ClubMembership.countDocuments({ clubId: club._id, status: 'ACTIVE' }),
+        Event.countDocuments({ clubId: club._id }),
+        isAuthorized
+          ? Handover.findOne({ clubId: club._id })
+              .populate('outgoingLeaderId', 'fullName email')
+              .populate('incomingLeaderId', 'fullName email')
+              .populate('positionId', 'name')
+              .sort({ createdAt: -1 })
+          : null,
+        access.capabilities.has('members.approve_requests')
+          ? ClubJoinRequest.countDocuments({ clubId: club._id, status: 'PENDING' })
+          : 0,
+      ]);
+
+    // Build unified leadership roster using top-level/leadership custom positions when available
+    let leadership = [];
+    const customLeaders = activeAssignments.filter(
+      (a) =>
+        a.userId &&
+        a.positionId &&
+        (a.positionId.isLeadership || !a.positionId.parentPositionId)
+    );
+
+    if (customLeaders.length > 0) {
+      leadership = customLeaders.map((a) => ({
+        _id: a._id,
+        userId: a.userId,
+        positionId: a.positionId._id,
+        title: a.positionId.name,
+        clubRole: a.positionId.name,
+        isLeadership: Boolean(a.positionId.isLeadership),
+        academicTermId: a.academicTermId,
+        status: a.status,
+      }));
+    } else if (legacyLeadership.length > 0) {
+      leadership = legacyLeadership;
+    }
+
     const sanitizedClub = club.toObject();
     if (!isAuthorized && sanitizedClub.facultyCoordinatorId) {
       delete sanitizedClub.facultyCoordinatorId.email;
       delete sanitizedClub.facultyCoordinatorId.phone;
     }
 
+    const memberCount = Math.max(customCount, legacyCount);
+
     const metrics = {
       memberCount,
       eventCount,
-      // Private handover information is strictly reserved for authorized members, assigned faculty, and campus admins
+      positionsCount: positions.length,
+      departmentsCount: departments.length,
+      pendingJoinRequestsCount,
       handoverProgress: isAuthorized && latestHandover ? latestHandover.completionPercentage : null,
       latestHandoverStatus: isAuthorized && latestHandover ? latestHandover.status : null,
     };
@@ -141,9 +195,19 @@ export async function getClub(req, res, next) {
       success: true,
       data: {
         club: sanitizedClub,
+        departments,
+        positions,
         leadership,
+        latestHandover: isAuthorized ? latestHandover : null,
         metrics,
         isAuthorized,
+        userAccess: {
+          capabilities: access.capabilitiesList,
+          positions: access.positions,
+          isWorkspaceOwner: access.isWorkspaceOwner,
+          isCampusAdmin: access.isCampusAdmin,
+          isAssignedFaculty: access.isAssignedFaculty,
+        },
       },
     });
   } catch (err) {
@@ -153,32 +217,117 @@ export async function getClub(req, res, next) {
 
 export async function getMembers(req, res, next) {
   try {
-    const isExecutiveOrAdmin =
+    const canViewSensitive =
       req.user.campusRole === 'CAMPUS_ADMIN' ||
+      req.userCapabilities?.has('members.view_sensitive') ||
       ['PRESIDENT', 'SECRETARY'].includes(req.userClubRole);
 
-    const selectFields = isExecutiveOrAdmin
+    const selectFields = canViewSensitive
       ? 'fullName email avatarUrl department phone'
-      : 'fullName email avatarUrl department'; // Protect student phone numbers from general members
+      : 'fullName email avatarUrl department';
 
-    const filter = {
-      clubId: req.params.clubId,
-      campusId: req.campusId,
+    const clubId = req.params.clubId;
+    const includeHistory = req.query.includeHistory === 'true';
+    const includeAllStatus = req.query.includeAllStatus === 'true';
+    const filterTermId = req.query.academicTermId || null;
+
+    const legacyFilter = {
+      clubId,
       status: 'ACTIVE',
     };
+    if (filterTermId) legacyFilter.academicTermId = filterTermId;
 
-    if (req.query.academicTermId) {
-      filter.academicTermId = req.query.academicTermId;
+    const customFilter = {
+      clubId,
+      status: includeAllStatus ? { $in: ['ACTIVE', 'SUSPENDED'] } : 'ACTIVE',
+    };
+
+    const assignmentFilter = { clubId };
+    if (!includeHistory) assignmentFilter.status = 'ACTIVE';
+    if (filterTermId) {
+      assignmentFilter.$or = [{ academicTermId: filterTermId }, { academicTermId: null }];
     }
 
-    const members = await Membership.find(filter)
-      .populate('userId', selectFields)
-      .populate('academicTermId', 'name isCurrent startDate endDate')
-      .sort({ clubRole: 1, createdAt: 1 });
+    const [customMembers, legacyMembers, assignments, positions] = await Promise.all([
+      ClubMembership.find(customFilter)
+        .populate('userId', selectFields)
+        .sort({ joinedAt: 1 })
+        .lean(),
+      Membership.find(legacyFilter)
+        .populate('userId', selectFields)
+        .populate('academicTermId', 'name isCurrent startDate endDate')
+        .sort({ clubRole: 1, createdAt: 1 })
+        .lean(),
+      ClubPositionAssignment.find(assignmentFilter)
+        .populate('positionId', 'name isLeadership departmentId permissions')
+        .populate('academicTermId', 'name isCurrent')
+        .sort({ effectiveFrom: -1 })
+        .lean(),
+      ClubPosition.find({ clubId, isActive: true }).sort({ sortOrder: 1 }).lean(),
+    ]);
+
+    const assignmentsByUser = new Map();
+    for (const a of assignments) {
+      const uid = a.userId?.toString();
+      if (!uid) continue;
+      if (!assignmentsByUser.has(uid)) assignmentsByUser.set(uid, []);
+      assignmentsByUser.get(uid).push(a);
+    }
+
+    // Merge ClubMembership and legacy Membership deduplicated by userId when no specific term forces multiple
+    const mergedByUser = new Map();
+    const blockedStatuses = new Map();
+    const allCustomDocs = await ClubMembership.find({ clubId }).select('userId status').lean();
+    for (const doc of allCustomDocs) {
+      blockedStatuses.set(doc.userId.toString(), doc.status);
+    }
+
+    for (const cm of customMembers) {
+      if (!cm.userId) continue;
+      const uid = cm.userId._id.toString();
+      const userAssignments = assignmentsByUser.get(uid) || [];
+      const activePos = userAssignments.filter((a) => a.status === 'ACTIVE' && a.positionId);
+
+      mergedByUser.set(uid, {
+        _id: cm._id,
+        clubId: cm.clubId,
+        userId: cm.userId,
+        status: cm.status,
+        membershipType: cm.membershipType,
+        joinedAt: cm.joinedAt,
+        clubRole: activePos[0]?.positionId?.name || cm.legacyRole || 'MEMBER',
+        title: activePos.map((a) => a.positionId.name).join(', ') || cm.legacyRole || 'Member',
+        isWorkspaceOwner:
+          req.club?.workspaceOwnerId?.toString() === uid,
+        assignedPositions: userAssignments,
+        academicTermId: activePos[0]?.academicTermId || null,
+      });
+    }
+
+    for (const lm of legacyMembers) {
+      if (!lm.userId) continue;
+      const uid = lm.userId._id.toString();
+      const customStatus = blockedStatuses.get(uid);
+      if (customStatus && customStatus !== 'ACTIVE' && !includeAllStatus) continue;
+
+      if (!mergedByUser.has(uid)) {
+        const userAssignments = assignmentsByUser.get(uid) || [];
+        mergedByUser.set(uid, {
+          ...lm,
+          isWorkspaceOwner: req.club?.workspaceOwnerId?.toString() === uid,
+          assignedPositions: userAssignments,
+        });
+      } else if (!mergedByUser.get(uid).academicTermId && lm.academicTermId) {
+        mergedByUser.get(uid).academicTermId = lm.academicTermId;
+      }
+    }
 
     return res.json({
       success: true,
-      data: { members },
+      data: {
+        members: Array.from(mergedByUser.values()),
+        positions,
+      },
     });
   } catch (err) {
     next(err);
@@ -340,21 +489,48 @@ export async function updateMemberRole(req, res, next) {
 
 export async function removeMember(req, res, next) {
   try {
-    const membership = await Membership.findOneAndUpdate(
+    const legacy = await Membership.findOneAndUpdate(
       {
         _id: req.params.memberId,
         clubId: req.params.clubId,
-        campusId: req.campusId,
+        campusId: req.campusId || null,
       },
       { status: 'REVOKED' },
       { new: true }
     );
 
-    if (!membership) {
+    const custom = await ClubMembership.findOneAndUpdate(
+      {
+        $or: [{ _id: req.params.memberId }, { userId: req.params.memberId }],
+        clubId: req.params.clubId,
+      },
+      { status: 'LEFT', leftAt: new Date() },
+      { new: true }
+    );
+
+    if (!legacy && !custom) {
       return res.status(404).json({
         success: false,
         error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'Membership not found.' },
       });
+    }
+
+    const targetUserId = custom?.userId || legacy?.userId;
+    if (targetUserId) {
+      await Promise.all([
+        ClubMembership.updateMany(
+          { clubId: req.params.clubId, userId: targetUserId, status: 'ACTIVE' },
+          { $set: { status: 'LEFT', leftAt: new Date() } }
+        ),
+        Membership.updateMany(
+          { clubId: req.params.clubId, userId: targetUserId, status: 'ACTIVE' },
+          { $set: { status: 'REVOKED' } }
+        ),
+        ClubPositionAssignment.updateMany(
+          { clubId: req.params.clubId, userId: targetUserId, status: 'ACTIVE' },
+          { $set: { status: 'ENDED', effectiveTo: new Date(), endedReason: 'Removed from organization' } }
+        ),
+      ]);
     }
 
     return res.json({

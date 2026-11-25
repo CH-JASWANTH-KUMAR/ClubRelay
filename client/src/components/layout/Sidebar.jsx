@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -14,6 +14,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  Network,
+  Settings,
+  Compass,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { clsx } from 'clsx';
@@ -21,7 +24,8 @@ import { BrandMark } from '../brand/BrandMark';
 import { BrandLockup } from '../brand/BrandLockup';
 
 export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile }) {
-  const { user, activeClub, memberships, switchClub } = useAuth();
+  const { user, activeClub, memberships, switchClub, hasClubCapability, draftClubs } = useAuth();
+  const navigate = useNavigate();
   const clubId = activeClub?._id || memberships[0]?.clubId?._id;
 
   const isCampusAdmin = user?.campusRole === 'CAMPUS_ADMIN';
@@ -29,64 +33,86 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
 
   const workspaceItems = [
     {
+      to: '/onboarding',
+      label: memberships.length === 0 ? 'Get Started' : 'Organizations Hub',
+      icon: Compass,
+      badge: draftClubs?.length > 0 ? 'Draft' : undefined,
+      show: true,
+    },
+    {
       to: '/my-work',
       label: 'My Work',
       icon: CheckSquare,
       badge: 'Tasks',
-      show: true,
+      show: memberships.length > 0 || isCampusAdmin || isFaculty,
     },
   ];
 
   const orgItems = [
     {
       to: `/clubs/${clubId}`,
-      label: 'Club Overview',
+      label: 'Overview',
       icon: LayoutDashboard,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('club.view_overview', clubId),
       end: true,
     },
     {
       to: `/clubs/${clubId}/events`,
-      label: 'Events & Projects',
+      label: 'Events',
       icon: Calendar,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('events.view', clubId),
+    },
+    {
+      to: `/clubs/${clubId}/structure`,
+      label: 'Structure & Roles',
+      icon: Network,
+      show: !!clubId && (hasClubCapability('club.manage_structure', clubId) || hasClubCapability('club.view_overview', clubId)),
     },
     {
       to: `/clubs/${clubId}/members`,
-      label: 'Roster & Roles',
+      label: 'Members',
       icon: Users,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('members.view', clubId),
     },
     {
       to: `/clubs/${clubId}/memory`,
-      label: 'Organization Memory',
+      label: 'Knowledge Base',
       icon: BookOpen,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('knowledge.view', clubId),
     },
     {
       to: `/clubs/${clubId}/directory`,
-      label: 'Sponsors & Vendors',
+      label: 'Sponsors & Partners',
       icon: Users,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('contacts.view', clubId),
     },
     {
       to: `/clubs/${clubId}/decisions`,
-      label: 'Executive Decisions',
+      label: 'Decisions',
       icon: CheckSquare,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('decisions.view', clubId),
     },
     {
       to: `/clubs/${clubId}/handover`,
       label: 'Handover Center',
       icon: ArrowRightLeft,
-      badge: 'Core',
-      show: !!clubId,
+      show:
+        !!clubId &&
+        (hasClubCapability('handover.view', clubId) ||
+          hasClubCapability('handover.manage_own', clubId) ||
+          hasClubCapability('handover.manage_all', clubId)),
     },
     {
       to: `/clubs/${clubId}/reports`,
       label: 'Annual Reports',
       icon: BarChart3,
-      show: !!clubId,
+      show: !!clubId && hasClubCapability('reports.view', clubId),
+    },
+    {
+      to: `/clubs/${clubId}/settings`,
+      label: 'Organization Settings',
+      icon: Settings,
+      show: !!clubId && hasClubCapability('club.manage_settings', clubId),
     },
   ];
 
@@ -213,9 +239,14 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
             <div className="relative">
               <select
                 value={activeClub?._id || ''}
+                aria-label="Switch active organization"
                 onChange={(e) => {
                   const selected = memberships.find((m) => m.clubId?._id === e.target.value);
-                  if (selected) switchClub(selected.clubId);
+                  if (selected) {
+                    switchClub(selected.clubId);
+                    navigate(`/clubs/${selected.clubId._id}`);
+                    onCloseMobile?.();
+                  }
                 }}
                 className="w-full text-xs font-semibold rounded-lg border border-border bg-subtle px-2.5 py-1.5 text-ink focus:outline-none focus:border-brand-500 appearance-none pr-6 cursor-pointer"
               >

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Card, CardHeader } from '../components/ui/Card';
@@ -26,8 +27,12 @@ const STATUS_COLUMNS = [
 ];
 
 export function MyWork() {
-  const { memberships } = useAuth();
+  const { user, memberships } = useAuth();
   const { addToast } = useToast();
+
+  if (user && user.campusRole === 'STUDENT' && (!memberships || memberships.length === 0)) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState({

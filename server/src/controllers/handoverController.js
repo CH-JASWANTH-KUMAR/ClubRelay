@@ -3,6 +3,9 @@ import { z } from 'zod';
 import {
   Handover,
   Membership,
+  ClubMembership,
+  ClubPosition,
+  ClubPositionAssignment,
   User,
   AcademicTerm,
   AuditLog,
@@ -37,7 +40,8 @@ const initiateHandoverSchema = z
   .object({
     outgoingLeaderEmail: z.string().email().optional(),
     incomingLeaderEmail: z.string().email(),
-    roleHandover: z.enum(['PRESIDENT', 'SECRETARY', 'CORE_LEAD']),
+    roleHandover: z.enum(['PRESIDENT', 'SECRETARY', 'CORE_LEAD', 'CUSTOM_POSITION']).optional(),
+    positionId: z.string().optional(),
     fromTermId: z.string(),
     toTermId: z.string(),
   })
@@ -102,6 +106,8 @@ export async function listHandovers(req, res, next) {
   try {
     const isExecutiveOrAdmin =
       req.user.campusRole === 'CAMPUS_ADMIN' ||
+      req.isWorkspaceOwner ||
+      req.userCapabilities?.has('handover.manage_all') ||
       ['PRESIDENT', 'SECRETARY'].includes(req.userClubRole) ||
       (req.user.campusRole === 'FACULTY_COORDINATOR' &&
         req.club?.facultyCoordinatorId &&
@@ -109,10 +115,11 @@ export async function listHandovers(req, res, next) {
 
     const handovers = await Handover.find({
       clubId: req.params.clubId,
-      campusId: req.campusId,
+      campusId: req.club?.campusId || req.campusId || null,
     })
       .populate('outgoingLeaderId', isExecutiveOrAdmin ? 'fullName email avatarUrl department' : 'fullName avatarUrl')
       .populate('incomingLeaderId', isExecutiveOrAdmin ? 'fullName email avatarUrl department' : 'fullName avatarUrl')
+      .populate('positionId', 'name description')
       .populate('fromTermId', 'name isCurrent')
       .populate('toTermId', 'name isCurrent')
       .sort({ createdAt: -1 });
@@ -175,10 +182,16 @@ export async function createHandover(req, res, next) {
       });
     }
 
-    // Validate both academic terms belong to the requesting user's campus
+    const clubCampusId = req.club?.campusId || req.campusId || null;
+
+    // Validate both academic terms belong to the requesting user's campus (or independent club)
+    const termFilter = clubCampusId
+      ? { $or: [{ campusId: clubCampusId, clubId: null }, { clubId: req.params.clubId }] }
+      : { clubId: req.params.clubId };
+
     const [fromTerm, toTerm] = await Promise.all([
-      AcademicTerm.findOne({ _id: data.fromTermId, campusId: req.campusId }),
-      AcademicTerm.findOne({ _id: data.toTermId, campusId: req.campusId }),
+      AcademicTerm.findOne({ _id: data.fromTermId, ...termFilter }),
+      AcademicTerm.findOne({ _id: data.toTermId, ...termFilter }),
     ]);
 
     if (!fromTerm || !toTerm) {
@@ -186,8 +199,147 @@ export async function createHandover(req, res, next) {
         success: false,
         error: {
           code: 'ACADEMIC_TERM_NOT_FOUND',
-          message: 'One or both academic terms were not found for this campus.',
+          message: 'One or both academic terms were not found for this organization workspace.',
         },
+      });
+    }
+
+    // Custom position handover path
+    if (data.positionId) {
+      const position = await ClubPosition.findOne({
+        _id: data.positionId,
+        clubId: req.params.clubId,
+        isActive: true,
+      });
+      if (!position) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'POSITION_NOT_FOUND', message: 'Position not found in this organization.' },
+        });
+      }
+
+      const canNominateOther =
+        req.user.campusRole === 'CAMPUS_ADMIN' ||
+        req.isWorkspaceOwner ||
+        req.userCapabilities?.has('handover.manage_all');
+
+      let outgoingUser = req.user;
+      if (data.outgoingLeaderEmail && data.outgoingLeaderEmail.toLowerCase() !== req.user.email.toLowerCase()) {
+        if (!canNominateOther) {
+          return res.status(403).json({
+            success: false,
+            error: {
+              code: 'FORBIDDEN_NOMINATION',
+              message: 'Only organization handover coordinators can nominate another user.',
+            },
+          });
+        }
+        outgoingUser = await User.findOne({
+          ...(clubCampusId ? { campusId: clubCampusId } : {}),
+          email: data.outgoingLeaderEmail.toLowerCase(),
+        });
+        if (!outgoingUser) {
+          return res.status(404).json({
+            success: false,
+            error: { code: 'USER_NOT_FOUND', message: 'Outgoing user not found.' },
+          });
+        }
+      }
+
+      const incomingUser = await User.findOne({
+        ...(clubCampusId ? { campusId: clubCampusId } : {}),
+        email: data.incomingLeaderEmail.toLowerCase(),
+      });
+      if (!incomingUser) {
+        return res.status(404).json({
+          success: false,
+          error: { code: 'USER_NOT_FOUND', message: 'Incoming member email not found.' },
+        });
+      }
+      if (outgoingUser._id.toString() === incomingUser._id.toString()) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_HANDOVER_TARGET', message: 'Outgoing and incoming holders cannot be the same user.' },
+        });
+      }
+
+      const [outgoingAssignment, incomingMember] = await Promise.all([
+        ClubPositionAssignment.findOne({
+          clubId: req.params.clubId,
+          userId: outgoingUser._id,
+          positionId: position._id,
+          status: 'ACTIVE',
+        }),
+        ClubMembership.findOne({
+          clubId: req.params.clubId,
+          userId: incomingUser._id,
+          status: 'ACTIVE',
+        }),
+      ]);
+
+      if (!outgoingAssignment) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'OUTGOING_ASSIGNMENT_NOT_FOUND',
+            message: `Outgoing member does not actively hold "${position.name}".`,
+          },
+        });
+      }
+      if (!incomingMember) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INCOMING_MEMBERSHIP_INVALID',
+            message: 'Incoming holder must be an active member of this organization.',
+          },
+        });
+      }
+
+      const handover = await Handover.create({
+        campusId: clubCampusId,
+        clubId: req.params.clubId,
+        fromTermId: fromTerm._id,
+        toTermId: toTerm._id,
+        outgoingLeaderId: outgoingUser._id,
+        incomingLeaderId: incomingUser._id,
+        positionId: position._id,
+        positionTitle: position.name,
+        outgoingAssignmentId: outgoingAssignment._id,
+        roleHandover: 'CUSTOM_POSITION',
+        status: 'DRAFT',
+        completionPercentage: 0,
+      });
+
+      await Notification.create({
+        campusId: clubCampusId,
+        userId: incomingUser._id,
+        title: `Position Handover Initiated: ${position.name}`,
+        message: `${req.user.fullName} initiated the ${position.name} continuity handover with you.`,
+        type: 'HANDOVER',
+        link: `/clubs/${req.params.clubId}/handover`,
+      });
+
+      await AuditLog.create({
+        campusId: clubCampusId,
+        clubId: req.params.clubId,
+        actorId: req.user._id,
+        action: 'HANDOVER_INITIATED',
+        targetType: 'Handover',
+        targetId: handover._id,
+        metadata: {
+          positionId: position._id.toString(),
+          positionTitle: position.name,
+          outgoingLeaderId: outgoingUser._id,
+          incomingLeaderId: incomingUser._id,
+          fromTermId: fromTerm._id,
+          toTermId: toTerm._id,
+        },
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: { handover },
       });
     }
 
@@ -379,10 +531,11 @@ export async function getHandover(req, res, next) {
     const handover = await Handover.findOne({
       _id: req.params.id,
       clubId: req.params.clubId,
-      campusId: req.campusId,
+      campusId: req.club?.campusId || req.campusId || null,
     })
       .populate('outgoingLeaderId', 'fullName email avatarUrl department phone')
       .populate('incomingLeaderId', 'fullName email avatarUrl department phone')
+      .populate('positionId', 'name description')
       .populate('fromTermId', 'name isCurrent startDate endDate')
       .populate('toTermId', 'name isCurrent startDate endDate')
       .populate('sections.contactsAndPartners.contactIds')
@@ -398,6 +551,8 @@ export async function getHandover(req, res, next) {
     const isOutgoingLeader = handover.outgoingLeaderId?._id?.toString() === req.user._id.toString();
     const isIncomingLeader = handover.incomingLeaderId?._id?.toString() === req.user._id.toString();
     const isPresident = req.userClubRole === 'PRESIDENT';
+    const isCoordinator =
+      req.isWorkspaceOwner || req.userCapabilities?.has('handover.manage_all');
     const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
     const isAssignedFaculty =
       req.user.campusRole === 'FACULTY_COORDINATOR' &&
@@ -405,7 +560,7 @@ export async function getHandover(req, res, next) {
       req.club.facultyCoordinatorId.toString() === req.user._id.toString();
 
     // General members or non-participating core members cannot access private handover details
-    if (!isOutgoingLeader && !isIncomingLeader && !isPresident && !isCampusAdmin && !isAssignedFaculty) {
+    if (!isOutgoingLeader && !isIncomingLeader && !isPresident && !isCoordinator && !isCampusAdmin && !isAssignedFaculty) {
       return res.status(403).json({
         success: false,
         error: {
@@ -476,7 +631,10 @@ export async function updateHandoverSection(req, res, next) {
 
     // RBAC: Only authorized outgoing officer or current President can edit sections
     const isOutgoingLeader = handover.outgoingLeaderId.toString() === req.user._id.toString();
-    const isPresident = req.userClubRole === 'PRESIDENT';
+    const isPresident =
+      req.userClubRole === 'PRESIDENT' ||
+      req.isWorkspaceOwner ||
+      req.userCapabilities?.has('handover.manage_all');
     const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
 
     if (!isOutgoingLeader && !isPresident && !isCampusAdmin) {
@@ -654,8 +812,8 @@ export async function completeHandover(req, res, next) {
       });
     }
 
-    const roleConfig = HANDOVER_ROLE_MAP[handover.roleHandover];
-    if (!roleConfig) {
+    const roleConfig = handover.positionId ? null : HANDOVER_ROLE_MAP[handover.roleHandover];
+    if (!handover.positionId && !roleConfig) {
       return res.status(400).json({
         success: false,
         error: {
@@ -665,10 +823,14 @@ export async function completeHandover(req, res, next) {
       });
     }
 
-    // Authorization: Only outgoing leader, current president, or campus admin can finalize transfer
+    // Authorization: Only outgoing leader, workspace owner, handover approver, or campus admin can finalize transfer
     const isOutgoingLeader = handover.outgoingLeaderId.toString() === req.user._id.toString();
     const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
-    const isPresident = req.userClubRole === 'PRESIDENT';
+    const isPresident =
+      req.userClubRole === 'PRESIDENT' ||
+      req.isWorkspaceOwner ||
+      req.userCapabilities?.has('handover.approve') ||
+      req.userCapabilities?.has('handover.manage_all');
 
     if (!isOutgoingLeader && !isCampusAdmin && !isPresident) {
       return res.status(403).json({
@@ -685,12 +847,14 @@ export async function completeHandover(req, res, next) {
     session.startTransaction();
 
     try {
+      const clubCampusId = req.club?.campusId || req.campusId || null;
+
       // Concurrency guard: atomically lock and transition handover status only if currently ACKNOWLEDGED
       const updatedHandover = await Handover.findOneAndUpdate(
         {
           _id: handover._id,
           clubId: req.params.clubId,
-          campusId: req.campusId,
+          campusId: clubCampusId,
           status: 'ACKNOWLEDGED',
         },
         {
@@ -715,6 +879,106 @@ export async function completeHandover(req, res, next) {
             code: 'HANDOVER_ALREADY_COMPLETED',
             message: 'This handover has already been completed. Role transition was executed previously.',
           },
+        });
+      }
+
+      // Custom Position Handover Transition
+      if (handover.positionId) {
+        const now = new Date();
+        await ClubPositionAssignment.updateOne(
+          {
+            clubId: handover.clubId,
+            userId: handover.outgoingLeaderId,
+            positionId: handover.positionId,
+            status: 'ACTIVE',
+          },
+          {
+            $set: {
+              status: 'ENDED',
+              effectiveTo: now,
+              handoverId: handover._id,
+              endedReason: `Transitioned to incoming holder (${handover.positionTitle})`,
+            },
+          },
+          { session }
+        );
+
+        const incomingMem = await ClubMembership.findOne({
+          clubId: handover.clubId,
+          userId: handover.incomingLeaderId,
+          status: 'ACTIVE',
+        }).session(session);
+
+        if (!incomingMem) {
+          await session.abortTransaction();
+          await session.endSession();
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'INCOMING_MEMBER_INACTIVE',
+              message: 'Incoming holder must remain an active member of this organization.',
+            },
+          });
+        }
+
+        const existingIncomingPos = await ClubPositionAssignment.findOne({
+          clubId: handover.clubId,
+          userId: handover.incomingLeaderId,
+          positionId: handover.positionId,
+          status: 'ACTIVE',
+        }).session(session);
+
+        if (!existingIncomingPos) {
+          const [createdAssign] = await ClubPositionAssignment.create(
+            [
+              {
+                campusId: clubCampusId,
+                clubId: handover.clubId,
+                membershipId: incomingMem._id,
+                userId: handover.incomingLeaderId,
+                positionId: handover.positionId,
+                academicTermId: handover.toTermId,
+                effectiveFrom: now,
+                status: 'ACTIVE',
+                assignedById: req.user._id,
+                handoverId: handover._id,
+              },
+            ],
+            { session }
+          );
+          updatedHandover.incomingAssignmentId = createdAssign._id;
+          await updatedHandover.save({ session });
+        }
+
+        await AuditLog.create(
+          [
+            {
+              campusId: clubCampusId,
+              clubId: req.params.clubId,
+              actorId: req.user._id,
+              action: 'HANDOVER_COMPLETED_POSITION_TRANSFERRED',
+              targetType: 'Handover',
+              targetId: handover._id,
+              metadata: {
+                positionId: handover.positionId.toString(),
+                positionTitle: handover.positionTitle,
+                outgoingLeaderId: handover.outgoingLeaderId,
+                incomingLeaderId: handover.incomingLeaderId,
+                fromTermId: handover.fromTermId,
+                toTermId: handover.toTermId,
+              },
+            },
+          ],
+          { session }
+        );
+
+        await session.commitTransaction();
+        await session.endSession();
+
+        return res.json({
+          success: true,
+          message: `${handover.positionTitle || 'Position'} continuity handover completed.`,
+          data: { handover: updatedHandover },
         });
       }
 

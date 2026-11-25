@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Approval, Event, Club, Membership, Notification, AuditLog } from '../models/index.js';
+import { Approval, Event, Club, Membership, ClubMembership, Notification, AuditLog } from '../models/index.js';
 import { verifyFacultyReviewerForClub } from '../middleware/tenant.js';
 
 const reviewSchema = z.object({
@@ -179,13 +179,25 @@ export async function listEventApprovals(req, res, next) {
 
     let isMember = false;
     if (!isCampusAdmin && !isAssignedFaculty) {
-      const membership = await Membership.findOne({
-        campusId: req.campusId,
+      const [legacyM, customM] = await Promise.all([
+        Membership.findOne({
+          campusId: req.campusId,
+          clubId: club?._id || club,
+          userId: req.user._id,
+          status: 'ACTIVE',
+        }),
+        ClubMembership.findOne({
+          clubId: club?._id || club,
+          userId: req.user._id,
+          status: 'ACTIVE',
+        }),
+      ]);
+      const suspended = await ClubMembership.exists({
         clubId: club?._id || club,
         userId: req.user._id,
-        status: 'ACTIVE',
+        status: { $in: ['SUSPENDED', 'LEFT'] },
       });
-      isMember = !!membership;
+      isMember = Boolean(!suspended && (legacyM || customM));
     }
 
     if (!isCampusAdmin && !isAssignedFaculty && !isMember) {

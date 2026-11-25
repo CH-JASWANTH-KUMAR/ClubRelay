@@ -50,9 +50,10 @@ export function HandoverCenter() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [isAdvisoryView, setIsAdvisoryView] = useState(false);
 
-  // Terms and eligible officers
+  // Terms and eligible officers / custom positions
   const [terms, setTerms] = useState([]);
   const [clubMembers, setClubMembers] = useState([]);
+  const [positions, setPositions] = useState([]);
 
   // Modals
   const [showInitiateModal, setShowInitiateModal] = useState(false);
@@ -64,6 +65,7 @@ export function HandoverCenter() {
     incomingLeaderEmail: '',
     outgoingLeaderEmail: '',
     roleHandover: 'PRESIDENT',
+    positionId: '',
     fromTermId: '',
     toTermId: '',
   });
@@ -116,6 +118,7 @@ export function HandoverCenter() {
       if (res && res.ok) {
         const json = await res.json();
         setClubMembers(json.data?.members || []);
+        if (json.data?.positions) setPositions(json.data.positions);
       }
     } catch (err) {
       console.error(err);
@@ -273,13 +276,21 @@ export function HandoverCenter() {
 
       const payload = {
         incomingLeaderEmail: initiateForm.incomingLeaderEmail.trim(),
-        roleHandover: initiateForm.roleHandover,
         fromTermId: initiateForm.fromTermId,
         toTermId: initiateForm.toTermId,
       };
 
-      if (user?.campusRole === 'CAMPUS_ADMIN') {
-        payload.outgoingLeaderEmail = initiateForm.outgoingLeaderEmail.trim();
+      if (initiateForm.positionId) {
+        payload.positionId = initiateForm.positionId;
+        payload.roleHandover = 'CUSTOM_POSITION';
+      } else {
+        payload.roleHandover = initiateForm.roleHandover;
+      }
+
+      if (user?.campusRole === 'CAMPUS_ADMIN' || initiateForm.outgoingLeaderEmail.trim()) {
+        if (initiateForm.outgoingLeaderEmail.trim()) {
+          payload.outgoingLeaderEmail = initiateForm.outgoingLeaderEmail.trim();
+        }
       }
 
       const res = await fetch(`/api/v1/clubs/${clubId}/handovers`, {
@@ -643,16 +654,30 @@ export function HandoverCenter() {
             />
           </div>
 
-          <Select
-            label="Executive Office Being Transitioned"
-            value={initiateForm.roleHandover}
-            onChange={(e) => setInitiateForm({ ...initiateForm, roleHandover: e.target.value })}
-            options={[
-              { label: 'Club President', value: 'PRESIDENT' },
-              { label: 'General Secretary', value: 'SECRETARY' },
-              { label: 'Core Technical Lead', value: 'CORE_LEAD' },
-            ]}
-          />
+          {positions.length > 0 ? (
+            <Select
+              label="Custom Position Being Transitioned"
+              value={initiateForm.positionId}
+              onChange={(e) => setInitiateForm({ ...initiateForm, positionId: e.target.value })}
+              options={[
+                { label: 'Select position or use legacy role...', value: '' },
+                ...positions.map((pos) => ({ label: pos.name, value: pos._id })),
+              ]}
+            />
+          ) : null}
+
+          {!initiateForm.positionId && (
+            <Select
+              label="Executive Office Being Transitioned"
+              value={initiateForm.roleHandover}
+              onChange={(e) => setInitiateForm({ ...initiateForm, roleHandover: e.target.value })}
+              options={[
+                { label: 'Club President', value: 'PRESIDENT' },
+                { label: 'General Secretary', value: 'SECRETARY' },
+                { label: 'Core Technical Lead', value: 'CORE_LEAD' },
+              ]}
+            />
+          )}
 
           {/* Campus Administrator Outgoing Officer Selector */}
           {user?.campusRole === 'CAMPUS_ADMIN' && (

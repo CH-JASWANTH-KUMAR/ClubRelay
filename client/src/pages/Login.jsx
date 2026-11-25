@@ -36,14 +36,20 @@ function getPasswordStrengthDetails(password) {
   return { score: 2, label: 'Fair password', tone: 'text-sunshine-700' };
 }
 
-function getAuthenticatedRedirectPath(user) {
-  if (!user) return '/my-work';
+function getAuthenticatedRedirectPath(user, requestedRedirect = '') {
+  if (requestedRedirect && requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//')) {
+    return requestedRedirect;
+  }
+  if (!user) return '/onboarding';
   if (user.campusRole === 'CAMPUS_ADMIN') return '/campus';
   if (user.campusRole === 'FACULTY_COORDINATOR') return '/faculty/approvals';
-  if (user.memberships && user.memberships.length > 0 && user.memberships[0]?.clubId?._id) {
-    return `/clubs/${user.memberships[0].clubId._id}`;
+  if (user.memberships && user.memberships.length > 0) {
+    const preferredId = user.lastActiveClubId || localStorage.getItem('clubrelay_active_club');
+    const matched = user.memberships.find((m) => (m.clubId?._id || m.clubId) === preferredId);
+    const targetId = matched?.clubId?._id || user.memberships[0]?.clubId?._id;
+    if (targetId) return `/clubs/${targetId}`;
   }
-  return '/my-work';
+  return '/onboarding';
 }
 
 export function Login({ initialTab = 'login' }) {
@@ -76,6 +82,7 @@ export function Login({ initialTab = 'login' }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [usePersonalAccount, setUsePersonalAccount] = useState(false);
   const [touchedSignUp, setTouchedSignUp] = useState({
     fullName: false,
     email: false,
@@ -342,7 +349,7 @@ export function Login({ initialTab = 'login' }) {
       const loggedInUser = await login(signInEmail.trim().toLowerCase(), signInPassword);
       setMascotEvent('signin_success');
       addToast(`Welcome back, ${loggedInUser.fullName}!`, 'success');
-      navigate(getAuthenticatedRedirectPath(loggedInUser));
+      navigate(getAuthenticatedRedirectPath(loggedInUser, searchParams.get('redirect') || ''));
     } catch (err) {
       setError(err.message || 'Invalid email or password.');
       setMascotEvent('error');
@@ -373,11 +380,14 @@ export function Login({ initialTab = 'login' }) {
       : '';
   const passwordsMatch = confirmPassword.length > 0 && confirmPassword === signUpPassword;
 
+  const campusResolvedOrPersonal =
+    (resolveState.status === 'resolved' && Boolean(resolveState.campus?.id)) ||
+    (resolveState.status === 'not_found' && usePersonalAccount);
+
   const isSignUpValid =
     normalizedSignUpName.length >= 2 &&
     EMAIL_REGEX.test(normalizedSignUpEmail) &&
-    resolveState.status === 'resolved' &&
-    Boolean(resolveState.campus?.id) &&
+    campusResolvedOrPersonal &&
     signUpPassword.length >= 8 &&
     passwordsMatch;
 
@@ -401,11 +411,15 @@ export function Login({ initialTab = 'login' }) {
     setMascotEvent('none');
 
     try {
+      const accountTypePayload =
+        resolveState.status === 'not_found' && usePersonalAccount ? 'PERSONAL' : undefined;
+
       if (typeof contextRegister === 'function') {
         await contextRegister({
           fullName: normalizedSignUpName,
           email: normalizedSignUpEmail,
           password: signUpPassword,
+          ...(accountTypePayload ? { accountType: accountTypePayload } : {}),
         });
       } else {
         const res = await fetch('/api/v1/auth/register', {
@@ -416,6 +430,7 @@ export function Login({ initialTab = 'login' }) {
             fullName: normalizedSignUpName,
             email: normalizedSignUpEmail,
             password: signUpPassword,
+            ...(accountTypePayload ? { accountType: accountTypePayload } : {}),
           }),
         });
         const json = await res.json();
@@ -788,9 +803,20 @@ export function Login({ initialTab = 'login' }) {
                           <span>{resolveState.campus.name}</span>
                         </p>
                       ) : resolveState.status === 'not_found' ? (
-                        <p className="text-coral-700 font-medium leading-snug">
-                          Your campus is not on ClubRelay yet. Ask your club lead to get your campus set up.
-                        </p>
+                        <div className="space-y-1.5">
+                          <p className="text-coral-700 font-medium leading-snug">
+                            Your campus is not on ClubRelay yet. Ask your club lead to get your campus set up.
+                          </p>
+                          <label className="inline-flex items-center gap-2 text-xs text-ink-700 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={usePersonalAccount}
+                              onChange={(e) => setUsePersonalAccount(e.target.checked)}
+                              className="rounded border-border text-brand-500 focus:ring-brand-500"
+                            />
+                            <span>Continue with a personal account and request campus setup inside</span>
+                          </label>
+                        </div>
                       ) : null}
                     </div>
                   </div>

@@ -5,7 +5,7 @@ const auditLogSchema = new mongoose.Schema(
     campusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Campus',
-      required: true,
+      default: null,
       index: true,
     },
     clubId: {

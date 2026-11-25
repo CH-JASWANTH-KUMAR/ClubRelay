@@ -17,6 +17,7 @@ import decisionRoutes from './routes/decisionRoutes.js';
 import handoverRoutes from './routes/handoverRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import onboardingRoutes from './routes/onboardingRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -125,6 +126,7 @@ app.use('/api/v1/campuses/resolve', resolveLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/campuses', campusRoutes);
 app.use('/api/v1/clubs', clubRoutes);
+app.use('/api/v1', onboardingRoutes);
 app.use('/api/v1', eventRoutes);
 app.use('/api/v1', taskRoutes);
 app.use('/api/v1/approvals', approvalRoutes);

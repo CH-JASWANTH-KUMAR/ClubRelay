@@ -208,7 +208,7 @@ describe('Phase 1B Frontend Components & Workflows', () => {
   });
 
   describe('Members & People Page', () => {
-    it('renders recruitment pipeline banner and member roster', async () => {
+    it('renders member directory with join requests/invitations controls and custom positions', async () => {
       global.fetch
         // Terms fetch
         .mockResolvedValueOnce({
@@ -222,6 +222,16 @@ describe('Phase 1B Frontend Components & Workflows', () => {
             },
           }),
         })
+        // Join requests fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: { joinRequests: [] } }),
+        })
+        // Invitations fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ data: { invitations: [] } }),
+        })
         // Members fetch
         .mockResolvedValueOnce({
           ok: true,
@@ -232,11 +242,12 @@ describe('Phase 1B Frontend Components & Workflows', () => {
                   _id: 'm-1',
                   userId: { fullName: 'Alex Lead', email: 'alex@pcu.edu', department: 'CS' },
                   clubRole: 'PRESIDENT',
-                  title: 'President & Tech Lead',
+                  title: 'Design Lead',
                   academicTermId: { name: '2025-2026' },
                   status: 'ACTIVE',
                 },
               ],
+              positions: [{ _id: 'pos-1', name: 'Design Lead' }],
             },
           }),
         });
@@ -245,14 +256,14 @@ describe('Phase 1B Frontend Components & Workflows', () => {
         user: mockUserAdmin,
         activeClub: mockClubs[0],
         memberships: mockMemberships,
+        hasClubCapability: () => true,
       });
 
-      expect(screen.getByText(/2026 Core Leadership & Talent Onboarding/i)).toBeInTheDocument();
-      expect(screen.getByText(/Track active applicants, schedule screening interviews/i)).toBeInTheDocument();
+      expect(screen.getByText(/Member Directory & Onboarding/i)).toBeInTheDocument();
 
       await waitFor(() => {
         expect(screen.getByText('Alex Lead')).toBeInTheDocument();
-        expect(screen.getByText('President & Tech Lead')).toBeInTheDocument();
+        expect(screen.getAllByText('Design Lead').length).toBeGreaterThanOrEqual(1);
       });
     });
   });

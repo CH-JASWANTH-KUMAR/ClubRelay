@@ -28,6 +28,9 @@ const campusSchema = new mongoose.Schema(
     settings: {
       allowSelfRegistration: { type: Boolean, default: true },
       requireFacultyApprovalForEvents: { type: Boolean, default: true },
+      requireFacultyApprovalForNewClubs: { type: Boolean, default: false },
+      requireFacultyAdvisorOnClubs: { type: Boolean, default: false },
+      allowStudentClubCreation: { type: Boolean, default: true },
       defaultAcademicYear: { type: String, default: '2025-2026' },
     },
   },

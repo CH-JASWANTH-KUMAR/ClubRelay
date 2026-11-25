@@ -5,7 +5,7 @@ const handoverSchema = new mongoose.Schema(
     campusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Campus',
-      required: true,
+      default: null,
       index: true,
     },
     clubId: {
@@ -36,10 +36,30 @@ const handoverSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    positionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ClubPosition',
+      default: null,
+      index: true,
+    },
+    positionTitle: {
+      type: String,
+      default: '',
+    },
+    outgoingAssignmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ClubPositionAssignment',
+      default: null,
+    },
+    incomingAssignmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ClubPositionAssignment',
+      default: null,
+    },
     roleHandover: {
       type: String,
-      enum: ['PRESIDENT', 'SECRETARY', 'CORE_LEAD'],
-      required: true,
+      enum: ['PRESIDENT', 'SECRETARY', 'CORE_LEAD', 'CUSTOM_POSITION'],
+      default: 'CUSTOM_POSITION',
     },
     status: {
       type: String,

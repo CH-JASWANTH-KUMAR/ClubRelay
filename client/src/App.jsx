@@ -19,6 +19,11 @@ import { FacultyApprovals } from './pages/FacultyApprovals';
 import { AnnualReports } from './pages/AnnualReports';
 import { Members } from './pages/Members';
 import { MyWork } from './pages/MyWork';
+import { Onboarding } from './pages/Onboarding';
+import { CreateClubWizard } from './pages/CreateClubWizard';
+import { StructureBuilder } from './pages/StructureBuilder';
+import { OrganizationSettings } from './pages/OrganizationSettings';
+import { AcceptInvitation } from './pages/AcceptInvitation';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,6 +66,7 @@ export function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Login initialTab="register" />} />
               <Route path="/register" element={<Login initialTab="register" />} />
+              <Route path="/invitations/accept" element={<AcceptInvitation />} />
 
               {/* Protected Application Workspace */}
               <Route
@@ -70,10 +76,15 @@ export function App() {
                   </ProtectedRoute>
                 }
               >
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/clubs/create" element={<CreateClubWizard />} />
+                <Route path="/clubs/create/:clubId" element={<CreateClubWizard />} />
                 <Route path="/campus" element={<CampusDashboard />} />
                 <Route path="/my-work" element={<MyWork />} />
                 <Route path="/faculty/approvals" element={<FacultyApprovals />} />
                 <Route path="/clubs/:clubId" element={<ClubDashboard />} />
+                <Route path="/clubs/:clubId/structure" element={<StructureBuilder />} />
+                <Route path="/clubs/:clubId/settings" element={<OrganizationSettings />} />
                 <Route path="/clubs/:clubId/events" element={<EventsList />} />
                 <Route path="/clubs/:clubId/events/:eventId" element={<EventDetail />} />
                 <Route path="/clubs/:clubId/memory" element={<KnowledgeBase />} />

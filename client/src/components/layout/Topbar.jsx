@@ -5,11 +5,16 @@ import { Avatar } from '../ui/EmptyState';
 import { useNavigate } from 'react-router-dom';
 
 export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
-  const { user, logout } = useAuth();
+  const { user, activeClub, memberships, switchClub, logout } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const activeTermLabel =
+    activeClub?.activeTermId?.name ||
+    user?.campusId?.settings?.defaultAcademicYear ||
+    'Active Term';
 
   useEffect(() => {
     async function loadNotifications() {
@@ -42,28 +47,55 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
   };
 
   return (
-    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 select-none">
+    <header className="h-14 border-b border-border bg-surface flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30 select-none">
       {/* Left: Mobile Nav Button + Campus & Term Identity */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {onOpenMobileNav && (
           <button
             onClick={onOpenMobileNav}
-            className="md:hidden p-1.5 rounded text-charcoal-600 hover:text-charcoal-900 hover:bg-subtle"
+            className="md:hidden p-1.5 rounded text-charcoal-600 hover:text-charcoal-900 hover:bg-subtle shrink-0"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-50 border border-brand-200 text-xs text-brand-800">
-          <School className="w-3.5 h-3.5 text-brand-600" />
-          <span className="font-bold text-ink truncate max-w-[160px] sm:max-w-none">
-            {user?.campusId?.name || 'Campus'}
+        <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-brand-50 border border-brand-200 text-xs text-brand-800 min-w-0">
+          <School className="w-3.5 h-3.5 text-brand-600 shrink-0" />
+          <span className="font-bold text-ink truncate max-w-[105px] sm:max-w-[180px]">
+            {user?.campusId?.name || 'Personal Workspace'}
           </span>
         </div>
+
+        {memberships && memberships.length > 0 && (
+          <select
+            value={activeClub?._id || ''}
+            aria-label="Topbar organization switcher"
+            onChange={(e) => {
+              if (e.target.value === '__onboarding__') {
+                navigate('/onboarding');
+                return;
+              }
+              const matched = memberships.find((m) => m.clubId?._id === e.target.value);
+              if (matched?.clubId) {
+                switchClub(matched.clubId);
+                navigate(`/clubs/${matched.clubId._id}`);
+              }
+            }}
+            className="hidden sm:block h-7 rounded-lg border border-border bg-white px-2 text-xs font-semibold text-ink max-w-[180px] focus:border-brand-500 focus:outline-none cursor-pointer"
+          >
+            {memberships.map((m) => (
+              <option key={m.clubId?._id} value={m.clubId?._id}>
+                {m.clubId?.shortName || m.clubId?.code || m.clubId?.name}
+              </option>
+            ))}
+            <option value="__onboarding__">+ Add or Join Org</option>
+          </select>
+        )}
+
         <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 text-[11px] text-mutedSlate">
           <Calendar className="w-3.5 h-3.5 text-mutedSlate" />
-          <span>2025-2026 Academic Term</span>
+          <span>{activeTermLabel}</span>
         </div>
       </div>
 
@@ -84,7 +116,7 @@ export function Topbar({ onOpenMobileNav, onOpenCommandPalette }) {
       </div>
 
       {/* Right: Notifications, Profile, Logout */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Mobile Search Icon */}
         <button
           onClick={onOpenCommandPalette}
