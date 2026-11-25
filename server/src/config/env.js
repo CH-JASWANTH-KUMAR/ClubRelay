@@ -11,6 +11,7 @@ const envSchema = z
       .string()
       .min(16, 'JWT_SECRET must be at least 16 characters in development/test and 32 in production'),
     MONGODB_URI: z.string().optional(),
+    CLUBRELAY_USE_MEMORY_DB: z.string().optional().default('false'),
     CLIENT_ORIGIN: z.string().optional(),
     ALLOW_SEED_IN_PROD: z.string().optional().default('false'),
     GOOGLE_CLIENT_ID: z.string().optional(),
@@ -115,6 +116,7 @@ const rawEnv = {
   PORT: process.env.PORT || '5000',
   JWT_SECRET: process.env.JWT_SECRET || devFallbackSecret,
   MONGODB_URI: process.env.MONGODB_URI,
+  CLUBRELAY_USE_MEMORY_DB: process.env.CLUBRELAY_USE_MEMORY_DB || 'false',
   CLIENT_ORIGIN:
     process.env.CLIENT_ORIGIN ||
     (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:5173'),

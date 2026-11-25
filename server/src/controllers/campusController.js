@@ -1,5 +1,37 @@
 import { Campus, Club, AcademicTerm, Event, Approval, Handover } from '../models/index.js';
 
+export async function resolveCampusByDomain(req, res, next) {
+  try {
+    const rawDomain = typeof req.query.domain === 'string' ? req.query.domain.trim().toLowerCase() : '';
+    if (!rawDomain) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_DOMAIN', message: 'Domain query parameter is required.' },
+      });
+    }
+
+    const campuses = await Campus.find({ domain: rawDomain }).select('_id name');
+    if (campuses.length !== 1) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'CAMPUS_NOT_FOUND', message: 'Campus not found for this domain.' },
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        campus: {
+          id: campuses[0]._id,
+          name: campuses[0].name,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function listCampuses(req, res, next) {
   try {
     const campuses = await Campus.find().sort({ name: 1 });

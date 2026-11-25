@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const fetchCurrentUser = useCallback(async () => {
     try {
       const res = await fetch('/api/v1/auth/me', {
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
       if (res.ok) {
@@ -41,6 +42,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await fetch('/api/v1/auth/login', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -59,9 +61,23 @@ export function AuthProvider({ children }) {
     return json.data.user;
   };
 
+  const register = async ({ fullName, email, password }) => {
+    const res = await fetch('/api/v1/auth/register', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullName, email, password }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.error?.message || 'Could not create account');
+    }
+    return json;
+  };
+
   const logout = async () => {
     try {
-      await fetch('/api/v1/auth/logout', { method: 'POST' });
+      await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (e) {
       console.error(e);
     }
@@ -86,6 +102,7 @@ export function AuthProvider({ children }) {
         memberships: user?.memberships || [],
         loading,
         login,
+        register,
         logout,
         switchClub,
         refreshUser: fetchCurrentUser,

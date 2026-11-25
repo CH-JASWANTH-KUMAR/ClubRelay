@@ -57,8 +57,10 @@ export function App() {
               {/* Public Marketing Landing Page */}
               <Route path="/" element={<LandingPage />} />
 
-              {/* Public Login */}
+              {/* Public Login & Sign Up */}
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Login initialTab="register" />} />
+              <Route path="/register" element={<Login initialTab="register" />} />
 
               {/* Protected Application Workspace */}
               <Route

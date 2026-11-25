@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { env } from '../config/env.js';
-import { User, Campus, Membership, FederatedIdentity } from '../models/index.js';
+import { User, Campus, Membership, FederatedIdentity, AuditLog } from '../models/index.js';
 import { generateToken } from '../middleware/auth.js';
 
 // Pre-computed bcrypt hash for constant-time comparison on failed lookups (mitigates timing attacks)
@@ -15,10 +15,10 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
-  campusId: z.string(),
-  fullName: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
+  campusId: z.string().optional(),
+  fullName: z.string().trim().min(2, 'Full name must be at least 2 characters'),
+  email: z.string().trim().email('Please provide a valid university email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters long'),
   department: z.string().optional(),
 });
 
@@ -135,12 +135,48 @@ export async function register(req, res, next) {
   try {
     const data = registerSchema.parse(req.body);
 
-    const campus = await Campus.findById(data.campusId);
-    if (!campus) {
-      return res.status(404).json({
+    const emailLower = data.email.trim().toLowerCase();
+    const emailDomain = emailLower.split('@')[1];
+    if (!emailDomain) {
+      return res.status(400).json({
         success: false,
-        error: { code: 'CAMPUS_NOT_FOUND', message: 'Selected campus was not found.' },
+        error: {
+          code: 'INVALID_CAMPUS_DOMAIN',
+          message: 'Please enter a valid university email address.',
+        },
       });
+    }
+
+    // Resolve campus strictly from email domain on the server
+    const domainCampuses = await Campus.find({ domain: emailDomain });
+    if (domainCampuses.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_CAMPUS_DOMAIN',
+          message: 'Unsupported campus email domain. Your campus may not be on ClubRelay yet.',
+        },
+      });
+    }
+
+    let campus = null;
+    if (domainCampuses.length === 1) {
+      // Single campus matches email domain: ignore any mismatched client campusId
+      campus = domainCampuses[0];
+    } else {
+      // Multiple campuses share domain: accept client campusId only if it matches one of them
+      if (data.campusId) {
+        campus = domainCampuses.find((c) => c._id.toString() === String(data.campusId));
+      }
+      if (!campus) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'AMBIGUOUS_CAMPUS',
+            message: 'Multiple campuses share this domain. Please select your campus or contact your campus coordinator.',
+          },
+        });
+      }
     }
 
     // Enforce campus registration policy
@@ -154,19 +190,6 @@ export async function register(req, res, next) {
       });
     }
 
-    // Verify campus email domain rule
-    const emailLower = data.email.toLowerCase();
-    const emailDomain = emailLower.split('@')[1];
-    if (campus.domain && emailDomain !== campus.domain.toLowerCase()) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_CAMPUS_DOMAIN',
-          message: `Email must belong to the campus domain (@${campus.domain}).`,
-        },
-      });
-    }
-
     const existingUser = await User.findOne({
       campusId: campus._id,
       email: emailLower,
@@ -175,7 +198,7 @@ export async function register(req, res, next) {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: { code: 'USER_EXISTS', message: 'A user with this email already exists on this campus.' },
+        error: { code: 'USER_EXISTS', message: 'An account with this email is already registered.' },
       });
     }
 
@@ -183,25 +206,33 @@ export async function register(req, res, next) {
 
     const user = await User.create({
       campusId: campus._id,
-      fullName: data.fullName,
+      fullName: data.fullName.trim(),
       email: emailLower,
       passwordHash,
       department: data.department || '',
       campusRole: 'STUDENT',
     });
 
-    const token = generateToken(user);
-
-    res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
-
-    const userObj = user.toObject();
-    delete userObj.passwordHash;
-    userObj.memberships = [];
+    await AuditLog.create({
+      campusId: campus._id,
+      actorId: user._id,
+      action: 'USER_REGISTERED',
+      targetType: 'User',
+      targetId: user._id,
+      metadata: {
+        campusId: campus._id.toString(),
+      },
+    });
 
     return res.status(201).json({
       success: true,
+      message: 'Account created. Sign in to continue.',
       data: {
-        user: userObj,
+        registered: true,
+        campus: {
+          id: campus._id,
+          name: campus.name,
+        },
       },
     });
   } catch (err) {

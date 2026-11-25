@@ -58,7 +58,15 @@ export async function connectDB(customUri = null) {
     return cached.conn;
   }
 
-  let uri = customUri || env.MONGODB_URI;
+  const useMemoryDb =
+    (!customUri && env.NODE_ENV === 'test') ||
+    (env.NODE_ENV !== 'production' &&
+      (process.env.CLUBRELAY_USE_MEMORY_DB === 'true' ||
+        process.env.CLUBRELAY_USE_MEMORY_DB === '1' ||
+        env.CLUBRELAY_USE_MEMORY_DB === 'true' ||
+        env.CLUBRELAY_USE_MEMORY_DB === '1'));
+
+  let uri = useMemoryDb ? '' : (customUri || env.MONGODB_URI || '').trim();
 
   if (!uri) {
     if (env.NODE_ENV === 'production') {
@@ -87,7 +95,9 @@ export async function connectDB(customUri = null) {
     console.warn('\n********************************************************************');
     console.warn('[WARNING] Using in-memory database: all data is lost on restart. Set MONGODB_URI for persistence.');
     console.warn('********************************************************************\n');
-    console.log('[Database] Using isolated in-memory replica set MongoDB');
+    console.log(
+      '[Database] Active database: Ephemeral local MongoDB Memory Server (replica set). Data will be lost on restart.'
+    );
   } else {
     console.log('[Database] Connecting to MongoDB database...');
   }

@@ -27,7 +27,12 @@ export async function runSeed() {
     );
   }
 
-  const uri = process.env.MONGODB_URI || '';
+  const usingMemoryDb =
+    process.env.NODE_ENV === 'test' ||
+    (process.env.NODE_ENV !== 'production' &&
+      (process.env.CLUBRELAY_USE_MEMORY_DB === 'true' || process.env.CLUBRELAY_USE_MEMORY_DB === '1'));
+
+  const uri = usingMemoryDb ? '' : process.env.MONGODB_URI || '';
   if (uri.includes('mongodb+srv') && process.env.ALLOW_SEED !== '1' && process.env.ALLOW_SEED_IN_PROD !== 'true') {
     console.error('[CRITICAL SEED ERROR] Database seeding targets a remote Atlas cluster (mongodb+srv)!');
     throw new Error(

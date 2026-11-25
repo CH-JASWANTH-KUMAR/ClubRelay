@@ -76,6 +76,36 @@ const authLimiter = rateLimit({
   skip: () => env.NODE_ENV === 'test', // avoid test suite throttling
 });
 
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // stricter limit for registration attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many registration attempts. Please try again later.',
+    },
+  },
+  skip: () => env.NODE_ENV === 'test',
+});
+
+const resolveLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many domain lookup requests. Please slow down.',
+    },
+  },
+  skip: () => env.NODE_ENV === 'test',
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'ClubRelay API', environment: env.NODE_ENV, timestamp: new Date().toISOString() });
@@ -84,11 +114,12 @@ app.get('/api/health', (req, res) => {
 // Database-backed Health Check
 app.use('/api/v1/health', healthRoutes);
 
-// Mount Rate-Limited Auth Endpoints
+// Mount Rate-Limited Auth & Campus Resolution Endpoints
 app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/register', authLimiter);
+app.use('/api/v1/auth/register', registerLimiter);
 app.use('/api/v1/auth/google', authLimiter);
 app.use('/api/v1/auth/github', authLimiter);
+app.use('/api/v1/campuses/resolve', resolveLimiter);
 
 // Mount API v1 Endpoints
 app.use('/api/v1/auth', authRoutes);
