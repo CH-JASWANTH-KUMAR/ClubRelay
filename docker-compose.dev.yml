@@ -1,0 +1,27 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: clubrelay-mongodb-dev
+    restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - clubrelay_mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "const h = db.hello(); if (h.isWritablePrimary) { quit(0); } try { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }); } catch (e) {} quit(db.hello().isWritablePrimary ? 0 : 1);",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+volumes:
+  clubrelay_mongo_data:
+    name: clubrelay_mongo_data

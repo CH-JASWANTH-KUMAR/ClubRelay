@@ -146,3 +146,39 @@ curl -i https://<your-domain>/api/v1/health
 - **Database Connected**: Returns HTTP `200 OK` with `{"ok":true,"db":"up"}`.
 - **Database Disconnected**: Returns HTTP `503 Service Unavailable` with `{"ok":false,"db":"down"}`.
 - **Security**: The health endpoint performs a lightweight MongoDB `{ ping: 1 }` command and does **not** expose database names, server hostnames, or collection statistics.
+
+---
+
+## 9. Safe Connectivity Check (`npm run db:check`)
+
+To verify that `server/.env` can reach MongoDB without dumping connection strings or topology internals:
+
+```bash
+npm run db:check
+```
+
+- Prints only `CONNECTED host=<host> db=<db>` on success, or `FAILED cause=<category>` (`auth failure`, `timeout/network or allowlist`, `DNS`, `other`).
+- Server selection timeout can be configured via `DB_SERVER_SELECTION_TIMEOUT_MS` (default `15000` ms).
+
+---
+
+## 10. Local Persistent Fallback (Docker Single-Node Replica Set)
+
+If MongoDB Atlas is temporarily unreachable (for example due to network/firewall restrictions or IP allowlist changes), you can run a persistent local MongoDB 7 single-node replica set (`rs0`) via Docker:
+
+```bash
+# Start local MongoDB 7 replica set (waits until healthy)
+npm run db:local:up
+
+# Stop local MongoDB 7 replica set
+npm run db:local:down
+```
+
+Set this connection string in your local `server/.env` (placeholder example):
+
+```env
+MONGODB_URI=mongodb://127.0.0.1:27017/clubrelay_dev?replicaSet=rs0
+```
+
+Because `docker-compose.dev.yml` initiates `rs0` automatically, multi-document MongoDB transactions (handovers, federated account linking) work identically to Atlas.
+

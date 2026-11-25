@@ -11,6 +11,7 @@ const envSchema = z
       .string()
       .min(16, 'JWT_SECRET must be at least 16 characters in development/test and 32 in production'),
     MONGODB_URI: z.string().optional(),
+    DB_SERVER_SELECTION_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
     CLUBRELAY_USE_MEMORY_DB: z.string().optional().default('false'),
     CLIENT_ORIGIN: z.string().optional(),
     ALLOW_SEED_IN_PROD: z.string().optional().default('false'),
@@ -116,6 +117,7 @@ const rawEnv = {
   PORT: process.env.PORT || '5000',
   JWT_SECRET: process.env.JWT_SECRET || devFallbackSecret,
   MONGODB_URI: process.env.MONGODB_URI,
+  DB_SERVER_SELECTION_TIMEOUT_MS: process.env.DB_SERVER_SELECTION_TIMEOUT_MS || 15000,
   CLUBRELAY_USE_MEMORY_DB: process.env.CLUBRELAY_USE_MEMORY_DB || 'false',
   CLIENT_ORIGIN:
     process.env.CLIENT_ORIGIN ||

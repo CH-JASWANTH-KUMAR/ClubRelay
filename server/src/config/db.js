@@ -15,11 +15,33 @@ export function redactConnectionString(str) {
   return str.replace(/(mongodb(?:\+srv)?:\/\/)[^/\s?]+@/gi, '$1***:***@');
 }
 
+export const ATLAS_UNREACHABLE_MESSAGE =
+  'Could not reach MongoDB Atlas. Most likely causes: (1) your current IP is not in Atlas Network Access, (2) your network blocks outbound port 27017 (try a phone hotspot), (3) wrong database user or password in MONGODB_URI. No credentials are shown here.';
+
 /**
- * Sanitizes an error by redacting connection credentials from its message and stack trace.
+ * Checks whether a Mongoose/MongoDB error represents a server selection failure.
+ */
+export function isServerSelectionError(err) {
+  if (!err) return false;
+  const name = err.name || '';
+  const msg = err.message || '';
+  return (
+    name === 'MongooseServerSelectionError' ||
+    name === 'MongoServerSelectionError' ||
+    /ServerSelectionError/i.test(name) ||
+    /Could not connect to any servers/i.test(msg)
+  );
+}
+
+/**
+ * Sanitizes an error by redacting connection credentials and replacing verbose
+ * server selection topology dumps with a clear actionable message.
  */
 export function sanitizeError(err) {
   if (!err) return err;
+  if (isServerSelectionError(err)) {
+    return new Error(ATLAS_UNREACHABLE_MESSAGE);
+  }
   if (err instanceof Error) {
     err.message = redactConnectionString(err.message);
     if (err.stack) {
@@ -59,7 +81,7 @@ export async function connectDB(customUri = null) {
   }
 
   const useMemoryDb =
-    (!customUri && env.NODE_ENV === 'test') ||
+    (!customUri && env.NODE_ENV === 'test' && process.env.TEST_USE_EXTERNAL_DB !== 'true') ||
     (env.NODE_ENV !== 'production' &&
       (process.env.CLUBRELAY_USE_MEMORY_DB === 'true' ||
         process.env.CLUBRELAY_USE_MEMORY_DB === '1' ||
@@ -102,8 +124,14 @@ export async function connectDB(customUri = null) {
     console.log('[Database] Connecting to MongoDB database...');
   }
 
+  const parsedTimeout = Number(process.env.DB_SERVER_SELECTION_TIMEOUT_MS);
+  const serverSelectionTimeoutMS =
+    Number.isFinite(parsedTimeout) && parsedTimeout > 0
+      ? parsedTimeout
+      : env.DB_SERVER_SELECTION_TIMEOUT_MS || 15000;
+
   const opts = {
-    serverSelectionTimeoutMS: 8000,
+    serverSelectionTimeoutMS,
     socketTimeoutMS: 45000,
     maxPoolSize: 10,
     retryWrites: true,
@@ -121,7 +149,11 @@ export async function connectDB(customUri = null) {
       })
       .catch((err) => {
         cached.promise = null;
-        throw sanitizeError(err);
+        const cleanErr = sanitizeError(err);
+        if (isServerSelectionError(err)) {
+          console.error(`\n[Database Error] ${ATLAS_UNREACHABLE_MESSAGE}\n`);
+        }
+        throw cleanErr;
       });
   }
 

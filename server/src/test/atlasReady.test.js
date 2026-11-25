@@ -2,9 +2,16 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import app from '../app.js';
-import { connectDB, disconnectDB, redactConnectionString, sanitizeError } from '../config/db.js';
+import {
+  connectDB,
+  disconnectDB,
+  redactConnectionString,
+  sanitizeError,
+  ATLAS_UNREACHABLE_MESSAGE,
+} from '../config/db.js';
 import { env } from '../config/env.js';
 import { validateSyncGuard } from '../../scripts/sync-indexes.js';
+import { classifyDbError } from '../../scripts/db-check.js';
 import { Campus, Membership, User } from '../models/index.js';
 
 describe('MongoDB Atlas Readiness Suite', () => {
@@ -78,6 +85,41 @@ describe('MongoDB Atlas Readiness Suite', () => {
         'Connection timeout connecting to mongodb+srv://***:***@cluster.xyz.mongodb.net/prod'
       );
       expect(sanitized.message).not.toContain('P@ssword999');
+    });
+
+    it('replaces MongooseServerSelectionError and TopologyDescription with clear redacted message', () => {
+      const selectionErr = new Error('Could not connect to any servers in your MongoDB Atlas cluster');
+      selectionErr.name = 'MongooseServerSelectionError';
+      selectionErr.reason = { type: 'ReplicaSetNoPrimary', servers: new Map() };
+
+      const sanitized = sanitizeError(selectionErr);
+      expect(sanitized.message).toBe(ATLAS_UNREACHABLE_MESSAGE);
+      expect(sanitized.message).toContain('your current IP is not in Atlas Network Access');
+      expect(sanitized.message).toContain('No credentials are shown here.');
+      expect(sanitized.reason).toBeUndefined();
+      expect(sanitized.cause).toBeUndefined();
+    });
+
+    it('configures DB_SERVER_SELECTION_TIMEOUT_MS with default 15000', () => {
+      expect(env.DB_SERVER_SELECTION_TIMEOUT_MS).toBeGreaterThanOrEqual(1000);
+      expect(typeof env.DB_SERVER_SELECTION_TIMEOUT_MS).toBe('number');
+    });
+
+    it('classifies db-check errors cleanly across auth failure, DNS, timeout/network or allowlist, and other', () => {
+      const authErr = new Error('bad auth : Authentication failed.');
+      authErr.code = 8000;
+      expect(classifyDbError(authErr)).toBe('auth failure');
+
+      const dnsErr = new Error('querySrv ENOTFOUND _mongodb._tcp.cluster.mongodb.net');
+      dnsErr.code = 'ENOTFOUND';
+      expect(classifyDbError(dnsErr)).toBe('DNS');
+
+      const allowlistErr = new Error('Could not connect to any servers');
+      allowlistErr.name = 'MongooseServerSelectionError';
+      expect(classifyDbError(allowlistErr)).toBe('timeout/network or allowlist');
+
+      const otherErr = new Error('Unexpected socket state');
+      expect(classifyDbError(otherErr)).toBe('other');
     });
   });
 

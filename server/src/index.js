@@ -12,7 +12,7 @@ async function bootstrap() {
       console.log(`[ClubRelay API] Server listening on http://localhost:${PORT}`);
     });
   } catch (err) {
-    console.error('[Bootstrap Error]:', err);
+    console.error('[Bootstrap Error]:', err?.message || err);
     process.exit(1);
   }
 }
