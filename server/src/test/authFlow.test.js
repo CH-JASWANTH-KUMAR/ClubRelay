@@ -3,6 +3,7 @@ import request from 'supertest';
 import app from '../app.js';
 import { connectDB, disconnectDB } from '../config/db.js';
 import { AuditLog, Campus, User } from '../models/index.js';
+import { getCandidateDomains } from '../utils/campusDomain.js';
 
 describe('Authentication Flow & Registration Hardening (Memory Server)', () => {
   let primaryCampus;
@@ -77,6 +78,26 @@ describe('Authentication Flow & Registration Hardening (Memory Server)', () => {
         name: 'State University',
       });
       expect(Object.keys(res.body.data.campus)).toEqual(['id', 'name']);
+    });
+
+    it('resolves institutional subdomain emails to the parent campus domain', async () => {
+      const res = await request(app).get('/api/v1/campuses/resolve?domain=student.state.edu');
+      expect(res.status).toBe(200);
+      expect(res.body.data.campus).toEqual({
+        id: primaryCampus._id.toString(),
+        name: 'State University',
+      });
+    });
+
+    it('rejects lookalike non-subdomain domains such as evil-state.edu', async () => {
+      const res = await request(app).get('/api/v1/campuses/resolve?domain=evil-state.edu');
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('CAMPUS_NOT_FOUND');
+    });
+
+    it('does not generate generic two-label public suffix candidates (e.g. ac.in, co.uk)', () => {
+      expect(getCandidateDomains('student.iitb.ac.in')).toEqual(['student.iitb.ac.in', 'iitb.ac.in']);
+      expect(getCandidateDomains('student.gitam.edu')).toEqual(['student.gitam.edu', 'gitam.edu']);
     });
 
     it('returns generic 404 when no campus matches the domain', async () => {
@@ -336,6 +357,27 @@ describe('Authentication Flow & Registration Hardening (Memory Server)', () => {
         c.startsWith('cr_auth_token=;')
       );
       expect(clearedCookie).toBeDefined();
+    });
+
+    it('supports full signup, login, and /auth/me using an institutional subdomain email (e.g. student.state.edu)', async () => {
+      const signupRes = await request(app).post('/api/v1/auth/register').send({
+        fullName: 'Subdomain Student',
+        email: 'sub.student@student.state.edu',
+        password: 'StudentPassword123!',
+      });
+      expect(signupRes.status).toBe(201);
+      expect(signupRes.body.data.campus).toEqual({
+        id: primaryCampus._id.toString(),
+        name: 'State University',
+      });
+
+      const loginRes = await request(app).post('/api/v1/auth/login').send({
+        email: 'sub.student@student.state.edu',
+        password: 'StudentPassword123!',
+      });
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.data.user.email).toBe('sub.student@student.state.edu');
+      expect(loginRes.body.data.user.campusId._id.toString()).toBe(primaryCampus._id.toString());
     });
   });
 });

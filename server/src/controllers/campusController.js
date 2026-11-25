@@ -1,4 +1,5 @@
 import { Campus, Club, AcademicTerm, Event, Approval, Handover } from '../models/index.js';
+import { findCampusesByDomain } from '../utils/campusDomain.js';
 
 export async function resolveCampusByDomain(req, res, next) {
   try {
@@ -10,7 +11,7 @@ export async function resolveCampusByDomain(req, res, next) {
       });
     }
 
-    const campuses = await Campus.find({ domain: rawDomain }).select('_id name');
+    const campuses = await findCampusesByDomain(rawDomain, '_id name');
     if (campuses.length !== 1) {
       return res.status(404).json({
         success: false,

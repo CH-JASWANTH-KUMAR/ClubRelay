@@ -3,8 +3,9 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { env } from '../config/env.js';
-import { User, Campus, Membership, FederatedIdentity, AuditLog } from '../models/index.js';
+import { User, Membership, FederatedIdentity, AuditLog } from '../models/index.js';
 import { generateToken } from '../middleware/auth.js';
+import { findCampusesByDomain } from '../utils/campusDomain.js';
 
 // Pre-computed bcrypt hash for constant-time comparison on failed lookups (mitigates timing attacks)
 const DUMMY_HASH = '$2a$12$e8I5Gy2cW3NlD.Hj.Nvh8eK2E74W2d5UaO5fGeqiK9Lw4lq3aZt/S';
@@ -44,8 +45,8 @@ export async function login(req, res, next) {
       });
     }
 
-    // Multi-tenant resolution: resolve all institutional campuses matching the email domain
-    const campuses = await Campus.find({ domain: emailDomain });
+    // Multi-tenant resolution: resolve all institutional campuses matching the email domain (including subdomains)
+    const campuses = await findCampusesByDomain(emailDomain);
     if (!campuses || campuses.length === 0) {
       await bcrypt.compare(password, DUMMY_HASH);
       return res.status(401).json({
@@ -147,8 +148,8 @@ export async function register(req, res, next) {
       });
     }
 
-    // Resolve campus strictly from email domain on the server
-    const domainCampuses = await Campus.find({ domain: emailDomain });
+    // Resolve campus strictly from email domain (or parent institutional domain) on the server
+    const domainCampuses = await findCampusesByDomain(emailDomain);
     if (domainCampuses.length === 0) {
       return res.status(400).json({
         success: false,
@@ -628,8 +629,8 @@ export async function handleFederatedLogin(req, res, { provider, providerUserId,
     return res.redirect(getClientRedirectUrl('/login?error=invalid_email_domain'));
   }
 
-  // Resolve campus based on verified email domain
-  const matchingCampuses = await Campus.find({ domain: emailDomain.toLowerCase() });
+  // Resolve campus based on verified email domain (including institutional subdomains)
+  const matchingCampuses = await findCampusesByDomain(emailDomain);
 
   if (candidateUsers.length > 0) {
     // If no configured campus matches domain, do not link
