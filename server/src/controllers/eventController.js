@@ -10,6 +10,7 @@ import {
   AcademicTerm,
   Membership,
 } from '../models/index.js';
+import { resolveClubAccess } from '../services/rbacService.js';
 
 const createEventSchema = z
   .object({
@@ -178,7 +179,7 @@ export async function getEvent(req, res, next) {
       campusId: req.campusId,
     })
       .populate('leadOrganizerId', 'fullName email avatarUrl department')
-      .populate('clubId', 'name code category facultyCoordinatorId')
+      .populate('clubId', 'name code category facultyCoordinatorId campusId workspaceOwnerId activeTermId')
       .populate('academicTermId', 'name isCurrent');
 
     if (!event) {
@@ -189,24 +190,12 @@ export async function getEvent(req, res, next) {
     }
 
     const club = event.clubId;
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
-    const isAssignedFaculty =
-      req.user.campusRole === 'FACULTY_COORDINATOR' &&
-      club?.facultyCoordinatorId &&
-      club.facultyCoordinatorId.toString() === req.user._id.toString();
+    const access = await resolveClubAccess(req.user, club, {
+      allowCampusAdmin: true,
+      allowAssignedFaculty: true,
+    });
 
-    let isMember = false;
-    if (!isCampusAdmin && !isAssignedFaculty) {
-      const membership = await Membership.findOne({
-        campusId: req.campusId,
-        clubId: club?._id || club,
-        userId: req.user._id,
-        status: 'ACTIVE',
-      });
-      isMember = !!membership;
-    }
-
-    if (!isCampusAdmin && !isAssignedFaculty && !isMember) {
+    if (!access.allowed || !access.capabilities.has('events.view')) {
       return res.status(403).json({
         success: false,
         error: {
@@ -254,11 +243,14 @@ export async function updateEvent(req, res, next) {
       });
     }
 
-    // Role check: Lead Organizer, Club President/Secretary, or Campus Admin
-    const userRole = await getUserClubRole(req.campusId, event.clubId, req.user._id);
-    const isLeadOrganizer = event.leadOrganizerId?.toString() === req.user._id.toString();
-    const isExecutive = userRole === 'PRESIDENT' || userRole === 'SECRETARY';
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const access = await resolveClubAccess(req.user, event.clubId, { allowCampusAdmin: true });
+    const isLeadOrganizer =
+      access.isActiveMember && event.leadOrganizerId?.toString() === req.user._id.toString();
+    const isExecutive =
+      access.capabilities.has('events.edit') ||
+      access.capabilities.has('club.manage_settings') ||
+      ['PRESIDENT', 'SECRETARY'].includes(access.legacyRoleEquivalent);
+    const isCampusAdmin = access.isCampusAdmin;
 
     if (!isLeadOrganizer && !isExecutive && !isCampusAdmin) {
       return res.status(403).json({
@@ -384,10 +376,16 @@ export async function submitProposal(req, res, next) {
       });
     }
 
-    // Verify user membership in club and role
-    const userRole = await getUserClubRole(req.campusId, event.clubId._id, req.user._id);
-    const isLeadOrganizer = event.leadOrganizerId?.toString() === req.user._id.toString();
-    const canSubmit = isLeadOrganizer || ['PRESIDENT', 'SECRETARY', 'CORE_TEAM'].includes(userRole);
+    const access = await resolveClubAccess(req.user, event.clubId._id || event.clubId, {
+      allowCampusAdmin: true,
+    });
+    const isLeadOrganizer =
+      access.isActiveMember && event.leadOrganizerId?.toString() === req.user._id.toString();
+    const canSubmit =
+      isLeadOrganizer ||
+      access.capabilities.has('events.submit_for_approval') ||
+      access.capabilities.has('events.edit') ||
+      ['PRESIDENT', 'SECRETARY', 'CORE_TEAM'].includes(access.legacyRoleEquivalent);
 
     if (!canSubmit) {
       return res.status(403).json({
@@ -472,11 +470,13 @@ export async function saveRetrospective(req, res, next) {
       });
     }
 
-    // Role check: Lead Organizer, President, Secretary
-    const userRole = await getUserClubRole(req.campusId, event.clubId, req.user._id);
-    const isLeadOrganizer = event.leadOrganizerId?.toString() === req.user._id.toString();
-    const isExecutive = userRole === 'PRESIDENT' || userRole === 'SECRETARY';
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const access = await resolveClubAccess(req.user, event.clubId, { allowCampusAdmin: true });
+    const isLeadOrganizer =
+      access.isActiveMember && event.leadOrganizerId?.toString() === req.user._id.toString();
+    const isExecutive =
+      access.capabilities.has('events.edit') ||
+      ['PRESIDENT', 'SECRETARY'].includes(access.legacyRoleEquivalent);
+    const isCampusAdmin = access.isCampusAdmin;
 
     if (!isLeadOrganizer && !isExecutive && !isCampusAdmin) {
       return res.status(403).json({

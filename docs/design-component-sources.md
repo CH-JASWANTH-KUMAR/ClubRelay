@@ -193,3 +193,50 @@ This codebase enforces strict licensing, open-source attribution, and anti-fabri
 4. **Google Fonts (Outfit & DM Sans)**:
    - High readability display pairing for modern educational applications.
 
+
+
+---
+
+## 4. Phase 3.5 — Midnight Workshop Redesign Component Sources & Attributions
+
+This section records the component design references, libraries, and attribution sources used in the **ClubRelay Phase 3.5 — Midnight Workshop Redesign**.
+
+### Typography
+- **Space Grotesk Variable**: Display and headline typeface.
+  - Source: `@fontsource-variable/space-grotesk`
+  - License: SIL Open Font License, 1.1
+- **DM Sans Variable**: Body, navigation, and interface text.
+  - Source: `@fontsource-variable/dm-sans`
+  - License: SIL Open Font License, 1.1
+- **Instrument Serif**: Editorial accent phrases.
+  - Source: `@fontsource/instrument-serif`
+  - License: SIL Open Font License, 1.1
+
+### 3D Graphics & Visualisation
+- **Three.js & React Three Fiber v8**:
+  - Package: `three` (v0.187.0), `@react-three/fiber` (v8.18.0)
+  - License: MIT
+  - Usage: Custom procedural 3D Relay Engine geometry with interlocking sculptural ribbons (Catmull-Rom tubular knot), central illuminated relay core, and orbital nodes with dynamic satin metallic charcoal and oxidised mint/signal lime emissive materials.
+  - Performance: IntersectionObserver unmounting / idle pause, prefers-reduced-motion support, non-WebGL static SVG poster fallback.
+
+### Interaction & Component References
+- **Pill Navigation**:
+  - Inspiration: React Bits Pill Navigation (`https://reactbits.dev/components/pill-nav`)
+  - Implementation: Custom lightweight accessible implementation in `client/src/components/marketing/navigation/MarketingNavbar.jsx`. Floating dark translucent pill with backdrop blur, active section indicator, smooth anchor scrolling, keyboard navigation, and mobile dialog drawer.
+- **Spotlight Effect**:
+  - Inspiration: Aceternity UI Spotlight (`https://ui.aceternity.com/components/spotlight`)
+  - Implementation: Bespoke radial SVG lighting overlay with subtle movement for the interactive product preview window in `client/src/components/marketing/sections/ProductExperienceSection.jsx`.
+- **Animated Beam**:
+  - Inspiration: Magic UI Animated Beam (`https://magicui.design/docs/components/animated-beam`)
+  - Implementation: Bespoke SVG path dashed animation and GSAP path interpolation for the Leadership Handover section in `client/src/components/marketing/visuals/ContinuityTimeline.jsx`.
+- **Tilted Card Interaction**:
+  - Inspiration: React Bits Tilted Card (`https://reactbits.dev/components/tilted-card`)
+  - Implementation: Targeted subtle 3D transform with pointer tracking on specific featured cards without global scroll-lag.
+
+### Motion & Animation Engines
+- **GSAP (GreenSock)**: Version 3.15.1 with `@gsap/react` 2.1.2.
+  - License: Standard GreenSock License
+  - Role: Primary motion engine for hero entrance, timeline choreography, and ScrollTrigger triggers.
+- **Lenis**: Version 1.3.27.
+  - License: MIT
+  - Role: Smooth scroll engine driven exclusively by GSAP ticker.

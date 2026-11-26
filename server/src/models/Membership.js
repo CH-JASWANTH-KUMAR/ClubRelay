@@ -54,5 +54,6 @@ const membershipSchema = new mongoose.Schema(
 // One active membership per user per club per academic term
 membershipSchema.index({ campusId: 1, clubId: 1, userId: 1, academicTermId: 1 }, { unique: true });
 membershipSchema.index({ clubId: 1, clubRole: 1, status: 1 });
+membershipSchema.index({ userId: 1, status: 1 });
 
 export const Membership = mongoose.model('Membership', membershipSchema);

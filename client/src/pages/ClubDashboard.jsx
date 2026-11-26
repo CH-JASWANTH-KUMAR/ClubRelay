@@ -101,17 +101,22 @@ export function ClubDashboard() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-heading text-xl font-bold text-ink tracking-tight">
-                {club?.name || 'Club Workspace'}
+                {club?.name || 'Organization Workspace'}
               </h2>
               <Badge variant="approved" size="sm">
-                {club?.category || 'General'}
+                {club?.category === 'CUSTOM' ? club?.customCategory || 'Custom' : club?.category || 'General'}
               </Badge>
               <Badge variant="default" size="sm">
-                Term: 2025/2026
+                Term: {club?.activeTermId?.name || 'Active Term'}
               </Badge>
+              {(clubData?.userAccess?.positions || []).map((pos) => (
+                <Badge key={pos.positionId} variant="planning" size="sm">
+                  {pos.name}
+                </Badge>
+              ))}
             </div>
             <p className="text-xs text-charcoal-600 mt-1 max-w-2xl">
-              {club?.description || 'Active campus student organization repository and continuity workspace.'}
+              {club?.mission || club?.description || 'Active student organization workspace and institutional continuity hub.'}
             </p>
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
               <Tag className="w-3 h-3 text-charcoal-400" />
@@ -127,17 +132,32 @@ export function ClubDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/clubs/${clubId}/handover`)}
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5" /> Handover
-          </Button>
-          <Button size="sm" onClick={() => navigate(`/clubs/${clubId}/events`)}>
-            <Calendar className="w-3.5 h-3.5" /> Manage Events
-          </Button>
+        <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+          {clubData?.userAccess?.capabilities?.includes('club.manage_structure') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/clubs/${clubId}/structure`)}
+            >
+              Structure & Roles
+            </Button>
+          )}
+          {(clubData?.userAccess?.capabilities?.includes('handover.view') ||
+            clubData?.userAccess?.capabilities?.includes('handover.manage_own') ||
+            clubData?.userAccess?.capabilities?.includes('handover.manage_all')) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/clubs/${clubId}/handover`)}
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5" /> Handover
+            </Button>
+          )}
+          {clubData?.userAccess?.capabilities?.includes('events.create') && (
+            <Button size="sm" onClick={() => navigate(`/clubs/${clubId}/events`)}>
+              <Calendar className="w-3.5 h-3.5" /> Manage Events
+            </Button>
+          )}
         </div>
       </div>
 
@@ -387,7 +407,7 @@ export function ClubDashboard() {
                       </div>
                     </div>
                     <Badge variant="default" size="sm">
-                      {m.clubRole.replace('_', ' ')}
+                      {String(m.title || m.clubRole || 'Member').replace('_', ' ')}
                     </Badge>
                   </div>
                 ))
@@ -395,26 +415,30 @@ export function ClubDashboard() {
             </div>
           </Card>
 
-          {/* Past Event Performance Summary */}
+          {/* Past Event & Workspace Real Summary (Zero Fake Metrics) */}
           <Card className="dash-widget">
             <CardHeader
-              title="Historical Continuity"
-              subtitle="Recorded outcomes across prior milestones"
+              title="Organization Snapshot"
+              subtitle="Live metrics calculated from workspace records"
             />
             <div className="space-y-2.5 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-border">
+                <span className="text-charcoal-500">Active Members</span>
+                <span className="font-bold text-charcoal-900">{metrics?.memberCount ?? 0}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-border">
+                <span className="text-charcoal-500">Configured Positions</span>
+                <span className="font-bold text-charcoal-900">{metrics?.positionsCount ?? clubData?.positions?.length ?? 0}</span>
+              </div>
               <div className="flex justify-between items-center py-1 border-b border-border">
                 <span className="text-charcoal-500">Events Completed</span>
                 <span className="font-bold text-charcoal-900">{completedEvents.length}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-border">
-                <span className="text-charcoal-500">Total Student Reach</span>
+                <span className="text-charcoal-500">Total Recorded Attendance</span>
                 <span className="font-bold text-charcoal-900">
                   {completedEvents.reduce((acc, c) => acc + (c.actualAttendance || 0), 0)} Attendees
                 </span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-border">
-                <span className="text-charcoal-500">Budget Efficiency</span>
-                <span className="font-bold text-forest-800">96.8% On Budget</span>
               </div>
               <div className="pt-2">
                 <Button
@@ -423,7 +447,7 @@ export function ClubDashboard() {
                   className="w-full text-xs"
                   onClick={() => navigate(`/clubs/${clubId}/reports`)}
                 >
-                  Generate Report
+                  View Reports & Analytics
                 </Button>
               </div>
             </div>

@@ -5,7 +5,7 @@ const notificationSchema = new mongoose.Schema(
     campusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Campus',
-      required: true,
+      default: null,
       index: true,
     },
     userId: {
@@ -24,7 +24,17 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['APPROVAL', 'TASK', 'HANDOVER', 'DECISION', 'SYSTEM'],
+      enum: [
+        'APPROVAL',
+        'TASK',
+        'HANDOVER',
+        'DECISION',
+        'SYSTEM',
+        'JOIN_REQUEST',
+        'JOIN_APPROVED',
+        'MEMBER_JOINED',
+        'ORGANIZATION',
+      ],
       default: 'SYSTEM',
     },
     link: {

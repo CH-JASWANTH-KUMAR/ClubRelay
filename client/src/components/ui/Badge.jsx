@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function Badge({ children, variant = 'default', size = 'md', className = '' }) {
-  const base = 'inline-flex items-center font-medium rounded-full';
+  const base = 'inline-flex items-center font-medium rounded-full whitespace-nowrap';
 
   const variants = {
     default: 'bg-subtle text-ink border border-border',

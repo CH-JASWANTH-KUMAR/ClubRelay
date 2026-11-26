@@ -5,7 +5,13 @@ const academicTermSchema = new mongoose.Schema(
     campusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Campus',
-      required: true,
+      default: null,
+      index: true,
+    },
+    clubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Club',
+      default: null,
       index: true,
     },
     name: {
@@ -31,6 +37,6 @@ const academicTermSchema = new mongoose.Schema(
   }
 );
 
-academicTermSchema.index({ campusId: 1, name: 1 }, { unique: true });
+academicTermSchema.index({ campusId: 1, clubId: 1, name: 1 }, { unique: true });
 
 export const AcademicTerm = mongoose.model('AcademicTerm', academicTermSchema);

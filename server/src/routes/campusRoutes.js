@@ -1,9 +1,16 @@
 import express from 'express';
-import { listCampuses, getCampusDetails, getCampusStats, listTerms } from '../controllers/campusController.js';
+import {
+  listCampuses,
+  getCampusDetails,
+  getCampusStats,
+  listTerms,
+  resolveCampusByDomain,
+} from '../controllers/campusController.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
+router.get('/resolve', resolveCampusByDomain);
 router.get('/', listCampuses);
 router.get('/:campusId', getCampusDetails);
 router.get('/:campusId/stats', requireAuth, getCampusStats);

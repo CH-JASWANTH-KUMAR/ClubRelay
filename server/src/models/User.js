@@ -6,8 +6,24 @@ const userSchema = new mongoose.Schema(
     campusId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Campus',
-      required: true,
+      default: null,
       index: true,
+    },
+    accountType: {
+      type: String,
+      enum: ['CAMPUS', 'PERSONAL'],
+      default: 'CAMPUS',
+    },
+    pendingCampusDomain: {
+      type: String,
+      default: '',
+      lowercase: true,
+      trim: true,
+    },
+    lastActiveClubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Club',
+      default: null,
     },
     fullName: {
       type: String,

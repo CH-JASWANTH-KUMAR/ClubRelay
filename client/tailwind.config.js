@@ -112,9 +112,51 @@ export default {
           700: '#B88D22',
           800: '#967118',
         },
+        // Midnight Workshop Marketing Palette
+        midnight: {
+          DEFAULT: '#101815',
+          workshop: '#101815',
+          forest: '#19251F',
+          graphite: '#151A18',
+          surface: '#16221C',
+          card: '#131B17',
+          border: '#23322A',
+          borderLight: '#2F4339',
+        },
+        warmPaper: {
+          DEFAULT: '#F0EDE3',
+          light: '#F8F6F0',
+          dark: '#E4DFD3',
+          ink: '#19251F',
+        },
+        softStone: {
+          DEFAULT: '#DDDCD1',
+          light: '#E6E5DC',
+          dark: '#CAC9BC',
+        },
+        signalLime: {
+          DEFAULT: '#D4EE79',
+          hover: '#C4E15F',
+          active: '#B2D443',
+          muted: 'rgba(212, 238, 121, 0.15)',
+        },
+        oxidisedMint: {
+          DEFAULT: '#82C9AE',
+          hover: '#70B99E',
+          muted: 'rgba(130, 201, 174, 0.15)',
+        },
+        warmCopper: {
+          DEFAULT: '#D77D5E',
+          hover: '#C56B4C',
+          muted: 'rgba(215, 125, 94, 0.15)',
+        },
+        mutedSage: '#A8B5A9',
+        lightSand: '#F0EDE3',
+        deepInk: '#19251F',
       },
       fontFamily: {
         sans: [
+          '"DM Sans Variable"',
           'DM Sans',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -124,17 +166,19 @@ export default {
           'Arial',
           'sans-serif',
         ],
-        heading: [
-          'Outfit',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"Segoe UI"',
-          'Roboto',
-          '"Helvetica Neue"',
-          'Arial',
+        display: [
+          '"Space Grotesk Variable"',
+          '"Space Grotesk"',
           'sans-serif',
         ],
-        display: [
+        serif: [
+          '"Instrument Serif"',
+          'Georgia',
+          'serif',
+        ],
+        heading: [
+          '"Space Grotesk Variable"',
+          '"Space Grotesk"',
           'Outfit',
           '-apple-system',
           'BlinkMacSystemFont',

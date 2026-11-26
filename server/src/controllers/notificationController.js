@@ -4,7 +4,6 @@ export async function listNotifications(req, res, next) {
   try {
     const notifications = await Notification.find({
       userId: req.user._id,
-      campusId: req.campusId,
     })
       .sort({ createdAt: -1 })
       .limit(30);

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { EventTask, Event, Membership, Notification } from '../models/index.js';
+import { EventTask, Event, ClubMembership, Notification } from '../models/index.js';
+import { resolveClubAccess } from '../services/rbacService.js';
 
 const createTaskSchema = z
   .object({
@@ -38,26 +39,12 @@ export async function listTasks(req, res, next) {
       });
     }
 
-    // Role check: Campus Admin, assigned Faculty Coordinator, or active Club Member
-    const club = event.clubId;
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
-    const isAssignedFaculty =
-      req.user.campusRole === 'FACULTY_COORDINATOR' &&
-      club?.facultyCoordinatorId &&
-      club.facultyCoordinatorId.toString() === req.user._id.toString();
+    const access = await resolveClubAccess(req.user, event.clubId, {
+      allowCampusAdmin: true,
+      allowAssignedFaculty: true,
+    });
 
-    let isMember = false;
-    if (!isCampusAdmin && !isAssignedFaculty) {
-      const membership = await Membership.findOne({
-        campusId: req.campusId,
-        clubId: club?._id || club,
-        userId: req.user._id,
-        status: 'ACTIVE',
-      });
-      isMember = !!membership;
-    }
-
-    if (!isCampusAdmin && !isAssignedFaculty && !isMember) {
+    if (!access.allowed || !access.capabilities.has('tasks.view')) {
       return res.status(403).json({
         success: false,
         error: {
@@ -97,17 +84,14 @@ export async function createTask(req, res, next) {
       });
     }
 
-    // Role check: General members cannot create tasks
-    const membership = await Membership.findOne({
-      campusId: req.campusId,
-      clubId: event.clubId,
-      userId: req.user._id,
-      status: 'ACTIVE',
-    });
-
-    const isLeadOrganizer = event.leadOrganizerId?.toString() === req.user._id.toString();
-    const isCoreOrAbove = membership && ['CORE_TEAM', 'SECRETARY', 'PRESIDENT'].includes(membership.clubRole);
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const access = await resolveClubAccess(req.user, event.clubId, { allowCampusAdmin: true });
+    const isLeadOrganizer =
+      access.isActiveMember && event.leadOrganizerId?.toString() === req.user._id.toString();
+    const isCoreOrAbove =
+      access.capabilities.has('tasks.manage') ||
+      access.capabilities.has('projects.create') ||
+      ['CORE_TEAM', 'SECRETARY', 'PRESIDENT'].includes(access.legacyRoleEquivalent);
+    const isCampusAdmin = access.isCampusAdmin;
 
     if (!isLeadOrganizer && !isCoreOrAbove && !isCampusAdmin) {
       return res.status(403).json({
@@ -169,17 +153,14 @@ export async function updateTask(req, res, next) {
       });
     }
 
-    // Check membership and permissions
-    const membership = await Membership.findOne({
-      campusId: req.campusId,
-      clubId: task.clubId,
-      userId: req.user._id,
-      status: 'ACTIVE',
-    });
-
-    const isAssignee = task.assigneeId?.toString() === req.user._id.toString();
-    const isCoreOrAbove = membership && ['CORE_TEAM', 'SECRETARY', 'PRESIDENT'].includes(membership.clubRole);
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const access = await resolveClubAccess(req.user, task.clubId, { allowCampusAdmin: true });
+    const isAssignee =
+      access.isActiveMember && task.assigneeId?.toString() === req.user._id.toString();
+    const isCoreOrAbove =
+      access.capabilities.has('tasks.manage') ||
+      access.capabilities.has('projects.edit') ||
+      ['CORE_TEAM', 'SECRETARY', 'PRESIDENT'].includes(access.legacyRoleEquivalent);
+    const isCampusAdmin = access.isCampusAdmin;
 
     if (!isAssignee && !isCoreOrAbove && !isCampusAdmin) {
       return res.status(403).json({
@@ -229,15 +210,12 @@ export async function deleteTask(req, res, next) {
       });
     }
 
-    const membership = await Membership.findOne({
-      campusId: req.campusId,
-      clubId: task.clubId,
-      userId: req.user._id,
-      status: 'ACTIVE',
-    });
-
-    const isCoreOrAbove = membership && ['CORE_TEAM', 'SECRETARY', 'PRESIDENT'].includes(membership.clubRole);
-    const isCampusAdmin = req.user.campusRole === 'CAMPUS_ADMIN';
+    const access = await resolveClubAccess(req.user, task.clubId, { allowCampusAdmin: true });
+    const isCoreOrAbove =
+      access.capabilities.has('tasks.manage') ||
+      access.capabilities.has('projects.edit') ||
+      ['CORE_TEAM', 'SECRETARY', 'PRESIDENT'].includes(access.legacyRoleEquivalent);
+    const isCampusAdmin = access.isCampusAdmin;
 
     if (!isCoreOrAbove && !isCampusAdmin) {
       return res.status(403).json({
@@ -262,14 +240,17 @@ export async function deleteTask(req, res, next) {
 
 export async function getMyWorkTasks(req, res, next) {
   try {
-    // 1. Fetch user's active club memberships on this campus
-    const memberships = await Membership.find({
-      campusId: req.campusId,
-      userId: req.user._id,
-      status: 'ACTIVE',
-    }).select('clubId clubRole');
+    // Active clubs resolved on auth middleware include both legacy & custom memberships
+    const activeMemberships = req.user.memberships || [];
+    const activeClubIds = activeMemberships.map((m) => m.clubId?._id || m.clubId).filter(Boolean);
 
-    const activeClubIds = memberships.map((m) => m.clubId);
+    if (activeClubIds.length === 0) {
+      const fallbackCustom = await ClubMembership.find({
+        userId: req.user._id,
+        status: 'ACTIVE',
+      }).select('clubId');
+      activeClubIds.push(...fallbackCustom.map((m) => m.clubId));
+    }
 
     if (activeClubIds.length === 0) {
       return res.json({

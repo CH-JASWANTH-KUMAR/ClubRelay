@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
-import { User, Membership } from '../models/index.js';
+import { User } from '../models/index.js';
+import { buildEnrichedUserMemberships } from '../services/rbacService.js';
 
 const JWT_SECRET = env.JWT_SECRET;
 
@@ -38,15 +39,13 @@ export async function requireAuth(req, res, next) {
 
     // Attach user and campus to request
     req.user = user;
-    req.campusId = user.campusId?._id || user.campusId;
+    req.campusId = user.campusId?._id || user.campusId || null;
 
-    // Load memberships for convenient RBAC
-    const memberships = await Membership.find({
-      userId: user._id,
-      status: 'ACTIVE',
-    }).populate('clubId');
-
+    // Load enriched memberships (combining custom position assignments & legacy records)
+    const { memberships, draftClubs, pendingInvitationsCount } = await buildEnrichedUserMemberships(user);
     req.user.memberships = memberships;
+    req.draftClubs = draftClubs;
+    req.pendingInvitationsCount = pendingInvitationsCount;
 
     next();
   } catch (err) {
@@ -73,7 +72,7 @@ export function generateToken(user) {
   return jwt.sign(
     {
       userId: user._id,
-      campusId: user.campusId?._id || user.campusId,
+      campusId: user.campusId?._id || user.campusId || null,
       campusRole: user.campusRole,
     },
     JWT_SECRET,

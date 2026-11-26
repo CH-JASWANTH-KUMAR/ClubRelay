@@ -4,6 +4,7 @@ import {
   register,
   logout,
   getCurrentUser,
+  updateActiveClubPreference,
   getProviders,
   googleAuth,
   googleCallback,
@@ -19,6 +20,7 @@ router.post('/login', login);
 router.post('/register', register);
 router.post('/logout', logout);
 router.get('/me', requireAuth, getCurrentUser);
+router.put('/active-club', requireAuth, updateActiveClubPreference);
 
 // OAuth Routes
 router.get('/google', googleAuth);

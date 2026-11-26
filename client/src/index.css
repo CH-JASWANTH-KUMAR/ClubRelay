@@ -1,6 +1,9 @@
 /* Hallmark · v2.0.0 · ClubRelay Campus Energy System */
 /* theme: bespoke-campus-energy · genre: modern-minimal · job: university organization continuity */
 
+@import './components/marketing/styles/marketing-theme.css';
+@import './components/marketing/styles/marketing-effects.css';
+
 :root {
   /* Campus Energy Palette */
   --color-brand-primary: #315BDB;
@@ -145,6 +148,15 @@ h1, h2, h3, h4, .font-heading {
 .dark-grid-canvas-bg {
   background-image: radial-gradient(circle, var(--color-brand-dot) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+.auth-canvas-grid {
+  background-color: var(--color-canvas);
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(49, 91, 219, 0.08) 0%, transparent 65%),
+    linear-gradient(to right, rgba(49, 91, 219, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(49, 91, 219, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
 }
 
 .btn-nowrap {

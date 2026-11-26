@@ -1,6 +1,7 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import gsap from 'gsap';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
@@ -13,6 +14,7 @@ import { RelayContinuitySection } from '../components/marketing/RelayContinuityS
 import { FinalCtaSection } from '../components/marketing/FinalCtaSection';
 import { ProblemSection } from '../components/marketing/ProblemSection';
 import { CampusCommunities } from '../components/marketing/CampusCommunities';
+import { ProductExperienceSection } from '../components/marketing/sections/ProductExperienceSection';
 
 const mockToast = {
   addToast: vi.fn(),
@@ -231,13 +233,16 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
         </MemoryRouter>
       );
 
-      const eventsTab = screen.getByRole('button', { name: /event cockpit/i });
+      const eventsTab = screen.getByRole('tab', { name: /event cockpit/i });
       fireEvent.click(eventsTab);
-      expect(screen.getByText(/7-tab event cockpit/i)).toBeInTheDocument();
+      expect(screen.getByText(/Phase: Planning/i)).toBeInTheDocument();
+      expect(screen.getByText(/Venue booking and permits/i)).toBeInTheDocument();
+      expect(screen.getByText(/Stage equipment setup/i)).toBeInTheDocument();
 
-      const workTab = screen.getByRole('button', { name: /my work/i });
+      const workTab = screen.getByRole('tab', { name: /my work/i });
       fireEvent.click(workTab);
-      expect(screen.getByText(/my work personal cockpit/i)).toBeInTheDocument();
+      expect(screen.getByText(/Sample Engineering Society/i)).toBeInTheDocument();
+      expect(screen.getByText(/Submit audio equipment requisition/i)).toBeInTheDocument();
     });
 
     it('shows authenticated workspace navigation button when logged in', () => {
@@ -276,6 +281,119 @@ describe('ClubRelay Brand Experience & Landing Page', () => {
 
       // Close mobile drawer
       fireEvent.click(toggleButton);
+    });
+  });
+
+  describe('ProductExperienceSection Auto-Advance Timer', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      gsap.ticker.lagSmoothing(false);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      gsap.ticker.lagSmoothing(500, 33);
+    });
+
+    const advanceGSAP = (seconds) => {
+      gsap.ticker.time += seconds;
+      if (gsap.ticker._listeners && gsap.ticker._listeners[0]) {
+        gsap.ticker._listeners[0](gsap.ticker.time);
+      }
+      vi.advanceTimersByTime(seconds * 1000);
+    };
+
+    it('advancing 6s selects the next item', () => {
+      render(<ProductExperienceSection />);
+      const eventsTab = screen.getByRole('tab', { name: /event cockpit/i });
+      const workTab = screen.getByRole('tab', { name: /my work/i });
+
+      expect(eventsTab.getAttribute('aria-selected')).toBe('true');
+      expect(workTab.getAttribute('aria-selected')).toBe('false');
+
+      act(() => {
+        advanceGSAP(6.05);
+      });
+
+      expect(eventsTab.getAttribute('aria-selected')).toBe('false');
+      expect(workTab.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('clicking item 3 then advancing 6s selects item 4', () => {
+      render(<ProductExperienceSection />);
+      const teamTab = screen.getByRole('tab', { name: /team and members/i });
+      const engTab = screen.getByRole('tab', { name: /engineering projects/i });
+
+      // Click item 3 (team)
+      act(() => {
+        fireEvent.click(teamTab);
+      });
+
+      expect(teamTab.getAttribute('aria-selected')).toBe('true');
+      expect(engTab.getAttribute('aria-selected')).toBe('false');
+
+      act(() => {
+        advanceGSAP(6.05);
+      });
+
+      expect(teamTab.getAttribute('aria-selected')).toBe('false');
+      expect(engTab.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('item 6 wraps to item 1', () => {
+      render(<ProductExperienceSection />);
+      const eventsTab = screen.getByRole('tab', { name: /event cockpit/i });
+      const handoverTab = screen.getByRole('tab', { name: /leadership handover/i });
+
+      act(() => {
+        fireEvent.click(handoverTab);
+      });
+
+      expect(handoverTab.getAttribute('aria-selected')).toBe('true');
+
+      act(() => {
+        advanceGSAP(6.05);
+      });
+
+      expect(eventsTab.getAttribute('aria-selected')).toBe('true');
+      expect(handoverTab.getAttribute('aria-selected')).toBe('false');
+    });
+
+    it('stage hover pauses and leaving resumes without reset', () => {
+      render(<ProductExperienceSection />);
+      const eventsTab = screen.getByRole('tab', { name: /event cockpit/i });
+      const workTab = screen.getByRole('tab', { name: /my work/i });
+      const stageCard = screen.getByRole('tabpanel').parentElement;
+
+      // Advance 3s halfway
+      act(() => {
+        advanceGSAP(3);
+      });
+
+      // Hover over stage panel
+      act(() => {
+        fireEvent.mouseEnter(stageCard);
+      });
+
+      // Advance 4s while hovered (should NOT advance tab)
+      act(() => {
+        advanceGSAP(4);
+      });
+
+      expect(eventsTab.getAttribute('aria-selected')).toBe('true');
+      expect(workTab.getAttribute('aria-selected')).toBe('false');
+
+      // Unhover stage panel
+      act(() => {
+        fireEvent.mouseLeave(stageCard);
+      });
+
+      // Advance remaining 3.1s to finish the 6s cycle
+      act(() => {
+        advanceGSAP(3.1);
+      });
+
+      expect(workTab.getAttribute('aria-selected')).toBe('true');
     });
   });
 });

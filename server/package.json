@@ -6,8 +6,11 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon --watch src src/index.js",
+    "dev": "nodemon --delay 250ms --watch src src/index.js",
     "seed": "node src/scripts/seed.js",
+    "seed:dev": "node scripts/seed-dev.js",
+    "db:indexes": "node scripts/sync-indexes.js",
+    "db:check": "node scripts/db-check.js",
     "clean-demo": "node src/scripts/cleanDemoData.js",
     "test": "vitest run",
     "lint": "eslint src"

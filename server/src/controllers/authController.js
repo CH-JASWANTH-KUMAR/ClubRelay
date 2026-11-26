@@ -1,9 +1,15 @@
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { env } from '../config/env.js';
-import { User, Campus, Membership, FederatedIdentity } from '../models/index.js';
+import { User, Membership, FederatedIdentity, AuditLog } from '../models/index.js';
 import { generateToken } from '../middleware/auth.js';
+import { buildEnrichedUserMemberships } from '../services/rbacService.js';
+import { findCampusesByDomain } from '../utils/campusDomain.js';
+
+// Pre-computed bcrypt hash for constant-time comparison on failed lookups (mitigates timing attacks)
+const DUMMY_HASH = '$2a$12$e8I5Gy2cW3NlD.Hj.Nvh8eK2E74W2d5UaO5fGeqiK9Lw4lq3aZt/S';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -11,11 +17,12 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
-  campusId: z.string(),
-  fullName: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
+  campusId: z.string().optional(),
+  fullName: z.string().trim().min(2, 'Full name must be at least 2 characters'),
+  email: z.string().trim().email('Please provide a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters long'),
   department: z.string().optional(),
+  accountType: z.enum(['CAMPUS', 'PERSONAL']).optional(),
 });
 
 const COOKIE_OPTIONS = {
@@ -30,8 +37,62 @@ export async function login(req, res, next) {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
-    const user = await User.findOne({ email: email.toLowerCase() }).populate('campusId');
-    if (!user) {
+    const emailLower = email.toLowerCase();
+    const emailDomain = emailLower.split('@')[1];
+    if (!emailDomain) {
+      await bcrypt.compare(password, DUMMY_HASH);
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    // Multi-tenant resolution: resolve all institutional campuses matching the email domain (including subdomains)
+    const campuses = await findCampusesByDomain(emailDomain);
+    let matchingUsers = [];
+
+    if (campuses && campuses.length > 0) {
+      const campusIds = campuses.map((c) => c._id);
+      matchingUsers = await User.find({
+        campusId: { $in: campusIds },
+        email: emailLower,
+      }).populate('campusId');
+    }
+
+    // Also look up standalone PERSONAL / campusless account when no campus account matched
+    if (matchingUsers.length === 0) {
+      matchingUsers = await User.find({
+        campusId: null,
+        email: emailLower,
+      }).populate('campusId');
+    }
+
+    // No matching user found
+    if (matchingUsers.length === 0) {
+      await bcrypt.compare(password, DUMMY_HASH);
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    // Multiple accounts found across campuses sharing the same domain (ambiguous tenant)
+    if (matchingUsers.length > 1) {
+      console.warn(
+        `[Login Multi-Tenant Ambiguity] Multiple user accounts (${matchingUsers.length}) found for domain: ${emailDomain}`
+      );
+      await bcrypt.compare(password, DUMMY_HASH);
+      return res.status(401).json({
+        success: false,
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
+      });
+    }
+
+    const user = matchingUsers[0];
+
+    // Reject inactive accounts with the same generic error
+    if (!user.isActive) {
+      await bcrypt.compare(password, DUMMY_HASH);
       return res.status(401).json({
         success: false,
         error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password.' },
@@ -54,14 +115,13 @@ export async function login(req, res, next) {
     // Set secure HttpOnly cookie
     res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
 
-    const memberships = await Membership.find({
-      userId: user._id,
-      status: 'ACTIVE',
-    }).populate('clubId');
+    const { memberships, draftClubs, pendingInvitationsCount } = await buildEnrichedUserMemberships(user);
 
     const userObj = user.toObject();
     delete userObj.passwordHash;
     userObj.memberships = memberships;
+    userObj.draftClubs = draftClubs;
+    userObj.pendingInvitationsCount = pendingInvitationsCount;
 
     // Production hardening: Token is transported exclusively in HttpOnly cookie
     return res.json({
@@ -79,12 +139,91 @@ export async function register(req, res, next) {
   try {
     const data = registerSchema.parse(req.body);
 
-    const campus = await Campus.findById(data.campusId);
-    if (!campus) {
-      return res.status(404).json({
+    const emailLower = data.email.trim().toLowerCase();
+    const emailDomain = emailLower.split('@')[1];
+    if (!emailDomain) {
+      return res.status(400).json({
         success: false,
-        error: { code: 'CAMPUS_NOT_FOUND', message: 'Selected campus was not found.' },
+        error: {
+          code: 'INVALID_CAMPUS_DOMAIN',
+          message: 'Please enter a valid email address.',
+        },
       });
+    }
+
+    // Resolve campus from email domain (or parent institutional domain) on the server
+    const domainCampuses = await findCampusesByDomain(emailDomain);
+
+    // Scenario E: explicit personal/independent account registration when no campus matches
+    if (domainCampuses.length === 0 && data.accountType === 'PERSONAL') {
+      const existingPersonal = await User.findOne({ campusId: null, email: emailLower });
+      if (existingPersonal) {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'USER_EXISTS', message: 'An account with this email is already registered.' },
+        });
+      }
+
+      const passwordHash = await User.hashPassword(data.password);
+      const user = await User.create({
+        campusId: null,
+        accountType: 'PERSONAL',
+        pendingCampusDomain: emailDomain,
+        fullName: data.fullName.trim(),
+        email: emailLower,
+        passwordHash,
+        department: data.department || '',
+        campusRole: 'STUDENT',
+      });
+
+      await AuditLog.create({
+        campusId: null,
+        actorId: user._id,
+        action: 'USER_REGISTERED',
+        targetType: 'User',
+        targetId: user._id,
+        metadata: { accountType: 'PERSONAL' },
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Personal account created. Sign in to continue.',
+        data: {
+          registered: true,
+          campus: null,
+          accountType: 'PERSONAL',
+        },
+      });
+    }
+
+    if (domainCampuses.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_CAMPUS_DOMAIN',
+          message: 'Unsupported campus email domain. Your campus may not be on ClubRelay yet.',
+        },
+      });
+    }
+
+    let campus = null;
+    if (domainCampuses.length === 1) {
+      // Single campus matches email domain: ignore any mismatched client campusId
+      campus = domainCampuses[0];
+    } else {
+      // Multiple campuses share domain: accept client campusId only if it matches one of them
+      if (data.campusId) {
+        campus = domainCampuses.find((c) => c._id.toString() === String(data.campusId));
+      }
+      if (!campus) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'AMBIGUOUS_CAMPUS',
+            message: 'Multiple campuses share this domain. Please select your campus or contact your campus coordinator.',
+          },
+        });
+      }
     }
 
     // Enforce campus registration policy
@@ -98,19 +237,6 @@ export async function register(req, res, next) {
       });
     }
 
-    // Verify campus email domain rule
-    const emailLower = data.email.toLowerCase();
-    const emailDomain = emailLower.split('@')[1];
-    if (campus.domain && emailDomain !== campus.domain.toLowerCase()) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_CAMPUS_DOMAIN',
-          message: `Email must belong to the campus domain (@${campus.domain}).`,
-        },
-      });
-    }
-
     const existingUser = await User.findOne({
       campusId: campus._id,
       email: emailLower,
@@ -119,7 +245,7 @@ export async function register(req, res, next) {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        error: { code: 'USER_EXISTS', message: 'A user with this email already exists on this campus.' },
+        error: { code: 'USER_EXISTS', message: 'An account with this email is already registered.' },
       });
     }
 
@@ -127,25 +253,34 @@ export async function register(req, res, next) {
 
     const user = await User.create({
       campusId: campus._id,
-      fullName: data.fullName,
+      accountType: 'CAMPUS',
+      fullName: data.fullName.trim(),
       email: emailLower,
       passwordHash,
       department: data.department || '',
       campusRole: 'STUDENT',
     });
 
-    const token = generateToken(user);
-
-    res.cookie('cr_auth_token', token, COOKIE_OPTIONS);
-
-    const userObj = user.toObject();
-    delete userObj.passwordHash;
-    userObj.memberships = [];
+    await AuditLog.create({
+      campusId: campus._id,
+      actorId: user._id,
+      action: 'USER_REGISTERED',
+      targetType: 'User',
+      targetId: user._id,
+      metadata: {
+        campusId: campus._id.toString(),
+      },
+    });
 
     return res.status(201).json({
       success: true,
+      message: 'Account created. Sign in to continue.',
       data: {
-        user: userObj,
+        registered: true,
+        campus: {
+          id: campus._id,
+          name: campus.name,
+        },
       },
     });
   } catch (err) {
@@ -172,18 +307,43 @@ export async function getCurrentUser(req, res, next) {
     const userObj = req.user.toObject();
     delete userObj.passwordHash;
 
-    const memberships = await Membership.find({
-      userId: req.user._id,
-      status: 'ACTIVE',
-    }).populate('clubId');
-
+    const { memberships, draftClubs, pendingInvitationsCount } = await buildEnrichedUserMemberships(req.user);
     userObj.memberships = memberships;
+    userObj.draftClubs = draftClubs;
+    userObj.pendingInvitationsCount = pendingInvitationsCount;
 
     return res.json({
       success: true,
       data: {
         user: userObj,
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateActiveClubPreference(req, res, next) {
+  try {
+    const clubId = req.body?.clubId || null;
+    if (clubId) {
+      const hasClub = (req.user.memberships || []).some(
+        (m) => (m.clubId?._id || m.clubId)?.toString() === String(clubId)
+      );
+      if (!hasClub && req.user.campusRole !== 'CAMPUS_ADMIN') {
+        return res.status(403).json({
+          success: false,
+          error: { code: 'NOT_A_MEMBER', message: 'You cannot switch to an organization you do not belong to.' },
+        });
+      }
+    }
+
+    req.user.lastActiveClubId = clubId;
+    await req.user.save();
+
+    return res.json({
+      success: true,
+      data: { lastActiveClubId: req.user.lastActiveClubId },
     });
   } catch (err) {
     next(err);
@@ -541,8 +701,8 @@ export async function handleFederatedLogin(req, res, { provider, providerUserId,
     return res.redirect(getClientRedirectUrl('/login?error=invalid_email_domain'));
   }
 
-  // Resolve campus based on verified email domain
-  const matchingCampuses = await Campus.find({ domain: emailDomain.toLowerCase() });
+  // Resolve campus based on verified email domain (including institutional subdomains)
+  const matchingCampuses = await findCampusesByDomain(emailDomain);
 
   if (candidateUsers.length > 0) {
     // If no configured campus matches domain, do not link

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { connectDB, disconnectDB } from '../config/db.js';
+import { connectDB, disconnectDB, redactConnectionString } from '../config/db.js';
 import { env } from '../config/env.js';
 import {
   Campus,
@@ -64,6 +64,7 @@ export async function cleanDemoData({
   }
 
   const dbUri = mongoose.connection.client?.s?.url || env.MONGODB_URI || 'unknown';
+  const safeDbUri = redactConnectionString(dbUri);
 
   // Security Guard 2: Verify database host safety
   const isLocalHost =
@@ -72,15 +73,17 @@ export async function cleanDemoData({
     dbUri.startsWith('mongodb-memory-server') ||
     dbUri.includes('testset');
 
-  if (!isLocalHost) {
-    const errorMsg = `[SAFETY ERROR] Connected to non-local or unknown MongoDB host: ${dbUri}. Cleanup is strictly restricted to local development environments.`;
+  const isRemoteCluster = typeof dbUri === 'string' && dbUri.includes('mongodb+srv');
+
+  if ((!isLocalHost || isRemoteCluster) && process.env.ALLOW_CLEAN_DEMO !== '1') {
+    const errorMsg = `[SAFETY ERROR] Connected to non-local or unknown MongoDB host: ${safeDbUri}. Cleanup is strictly restricted to local development environments unless ALLOW_CLEAN_DEMO=1 is set.`;
     console.error(`\n${errorMsg}\n`);
     if (!skipDisconnect) await disconnectDB();
     if (isTest) throw new Error(errorMsg);
     process.exit(1);
   }
 
-  console.log(`[Target Database] Verified local host: ${dbUri}`);
+  console.log(`[Target Database] Verified host: ${safeDbUri}`);
   console.log(`[Mode] ${dryRun || !confirm ? 'DRY RUN (Simulated: No database records will be modified)' : 'LIVE EXECUTION (Destructive Deletion)'}`);
 
   // Step 1: Identify target demo campuses

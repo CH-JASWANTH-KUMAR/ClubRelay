@@ -14,6 +14,11 @@
     "build": "npm run build --workspace=client",
     "test": "npm run test --workspace=server && npm run test --workspace=client",
     "seed": "npm run seed --workspace=server",
+    "seed:dev": "npm run seed:dev --workspace=server",
+    "db:indexes": "npm run db:indexes --workspace=server",
+    "db:check": "npm run db:check --workspace=server",
+    "db:local:up": "docker compose -f docker-compose.dev.yml up -d --wait",
+    "db:local:down": "docker compose -f docker-compose.dev.yml down",
     "lint": "eslint client/src server/src"
   },
   "devDependencies": {

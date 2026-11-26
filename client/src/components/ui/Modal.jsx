@@ -36,7 +36,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg',
       <div
         className={twMerge(
           clsx(
-            'relative w-full rounded-lg bg-surface border border-border shadow-elevated p-6 z-10 animate-in fade-in zoom-in-95 duration-150',
+            'relative w-full max-h-[90vh] overflow-y-auto rounded-lg bg-surface border border-border shadow-elevated p-6 z-10 animate-in fade-in zoom-in-95 duration-150',
             maxWidth,
             className
           )
